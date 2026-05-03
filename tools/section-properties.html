@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Property Calculator | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="../index.html" class="logo">StruxLab</a>
+        <ul class="nav-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../tools.html" class="active">Tools</a></li>
+            <li><a href="../blog.html">Blog</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../resume.html">Resume</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Section Property Calculator</h1>
+            <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for a built-up section composed of rectangular components.</p>
+        </div>
+    </header>
+
+    <section class="container">
+
+        <div class="tool-layout">
+
+            <div class="tool-panel">
+                <h3>Components</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                    Each row is a rectangular component. (x, y) is its centroid, measured from a global reference origin. All values in mm.
+                </p>
+
+                <table class="components-table">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>Width b</th>
+                            <th>Height h</th>
+                            <th>x</th>
+                            <th>y</th>
+                            <th class="col-action"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="componentsBody"></tbody>
+                </table>
+
+                <button class="add-btn" id="addComponentBtn">+ Add component</button>
+
+                <div id="errorBox"></div>
+                <button class="calc-button" id="calculateBtn">Calculate Properties</button>
+            </div>
+
+            <div class="tool-panel">
+                <h3>Results</h3>
+                <div id="results">
+                    <div class="result-empty">Add components and click Calculate.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="diagram-section">
+            <div class="diagram-panel">
+                <h4>Section preview</h4>
+                <svg id="sectionPreview" viewBox="0 0 700 320" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+        </div>
+
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <span class="footer-brand">StruxLab</span>
+            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============ State: array of component objects ============
+        // Each component is { b, h, x, y } — width, height, centroid x and y in mm
+        let components = [
+            { b: 200, h: 20,  x: 0,   y: 250 },   // top flange
+            { b: 12,  h: 220, x: 0,   y: 130 },   // web
+            { b: 200, h: 20,  x: 0,   y: 10  }    // bottom flange — default I-section
+        ];
+
+        // ============ DOM references ============
+        const componentsBody = document.getElementById('componentsBody');
+        const addComponentBtn = document.getElementById('addComponentBtn');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const errorBox = document.getElementById('errorBox');
+        const resultsBox = document.getElementById('results');
+        const sectionPreview = document.getElementById('sectionPreview');
+
+        // ============ Render the input rows from the components array ============
+        function renderRows() {
+            componentsBody.innerHTML = components.map((c, i) => `
+                <tr>
+                    <td class="col-num">${i + 1}</td>
+                    <td><input type="number" data-index="${i}" data-field="b" value="${c.b}" step="1"></td>
+                    <td><input type="number" data-index="${i}" data-field="h" value="${c.h}" step="1"></td>
+                    <td><input type="number" data-index="${i}" data-field="x" value="${c.x}" step="1"></td>
+                    <td><input type="number" data-index="${i}" data-field="y" value="${c.y}" step="1"></td>
+                    <td class="col-action">
+                        <button class="remove-btn" data-remove="${i}" title="Remove">×</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Wire up the input change events for every input we just rendered
+            componentsBody.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', e => {
+                    const idx = parseInt(e.target.dataset.index);
+                    const field = e.target.dataset.field;
+                    const v = parseFloat(e.target.value);
+                    components[idx][field] = isNaN(v) ? 0 : v;
+                    drawSection();   // live preview update as you type
+                });
+            });
+
+            // Wire up the remove buttons
+            componentsBody.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const idx = parseInt(e.target.dataset.remove);
+                    components.splice(idx, 1);
+                    renderRows();
+                    drawSection();
+                });
+            });
+        }
+
+        // ============ Add a new component row ============
+        addComponentBtn.addEventListener('click', () => {
+            components.push({ b: 100, h: 20, x: 0, y: 0 });
+            renderRows();
+            drawSection();
+        });
+
+        // ============ Main calculation ============
+        calculateBtn.addEventListener('click', calculate);
+
+        function calculate() {
+            errorBox.innerHTML = "";
+
+            if (components.length === 0) {
+                showError("Add at least one component.");
+                return;
+            }
+
+            // Validate
+            for (let i = 0; i < components.length; i++) {
+                const c = components[i];
+                if (c.b <= 0 || c.h <= 0) {
+                    showError(`Component ${i + 1}: width and height must be positive.`);
+                    return;
+                }
+            }
+
+            // ---- Total area and first moments ----
+            let A_total = 0;
+            let SumAx = 0;
+            let SumAy = 0;
+            components.forEach(c => {
+                const A = c.b * c.h;
+                A_total += A;
+                SumAx += A * c.x;
+                SumAy += A * c.y;
+            });
+
+            const xbar = SumAx / A_total;
+            const ybar = SumAy / A_total;
+
+            // ---- Moments of inertia about the centroid ----
+            let Ixx = 0;
+            let Iyy = 0;
+            components.forEach(c => {
+                const A = c.b * c.h;
+                const Ixx_self = (c.b * c.h ** 3) / 12;
+                const Iyy_self = (c.h * c.b ** 3) / 12;
+                Ixx += Ixx_self + A * (c.y - ybar) ** 2;
+                Iyy += Iyy_self + A * (c.x - xbar) ** 2;
+            });
+
+            // ---- Extreme fiber distances and section moduli ----
+            let yMin = Infinity, yMax = -Infinity;
+            let xMin = Infinity, xMax = -Infinity;
+            components.forEach(c => {
+                yMin = Math.min(yMin, c.y - c.h / 2);
+                yMax = Math.max(yMax, c.y + c.h / 2);
+                xMin = Math.min(xMin, c.x - c.b / 2);
+                xMax = Math.max(xMax, c.x + c.b / 2);
+            });
+            const cy = Math.max(Math.abs(yMax - ybar), Math.abs(ybar - yMin));
+            const cx = Math.max(Math.abs(xMax - xbar), Math.abs(xbar - xMin));
+            const Sxx = Ixx / cy;
+            const Syy = Iyy / cx;
+
+            // ---- Radii of gyration ----
+            const rx = Math.sqrt(Ixx / A_total);
+            const ry = Math.sqrt(Iyy / A_total);
+
+            // ---- Display results ----
+            resultsBox.innerHTML = `
+                <div class="result-row">
+                    <span class="result-label">Total area (A)</span>
+                    <span class="result-value">${A_total.toFixed(0)}<span class="unit">mm²</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Centroid x̄</span>
+                    <span class="result-value">${xbar.toFixed(2)}<span class="unit">mm</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Centroid ȳ</span>
+                    <span class="result-value">${ybar.toFixed(2)}<span class="unit">mm</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Ixx (about centroid)</span>
+                    <span class="result-value">${(Ixx / 1e6).toFixed(2)}<span class="unit">×10⁶ mm⁴</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Iyy (about centroid)</span>
+                    <span class="result-value">${(Iyy / 1e6).toFixed(2)}<span class="unit">×10⁶ mm⁴</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Sxx</span>
+                    <span class="result-value">${(Sxx / 1e3).toFixed(2)}<span class="unit">×10³ mm³</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Syy</span>
+                    <span class="result-value">${(Syy / 1e3).toFixed(2)}<span class="unit">×10³ mm³</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Radius of gyration rx</span>
+                    <span class="result-value">${rx.toFixed(2)}<span class="unit">mm</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Radius of gyration ry</span>
+                    <span class="result-value">${ry.toFixed(2)}<span class="unit">mm</span></span>
+                </div>
+            `;
+
+            drawSection(xbar, ybar);
+        }
+
+        // ============ Section preview drawing ============
+        function drawSection(xbar, ybar) {
+            if (components.length === 0) {
+                sectionPreview.innerHTML = `<text x="350" y="160" text-anchor="middle" class="dim-text">Add a component to see the preview.</text>`;
+                return;
+            }
+
+            // Find the bounding box of all components
+            let xMin = Infinity, yMin = Infinity, xMax = -Infinity, yMax = -Infinity;
+            components.forEach(c => {
+                xMin = Math.min(xMin, c.x - c.b / 2);
+                xMax = Math.max(xMax, c.x + c.b / 2);
+                yMin = Math.min(yMin, c.y - c.h / 2);
+                yMax = Math.max(yMax, c.y + c.h / 2);
+            });
+
+            const widthSec = xMax - xMin || 1;
+            const heightSec = yMax - yMin || 1;
+
+            // SVG viewBox is 700×320. Use a margin and pick a uniform scale.
+            const margin = 40;
+            const availW = 700 - 2 * margin;
+            const availH = 320 - 2 * margin;
+            const scale = Math.min(availW / widthSec, availH / heightSec);
+
+            // Center the section in the SVG. SVG y is inverted (down = positive).
+            const cxSvg = 350;
+            const cySvg = 160;
+            const xMid = (xMin + xMax) / 2;
+            const yMid = (yMin + yMax) / 2;
+
+            const toSvgX = x => cxSvg + (x - xMid) * scale;
+            const toSvgY = y => cySvg - (y - yMid) * scale;   // y inverted
+
+            let svg = '';
+
+            // Each rectangle
+            components.forEach(c => {
+                const xL = toSvgX(c.x - c.b / 2);
+                const yT = toSvgY(c.y + c.h / 2);   // top-y in SVG = high-y in real
+                const w = c.b * scale;
+                const h = c.h * scale;
+                svg += `<rect x="${xL}" y="${yT}" width="${w}" height="${h}" class="preview-rect"/>`;
+            });
+
+            // Centroid marker (only if calculate has been called and passed values in)
+            if (typeof xbar === 'number' && typeof ybar === 'number') {
+                const cxS = toSvgX(xbar);
+                const cyS = toSvgY(ybar);
+                svg += `<line x1="${margin}" y1="${cyS}" x2="${700 - margin}" y2="${cyS}" class="preview-centroid-line"/>`;
+                svg += `<line x1="${cxS}" y1="${margin}" x2="${cxS}" y2="${320 - margin}" class="preview-centroid-line"/>`;
+                svg += `<circle cx="${cxS}" cy="${cyS}" r="4" class="preview-centroid"/>`;
+            }
+
+            sectionPreview.innerHTML = svg;
+        }
+
+        function showError(message) {
+            errorBox.innerHTML = `<div class="result-error">${message}</div>`;
+            resultsBox.innerHTML = `<div class="result-empty">Fix the issue above and try again.</div>`;
+        }
+
+        // ============ Initial render ============
+        renderRows();
+        drawSection();
+        calculate();
+    </script>
+
+</body>
+</html>

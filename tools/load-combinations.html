@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Combination Generator | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="../index.html" class="logo">StruxLab</a>
+        <ul class="nav-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../tools.html" class="active">Tools</a></li>
+            <li><a href="../blog.html">Blog</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../resume.html">Resume</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Load Combination Generator</h1>
+            <p>Compute factored load combinations per ASCE 7-22 Strength Design or IS 875 (Part 5) Limit State Design. Enter unfactored loads and the governing combination is highlighted automatically.</p>
+        </div>
+    </header>
+
+    <section class="container">
+
+        <div class="tool-layout">
+
+            <div class="tool-panel">
+                <h3>Inputs</h3>
+
+                <label class="result-label" style="display:block; margin-bottom:0.5rem;">Code</label>
+                <div class="code-toggle">
+                    <button id="codeAsce" class="active">ASCE 7-22 (LRFD)</button>
+                    <button id="codeIs">IS 875 (LSD)</button>
+                </div>
+
+                <div class="field">
+                    <label for="loadD">Dead Load (D)</label>
+                    <input type="number" id="loadD" value="50" step="1">
+                    <span class="hint">Self-weight, finishes, fixed equipment (kN, kN/m, etc.)</span>
+                </div>
+
+                <div class="field">
+                    <label for="loadL">Live Load (L)</label>
+                    <input type="number" id="loadL" value="30" step="1">
+                    <span class="hint">Occupancy / imposed load</span>
+                </div>
+
+                <div class="field">
+                    <label for="loadLr">Roof Live Load (Lr)</label>
+                    <input type="number" id="loadLr" value="0" step="1">
+                    <span class="hint">Roof live load (ASCE only)</span>
+                </div>
+
+                <div class="field">
+                    <label for="loadS">Snow Load (S)</label>
+                    <input type="number" id="loadS" value="0" step="1">
+                </div>
+
+                <div class="field">
+                    <label for="loadW">Wind Load (W)</label>
+                    <input type="number" id="loadW" value="20" step="1">
+                </div>
+
+                <div class="field">
+                    <label for="loadE">Seismic Load (E)</label>
+                    <input type="number" id="loadE" value="15" step="1">
+                </div>
+
+                <button class="calc-button" id="calculateBtn">Generate Combinations</button>
+            </div>
+
+            <div class="tool-panel">
+                <h3>Results</h3>
+                <div id="errorBox"></div>
+                <div id="resultsHeader" class="result-empty">Enter unfactored loads and click Generate.</div>
+                <div class="combo-table-wrapper">
+                    <table class="combo-table" id="comboTable" style="display: none;">
+                        <thead id="comboTableHead"></thead>
+                        <tbody id="comboTableBody"></tbody>
+                    </table>
+                </div>
+                <button class="copy-btn" id="copyBtn" style="display: none;">Copy results to clipboard</button>
+            </div>
+
+        </div>
+
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <span class="footer-brand">StruxLab</span>
+            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============ Load combination definitions ============
+        // Each combination is an object with a "name" and a factor for each load type.
+        // Missing factors default to 0. The factored value for any combination is:
+        //   sum over all load types: (factor for that type) * (user input for that type)
+
+        const ASCE_COMBOS = [
+            { name: "1.4D",                              D: 1.4 },
+            { name: "1.2D + 1.6L + 0.5(Lr or S)",        D: 1.2, L: 1.6, Lr: 0.5, S: 0.5 },
+            { name: "1.2D + 1.6(Lr or S) + (L or 0.5W)", D: 1.2, Lr: 1.6, S: 1.6, L: 1.0, W: 0.5 },
+            { name: "1.2D + 1.0W + L + 0.5(Lr or S)",    D: 1.2, W: 1.0, L: 1.0, Lr: 0.5, S: 0.5 },
+            { name: "1.2D + 1.0E + L + 0.2S",            D: 1.2, E: 1.0, L: 1.0, S: 0.2 },
+            { name: "0.9D + 1.0W",                       D: 0.9, W: 1.0 },
+            { name: "0.9D + 1.0E",                       D: 0.9, E: 1.0 }
+        ];
+
+        const IS_COMBOS = [
+            { name: "1.5(D + L)",        D: 1.5, L: 1.5 },
+            { name: "1.2(D + L + W)",    D: 1.2, L: 1.2, W: 1.2 },
+            { name: "1.2(D + L - W)",    D: 1.2, L: 1.2, W: -1.2 },
+            { name: "1.2(D + L + E)",    D: 1.2, L: 1.2, E: 1.2 },
+            { name: "1.2(D + L - E)",    D: 1.2, L: 1.2, E: -1.2 },
+            { name: "1.5(D + W)",        D: 1.5, W: 1.5 },
+            { name: "1.5(D - W)",        D: 1.5, W: -1.5 },
+            { name: "1.5(D + E)",        D: 1.5, E: 1.5 },
+            { name: "1.5(D - E)",        D: 1.5, E: -1.5 },
+            { name: "0.9D + 1.5W",       D: 0.9, W: 1.5 },
+            { name: "0.9D - 1.5W",       D: 0.9, W: -1.5 },
+            { name: "0.9D + 1.5E",       D: 0.9, E: 1.5 },
+            { name: "0.9D - 1.5E",       D: 0.9, E: -1.5 }
+        ];
+
+        // ============ DOM references ============
+        const codeAsceBtn = document.getElementById('codeAsce');
+        const codeIsBtn = document.getElementById('codeIs');
+        const loadInputs = {
+            D: document.getElementById('loadD'),
+            L: document.getElementById('loadL'),
+            Lr: document.getElementById('loadLr'),
+            S: document.getElementById('loadS'),
+            W: document.getElementById('loadW'),
+            E: document.getElementById('loadE')
+        };
+        const calculateBtn = document.getElementById('calculateBtn');
+        const errorBox = document.getElementById('errorBox');
+        const resultsHeader = document.getElementById('resultsHeader');
+        const comboTable = document.getElementById('comboTable');
+        const comboTableHead = document.getElementById('comboTableHead');
+        const comboTableBody = document.getElementById('comboTableBody');
+        const copyBtn = document.getElementById('copyBtn');
+
+        // Track which code is active
+        let activeCode = "ASCE";
+
+        // ============ Code toggle handlers ============
+        codeAsceBtn.addEventListener('click', () => {
+            activeCode = "ASCE";
+            codeAsceBtn.classList.add('active');
+            codeIsBtn.classList.remove('active');
+            // Lr is only used for ASCE — show it
+            loadInputs.Lr.parentElement.style.display = '';
+            calculate();
+        });
+
+        codeIsBtn.addEventListener('click', () => {
+            activeCode = "IS";
+            codeIsBtn.classList.add('active');
+            codeAsceBtn.classList.remove('active');
+            // Lr is not used for IS — hide it
+            loadInputs.Lr.parentElement.style.display = 'none';
+            calculate();
+        });
+
+        calculateBtn.addEventListener('click', calculate);
+
+        // ============ Main calculation ============
+        function calculate() {
+            errorBox.innerHTML = "";
+
+            // Read all input values
+            const loads = {};
+            for (const key in loadInputs) {
+                const v = parseFloat(loadInputs[key].value);
+                if (isNaN(v)) {
+                    showError(`"${key}" must be a number.`);
+                    return;
+                }
+                loads[key] = v;
+            }
+
+            // Pick the right combination set
+            const combos = activeCode === "ASCE" ? ASCE_COMBOS : IS_COMBOS;
+
+            // Compute each combination
+            const results = combos.map(combo => {
+                let value = 0;
+                for (const key in loads) {
+                    if (combo[key]) {
+                        value += combo[key] * loads[key];
+                    }
+                }
+                return { name: combo.name, value };
+            });
+
+            // Find the governing combination (largest absolute factored value)
+            let governingIndex = 0;
+            results.forEach((r, i) => {
+                if (Math.abs(r.value) > Math.abs(results[governingIndex].value)) governingIndex = i;
+            });
+
+            renderTable(results, governingIndex);
+        }
+
+        // ============ Build the results table dynamically ============
+        function renderTable(results, governingIndex) {
+            resultsHeader.style.display = 'none';
+            comboTable.style.display = '';
+            copyBtn.style.display = '';
+            copyBtn.textContent = "Copy results to clipboard";
+            copyBtn.classList.remove('copied');
+
+            // Build the header row
+            comboTableHead.innerHTML = `
+                <tr>
+                    <th class="combo-name-col">Combination</th>
+                    <th>Factored value</th>
+                </tr>
+            `;
+
+            // Build a row for each result
+            comboTableBody.innerHTML = results.map((r, i) => {
+                const isGoverning = i === governingIndex;
+                return `
+                    <tr class="${isGoverning ? 'governing-row' : ''}">
+                        <td class="combo-name">
+                            ${r.name}${isGoverning ? '<span class="governing-tag">Governs</span>' : ''}
+                        </td>
+                        <td class="combo-result">${r.value.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============ Copy to clipboard ============
+        copyBtn.addEventListener('click', () => {
+            const rows = Array.from(comboTableBody.querySelectorAll('tr'));
+            const text = "Combination\tFactored value\n" + rows.map(r => {
+                const cells = r.querySelectorAll('td');
+                const name = cells[0].textContent.replace('Governs', '').trim();
+                const value = cells[1].textContent.trim();
+                return `${name}\t${value}`;
+            }).join('\n');
+
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = "Copied!";
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = "Copy results to clipboard";
+                    copyBtn.classList.remove('copied');
+                }, 1800);
+            });
+        });
+
+        function showError(message) {
+            errorBox.innerHTML = `<div class="result-error">${message}</div>`;
+            comboTable.style.display = 'none';
+            copyBtn.style.display = 'none';
+            resultsHeader.style.display = '';
+        }
+
+        // Run a calculation immediately on page load with default values
+        calculate();
+    </script>
+
+</body>
+</html>

@@ -620,3 +620,483 @@ ul.skills li:hover {
         justify-content: center;
     }
 }
+/* ============ Tool page layout ============ */
+.tool-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .tool-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tool-panel {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.tool-panel h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ============ Form fields ============ */
+.field {
+    margin-bottom: 1.25rem;
+}
+
+.field label {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.field .hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.field input[type="number"],
+.field select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.field input[type="number"]:focus,
+.field select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.calc-button {
+    width: 100%;
+    padding: 0.875rem;
+    margin-top: 0.5rem;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.calc-button:hover {
+    background-color: var(--accent-hover);
+}
+
+/* ============ Results display ============ */
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-row:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.result-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.result-value .unit {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 0.25rem;
+}
+
+.result-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.result-error {
+    background-color: rgba(232, 93, 36, 0.08);
+    border-left: 3px solid var(--accent);
+    color: var(--accent-hover);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Tool meta info on tools.html cards */
+.card.live {
+    border-color: var(--border);
+}
+
+.card.live::after {
+    content: "Live";
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: #2a9d4a;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+/* ============ Diagram panels ============ */
+.diagram-section {
+    margin-top: 2rem;
+}
+
+.diagram-panel {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+}
+
+.diagram-panel h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.diagram-panel svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* SVG primitive styling */
+.beam-fill { fill: #2A2D32; }
+.beam-stroke { stroke: var(--text-primary); stroke-width: 1.2; fill: none; }
+.support-fill { fill: var(--text-primary); }
+.load-arrow { stroke: var(--accent); stroke-width: 1.5; fill: var(--accent); }
+.dim-line { stroke: var(--text-muted); stroke-width: 0.8; fill: none; }
+.dim-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    fill: var(--text-secondary);
+}
+.axis-line { stroke: var(--text-muted); stroke-width: 0.8; }
+.axis-zero { stroke: var(--text-secondary); stroke-width: 1; }
+.sfd-fill { fill: rgba(232, 93, 36, 0.18); stroke: var(--accent); stroke-width: 1.5; }
+.bmd-fill { fill: rgba(15, 20, 25, 0.08); stroke: var(--text-primary); stroke-width: 1.5; }
+.value-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    fill: var(--text-primary);
+}
+.value-label-accent {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    fill: var(--accent-hover);
+}
+/* ============ Load combination table ============ */
+.combo-table-wrapper {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.combo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.combo-table thead {
+    background-color: var(--bg-muted);
+}
+
+.combo-table th {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    text-align: right;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.combo-table th:first-child,
+.combo-table td:first-child {
+    text-align: left;
+}
+
+.combo-table th.combo-name-col {
+    width: 30%;
+}
+
+.combo-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.combo-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.combo-table tbody tr:hover {
+    background-color: var(--bg-muted);
+}
+
+.combo-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.combo-result {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    color: var(--accent-hover);
+}
+
+.governing-row {
+    background-color: rgba(232, 93, 36, 0.08) !important;
+}
+
+.governing-tag {
+    display: inline-block;
+    background-color: var(--accent);
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.code-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.code-toggle button {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.code-toggle button:hover {
+    border-color: var(--accent);
+}
+
+.code-toggle button.active {
+    background-color: var(--text-primary);
+    border-color: var(--text-primary);
+    color: var(--text-on-dark);
+}
+
+.copy-btn {
+    margin-top: 1.25rem;
+    padding: 0.65rem 1.25rem;
+    background-color: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.copy-btn.copied {
+    background-color: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+/* ============ Section component rows ============ */
+.components-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.components-table thead th {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 0.5rem 0.5rem 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.components-table th.col-num,
+.components-table td.col-num {
+    width: 36px;
+    text-align: center;
+    color: var(--text-muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+}
+
+.components-table th.col-action,
+.components-table td.col-action {
+    width: 40px;
+    text-align: center;
+}
+
+.components-table td {
+    padding: 0.4rem 0.4rem 0.4rem 0;
+    vertical-align: middle;
+}
+
+.components-table input[type="number"] {
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.components-table input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.remove-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.add-btn {
+    width: 100%;
+    padding: 0.65rem;
+    background-color: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 1.25rem;
+}
+
+.add-btn:hover {
+    border-color: var(--accent);
+    border-style: solid;
+    color: var(--accent);
+}
+
+.unit-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Section preview SVG */
+#sectionPreview {
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.preview-rect {
+    fill: rgba(232, 93, 36, 0.18);
+    stroke: var(--accent);
+    stroke-width: 1.2;
+}
+
+.preview-centroid {
+    fill: var(--text-primary);
+}
+
+.preview-centroid-line {
+    stroke: var(--text-muted);
+    stroke-width: 0.6;
+    stroke-dasharray: 4, 3;
+}

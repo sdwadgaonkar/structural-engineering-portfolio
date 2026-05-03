@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beam Calculator | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="../index.html" class="logo">StruxLab</a>
+        <ul class="nav-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../tools.html" class="active">Tools</a></li>
+            <li><a href="../blog.html">Blog</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../resume.html">Resume</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Simply-Supported Beam Calculator</h1>
+            <p>Reactions, max shear, max moment, and live shear and bending-moment diagrams for a simply-supported beam under a UDL plus an optional point load.</p>
+        </div>
+    </header>
+
+    <section class="container">
+
+        <div class="tool-layout">
+
+            <div class="tool-panel">
+                <h3>Inputs</h3>
+
+                <div class="field">
+                    <label for="span">Span (L)</label>
+                    <input type="number" id="span" value="6" step="0.1" min="0">
+                    <span class="hint">Length of the beam in meters</span>
+                </div>
+
+                <div class="field">
+                    <label for="udl">Uniformly Distributed Load (w)</label>
+                    <input type="number" id="udl" value="25" step="0.5" min="0">
+                    <span class="hint">UDL applied along the full span, in kN/m</span>
+                </div>
+
+                <div class="field">
+                    <label for="pointLoad">Point Load (P) — optional</label>
+                    <input type="number" id="pointLoad" value="0" step="1" min="0">
+                    <span class="hint">Concentrated load in kN. Leave 0 if no point load.</span>
+                </div>
+
+                <div class="field">
+                    <label for="pointPosition">Point Load Position (a)</label>
+                    <input type="number" id="pointPosition" value="3" step="0.1" min="0">
+                    <span class="hint">Distance from left support, in meters</span>
+                </div>
+
+                <button class="calc-button" id="calculateBtn">Calculate</button>
+            </div>
+
+            <div class="tool-panel">
+                <h3>Results</h3>
+                <div id="errorBox"></div>
+                <div id="results">
+                    <div class="result-empty">Enter values and click Calculate to see results.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="diagram-section">
+
+            <div class="diagram-panel">
+                <h4>Beam &amp; loading</h4>
+                <svg id="beamDiagram" viewBox="0 0 700 180" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+
+            <div class="diagram-panel">
+                <h4>Shear Force Diagram (SFD)</h4>
+                <svg id="sfdDiagram" viewBox="0 0 700 200" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+
+            <div class="diagram-panel">
+                <h4>Bending Moment Diagram (BMD)</h4>
+                <svg id="bmdDiagram" viewBox="0 0 700 200" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+
+        </div>
+
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <span class="footer-brand">StruxLab</span>
+            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============ DOM references ============
+        const spanInput = document.getElementById('span');
+        const udlInput = document.getElementById('udl');
+        const pointLoadInput = document.getElementById('pointLoad');
+        const pointPositionInput = document.getElementById('pointPosition');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsBox = document.getElementById('results');
+        const errorBox = document.getElementById('errorBox');
+        const beamSvg = document.getElementById('beamDiagram');
+        const sfdSvg = document.getElementById('sfdDiagram');
+        const bmdSvg = document.getElementById('bmdDiagram');
+
+        // ============ Layout constants for diagrams ============
+        // The beam is drawn from x=80 to x=620 in SVG units; everything else
+        // is positioned relative to that span so diagrams stay aligned.
+        const X_LEFT = 80;
+        const X_RIGHT = 620;
+        const PLOT_WIDTH = X_RIGHT - X_LEFT;
+
+        // ============ Main entry point ============
+        calculateBtn.addEventListener('click', calculateBeam);
+
+        function calculateBeam() {
+            const L = parseFloat(spanInput.value);
+            const w = parseFloat(udlInput.value);
+            const P = parseFloat(pointLoadInput.value);
+            const a = parseFloat(pointPositionInput.value);
+
+            errorBox.innerHTML = "";
+            if (isNaN(L) || L <= 0) return showError("Span must be a positive number.");
+            if (isNaN(w) || w < 0) return showError("UDL must be zero or positive.");
+            if (isNaN(P) || P < 0) return showError("Point load must be zero or positive.");
+            if (P > 0 && (a <= 0 || a >= L)) return showError("Point load position must be between 0 and the span length.");
+
+            const b = L - a;
+            const R_A = (w * L) / 2 + (P > 0 ? (P * b) / L : 0);
+            const R_B = (w * L) / 2 + (P > 0 ? (P * a) / L : 0);
+
+            // Sample shear and moment at many points along the span for plotting
+            const samples = sampleBeam(L, w, P, a, R_A);
+
+            // Find true max shear and max moment from samples
+            let V_max = 0;
+            let M_max = 0;
+            samples.forEach(s => {
+                if (Math.abs(s.V) > Math.abs(V_max)) V_max = s.V;
+                if (s.M > M_max) M_max = s.M;
+            });
+
+            // ---- Display numerical results ----
+            resultsBox.innerHTML = `
+                <div class="result-row">
+                    <span class="result-label">Reaction at A (left)</span>
+                    <span class="result-value">${R_A.toFixed(2)}<span class="unit">kN</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Reaction at B (right)</span>
+                    <span class="result-value">${R_B.toFixed(2)}<span class="unit">kN</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Max shear (abs)</span>
+                    <span class="result-value">${Math.abs(V_max).toFixed(2)}<span class="unit">kN</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Max moment</span>
+                    <span class="result-value">${M_max.toFixed(2)}<span class="unit">kN·m</span></span>
+                </div>
+            `;
+
+            // ---- Draw the diagrams ----
+            drawBeamDiagram(L, w, P, a);
+            drawSFD(samples, L);
+            drawBMD(samples, L);
+        }
+
+        function showError(message) {
+            errorBox.innerHTML = `<div class="result-error">${message}</div>`;
+            resultsBox.innerHTML = `<div class="result-empty">Fix the input above and try again.</div>`;
+            beamSvg.innerHTML = "";
+            sfdSvg.innerHTML = "";
+            bmdSvg.innerHTML = "";
+        }
+
+        // ============ Sample the beam at 200 points for plotting ============
+        function sampleBeam(L, w, P, a, R_A) {
+            const N = 200;
+            const samples = [];
+            for (let i = 0; i <= N; i++) {
+                const x = (L * i) / N;
+                let V = R_A - w * x;
+                let M = R_A * x - (w * x * x) / 2;
+                if (P > 0 && x >= a) {
+                    V -= P;
+                    M -= P * (x - a);
+                }
+                samples.push({ x, V, M });
+            }
+            return samples;
+        }
+
+        // ============ Beam & loading diagram ============
+        function drawBeamDiagram(L, w, P, a) {
+            const beamY = 90;
+            const beamHeight = 14;
+
+            // Map physical x (0 to L meters) to SVG x (X_LEFT to X_RIGHT)
+            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
+
+            let svg = '';
+
+            // UDL arrows along the top of the beam
+            if (w > 0) {
+                const arrowCount = 12;
+                for (let i = 0; i <= arrowCount; i++) {
+                    const x = X_LEFT + (i / arrowCount) * PLOT_WIDTH;
+                    svg += `<line x1="${x}" y1="35" x2="${x}" y2="${beamY - 2}" class="load-arrow"/>`;
+                    svg += `<polygon points="${x - 3},${beamY - 6} ${x + 3},${beamY - 6} ${x},${beamY - 1}" class="load-arrow"/>`;
+                }
+                // Top line connecting the arrow tails
+                svg += `<line x1="${X_LEFT}" y1="35" x2="${X_RIGHT}" y2="35" class="load-arrow"/>`;
+                svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="28" text-anchor="middle" class="value-label-accent">w = ${w} kN/m</text>`;
+            }
+
+            // Point load arrow (if any)
+            if (P > 0) {
+                const px = toSvgX(a);
+                svg += `<line x1="${px}" y1="20" x2="${px}" y2="${beamY - 2}" class="load-arrow" stroke-width="2.5"/>`;
+                svg += `<polygon points="${px - 5},${beamY - 8} ${px + 5},${beamY - 8} ${px},${beamY - 1}" class="load-arrow"/>`;
+                svg += `<text x="${px}" y="14" text-anchor="middle" class="value-label-accent">P = ${P} kN</text>`;
+            }
+
+            // The beam itself
+            svg += `<rect x="${X_LEFT}" y="${beamY}" width="${PLOT_WIDTH}" height="${beamHeight}" class="beam-fill"/>`;
+
+            // Supports — pinned (triangle) at A, roller (triangle + line) at B
+            const supportTopY = beamY + beamHeight;
+            const supportSize = 14;
+            // Pinned A
+            svg += `<polygon points="${X_LEFT},${supportTopY} ${X_LEFT - supportSize},${supportTopY + supportSize * 1.4} ${X_LEFT + supportSize},${supportTopY + supportSize * 1.4}" class="support-fill"/>`;
+            // Roller B
+            svg += `<polygon points="${X_RIGHT},${supportTopY} ${X_RIGHT - supportSize},${supportTopY + supportSize * 1.4} ${X_RIGHT + supportSize},${supportTopY + supportSize * 1.4}" class="support-fill"/>`;
+            svg += `<line x1="${X_RIGHT - supportSize - 4}" y1="${supportTopY + supportSize * 1.4 + 4}" x2="${X_RIGHT + supportSize + 4}" y2="${supportTopY + supportSize * 1.4 + 4}" class="beam-stroke"/>`;
+
+            // Support labels
+            svg += `<text x="${X_LEFT}" y="${supportTopY + supportSize * 1.4 + 22}" text-anchor="middle" class="value-label">A</text>`;
+            svg += `<text x="${X_RIGHT}" y="${supportTopY + supportSize * 1.4 + 22}" text-anchor="middle" class="value-label">B</text>`;
+
+            // Span dimension
+            const dimY = 165;
+            svg += `<line x1="${X_LEFT}" y1="${dimY}" x2="${X_RIGHT}" y2="${dimY}" class="dim-line"/>`;
+            svg += `<line x1="${X_LEFT}" y1="${dimY - 4}" x2="${X_LEFT}" y2="${dimY + 4}" class="dim-line"/>`;
+            svg += `<line x1="${X_RIGHT}" y1="${dimY - 4}" x2="${X_RIGHT}" y2="${dimY + 4}" class="dim-line"/>`;
+            svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="${dimY - 6}" text-anchor="middle" class="dim-text">L = ${L} m</text>`;
+
+            beamSvg.innerHTML = svg;
+        }
+
+        // ============ Shear Force Diagram ============
+        function drawSFD(samples, L) {
+            const baseY = 100;       // where V = 0 sits in the SVG
+            const maxY = 30;         // top of plot area
+            const minY = 170;        // bottom of plot area
+
+            // Find extreme shear values to scale the plot
+            let V_pos_max = 0, V_neg_max = 0;
+            samples.forEach(s => {
+                if (s.V > V_pos_max) V_pos_max = s.V;
+                if (s.V < V_neg_max) V_neg_max = s.V;
+            });
+            const V_abs = Math.max(V_pos_max, Math.abs(V_neg_max));
+            if (V_abs === 0) { sfdSvg.innerHTML = ""; return; }
+
+            // Map physical x to SVG x, and shear value V to SVG y
+            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
+            const scale = (baseY - maxY) / V_abs;        // pixels per kN
+            const toSvgY = V => baseY - V * scale;
+
+            // Build a path for the SFD (filled to baseline)
+            let path = `M ${toSvgX(samples[0].x)} ${baseY}`;
+            samples.forEach(s => {
+                path += ` L ${toSvgX(s.x)} ${toSvgY(s.V)}`;
+            });
+            path += ` L ${toSvgX(samples[samples.length - 1].x)} ${baseY} Z`;
+
+            let svg = '';
+            // Zero axis
+            svg += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
+            // The SFD shape
+            svg += `<path d="${path}" class="sfd-fill"/>`;
+            // End-point value labels
+            svg += `<text x="${X_LEFT - 6}" y="${toSvgY(samples[0].V) - 6}" text-anchor="end" class="value-label">+${samples[0].V.toFixed(1)} kN</text>`;
+            const endV = samples[samples.length - 1].V;
+            svg += `<text x="${X_RIGHT + 6}" y="${toSvgY(endV) + 14}" text-anchor="start" class="value-label">${endV.toFixed(1)} kN</text>`;
+
+            sfdSvg.innerHTML = svg;
+        }
+
+        // ============ Bending Moment Diagram ============
+        // Convention: positive moment is plotted DOWNWARD (sagging tension on bottom face)
+        function drawBMD(samples, L) {
+            const baseY = 30;        // where M = 0 sits, near the top
+            const maxY = 170;        // bottom of plot area
+
+            let M_max = 0;
+            samples.forEach(s => { if (s.M > M_max) M_max = s.M; });
+            if (M_max === 0) { bmdSvg.innerHTML = ""; return; }
+
+            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
+            const scale = (maxY - baseY) / M_max;
+            const toSvgY = M => baseY + M * scale;
+
+            let path = `M ${toSvgX(samples[0].x)} ${baseY}`;
+            samples.forEach(s => {
+                path += ` L ${toSvgX(s.x)} ${toSvgY(s.M)}`;
+            });
+            path += ` L ${toSvgX(samples[samples.length - 1].x)} ${baseY} Z`;
+
+            let svg = '';
+            svg += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
+            svg += `<path d="${path}" class="bmd-fill"/>`;
+
+            // Find x at which M is maximum and label it
+            let M_peak = 0, x_peak = 0;
+            samples.forEach(s => { if (s.M > M_peak) { M_peak = s.M; x_peak = s.x; } });
+            const peakSx = toSvgX(x_peak);
+            const peakSy = toSvgY(M_peak);
+            svg += `<line x1="${peakSx}" y1="${baseY}" x2="${peakSx}" y2="${peakSy}" stroke="rgba(232,93,36,0.4)" stroke-dasharray="3,3"/>`;
+            svg += `<text x="${peakSx}" y="${peakSy + 16}" text-anchor="middle" class="value-label-accent">${M_peak.toFixed(2)} kN·m @ x = ${x_peak.toFixed(2)} m</text>`;
+
+            bmdSvg.innerHTML = svg;
+        }
+
+        // Run once on page load with default values
+        calculateBeam();
+    </script>
+
+</body>
+</html>

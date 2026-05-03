@@ -17,7 +17,7 @@
         <div class="page-header-inner">
             <span class="section-label">Tool · Live</span>
             <h1>Simply-Supported Beam Calculator</h1>
-            <p>Reactions, max shear, max moment, and live shear and bending-moment diagrams for a simply-supported beam under a UDL plus an optional point load.</p>
+            <p>Reactions, max shear, max moment, and live shear and bending-moment diagrams for a simply-supported beam under a UDL plus an optional point load. Imperial units (kip, kip-ft, ft).</p>
         </div>
     </header>
 
@@ -30,26 +30,26 @@
 
                 <div class="field">
                     <label for="span">Span (L)</label>
-                    <input type="number" id="span" value="6" step="0.1" min="0">
-                    <span class="hint">Length of the beam in meters</span>
+                    <input type="number" id="span" value="20" step="0.5" min="0">
+                    <span class="hint">Length of the beam in feet</span>
                 </div>
 
                 <div class="field">
                     <label for="udl">Uniformly Distributed Load (w)</label>
-                    <input type="number" id="udl" value="25" step="0.5" min="0">
-                    <span class="hint">UDL applied along the full span, in kN/m</span>
+                    <input type="number" id="udl" value="2" step="0.1" min="0">
+                    <span class="hint">UDL applied along the full span, in kip/ft</span>
                 </div>
 
                 <div class="field">
                     <label for="pointLoad">Point Load (P) — optional</label>
                     <input type="number" id="pointLoad" value="0" step="1" min="0">
-                    <span class="hint">Concentrated load in kN. Leave 0 if no point load.</span>
+                    <span class="hint">Concentrated load in kip. Leave 0 if no point load.</span>
                 </div>
 
                 <div class="field">
                     <label for="pointPosition">Point Load Position (a)</label>
-                    <input type="number" id="pointPosition" value="3" step="0.1" min="0">
-                    <span class="hint">Distance from left support, in meters</span>
+                    <input type="number" id="pointPosition" value="10" step="0.5" min="0">
+                    <span class="hint">Distance from left support, in feet</span>
                 </div>
 
                 <button class="calc-button" id="calculateBtn">Calculate</button>
@@ -107,10 +107,10 @@
         calculateBtn.addEventListener('click', calculateBeam);
 
         function calculateBeam() {
-            const L = parseFloat(spanInput.value);
-            const w = parseFloat(udlInput.value);
-            const P = parseFloat(pointLoadInput.value);
-            const a = parseFloat(pointPositionInput.value);
+            const L = parseFloat(spanInput.value);     // ft
+            const w = parseFloat(udlInput.value);      // kip/ft
+            const P = parseFloat(pointLoadInput.value); // kip
+            const a = parseFloat(pointPositionInput.value); // ft
 
             errorBox.innerHTML = "";
             if (isNaN(L) || L <= 0) return showError("Span must be a positive number.");
@@ -119,8 +119,8 @@
             if (P > 0 && (a <= 0 || a >= L)) return showError("Point load position must be between 0 and the span length.");
 
             const b = L - a;
-            const R_A = (w * L) / 2 + (P > 0 ? (P * b) / L : 0);
-            const R_B = (w * L) / 2 + (P > 0 ? (P * a) / L : 0);
+            const R_A = (w * L) / 2 + (P > 0 ? (P * b) / L : 0);    // kip
+            const R_B = (w * L) / 2 + (P > 0 ? (P * a) / L : 0);    // kip
 
             const samples = sampleBeam(L, w, P, a, R_A);
 
@@ -134,19 +134,19 @@
             resultsBox.innerHTML = `
                 <div class="result-row">
                     <span class="result-label">Reaction at A (left)</span>
-                    <span class="result-value">${R_A.toFixed(2)}<span class="unit">kN</span></span>
+                    <span class="result-value">${R_A.toFixed(2)}<span class="unit">kip</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Reaction at B (right)</span>
-                    <span class="result-value">${R_B.toFixed(2)}<span class="unit">kN</span></span>
+                    <span class="result-value">${R_B.toFixed(2)}<span class="unit">kip</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Max shear (abs)</span>
-                    <span class="result-value">${Math.abs(V_max).toFixed(2)}<span class="unit">kN</span></span>
+                    <span class="result-value">${Math.abs(V_max).toFixed(2)}<span class="unit">kip</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Max moment</span>
-                    <span class="result-value">${M_max.toFixed(2)}<span class="unit">kN·m</span></span>
+                    <span class="result-value">${M_max.toFixed(2)}<span class="unit">kip-ft</span></span>
                 </div>
             `;
 
@@ -194,14 +194,14 @@
                     svg += `<polygon points="${x - 3},${beamY - 6} ${x + 3},${beamY - 6} ${x},${beamY - 1}" class="load-arrow"/>`;
                 }
                 svg += `<line x1="${X_LEFT}" y1="35" x2="${X_RIGHT}" y2="35" class="load-arrow"/>`;
-                svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="28" text-anchor="middle" class="value-label-accent">w = ${w} kN/m</text>`;
+                svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="28" text-anchor="middle" class="value-label-accent">w = ${w} kip/ft</text>`;
             }
 
             if (P > 0) {
                 const px = toSvgX(a);
                 svg += `<line x1="${px}" y1="20" x2="${px}" y2="${beamY - 2}" class="load-arrow" stroke-width="2.5"/>`;
                 svg += `<polygon points="${px - 5},${beamY - 8} ${px + 5},${beamY - 8} ${px},${beamY - 1}" class="load-arrow"/>`;
-                svg += `<text x="${px}" y="14" text-anchor="middle" class="value-label-accent">P = ${P} kN</text>`;
+                svg += `<text x="${px}" y="14" text-anchor="middle" class="value-label-accent">P = ${P} kip</text>`;
             }
 
             svg += `<rect x="${X_LEFT}" y="${beamY}" width="${PLOT_WIDTH}" height="${beamHeight}" class="beam-fill"/>`;
@@ -219,7 +219,7 @@
             svg += `<line x1="${X_LEFT}" y1="${dimY}" x2="${X_RIGHT}" y2="${dimY}" class="dim-line"/>`;
             svg += `<line x1="${X_LEFT}" y1="${dimY - 4}" x2="${X_LEFT}" y2="${dimY + 4}" class="dim-line"/>`;
             svg += `<line x1="${X_RIGHT}" y1="${dimY - 4}" x2="${X_RIGHT}" y2="${dimY + 4}" class="dim-line"/>`;
-            svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="${dimY - 6}" text-anchor="middle" class="dim-text">L = ${L} m</text>`;
+            svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="${dimY - 6}" text-anchor="middle" class="dim-text">L = ${L} ft</text>`;
 
             beamSvg.innerHTML = svg;
         }
@@ -247,9 +247,9 @@
             let svg = '';
             svg += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
             svg += `<path d="${path}" class="sfd-fill"/>`;
-            svg += `<text x="${X_LEFT - 6}" y="${toSvgY(samples[0].V) - 6}" text-anchor="end" class="value-label">+${samples[0].V.toFixed(1)} kN</text>`;
+            svg += `<text x="${X_LEFT - 6}" y="${toSvgY(samples[0].V) - 6}" text-anchor="end" class="value-label">+${samples[0].V.toFixed(1)} kip</text>`;
             const endV = samples[samples.length - 1].V;
-            svg += `<text x="${X_RIGHT + 6}" y="${toSvgY(endV) + 14}" text-anchor="start" class="value-label">${endV.toFixed(1)} kN</text>`;
+            svg += `<text x="${X_RIGHT + 6}" y="${toSvgY(endV) + 14}" text-anchor="start" class="value-label">${endV.toFixed(1)} kip</text>`;
 
             sfdSvg.innerHTML = svg;
         }
@@ -279,7 +279,7 @@
             const peakSx = toSvgX(x_peak);
             const peakSy = toSvgY(M_peak);
             svg += `<line x1="${peakSx}" y1="${baseY}" x2="${peakSx}" y2="${peakSy}" stroke="rgba(232,93,36,0.4)" stroke-dasharray="3,3"/>`;
-            svg += `<text x="${peakSx}" y="${peakSy + 16}" text-anchor="middle" class="value-label-accent">${M_peak.toFixed(2)} kN·m @ x = ${x_peak.toFixed(2)} m</text>`;
+            svg += `<text x="${peakSx}" y="${peakSy + 16}" text-anchor="middle" class="value-label-accent">${M_peak.toFixed(2)} kip-ft @ x = ${x_peak.toFixed(2)} ft</text>`;
 
             bmdSvg.innerHTML = svg;
         }

@@ -17,7 +17,7 @@
         <div class="page-header-inner">
             <span class="section-label">Tool · Live</span>
             <h1>Section Property Calculator</h1>
-            <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for a built-up section composed of rectangular components.</p>
+            <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for a built-up section composed of rectangular components. Imperial units (inches).</p>
         </div>
     </header>
 
@@ -28,7 +28,7 @@
             <div class="tool-panel">
                 <h3>Components</h3>
                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                    Each row is a rectangular component. (x, y) is its centroid, measured from a global reference origin. All values in mm.
+                    Each row is a rectangular component. (x, y) is its centroid, measured from a global reference origin. All values in inches.
                 </p>
 
                 <table class="components-table">
@@ -72,10 +72,12 @@
     <div id="site-footer"></div>
 
     <script>
+        // Default: a W-shape-like built-up I section (in inches)
+        // Top flange 8 × 0.5, Web 0.4 × 9, Bottom flange 8 × 0.5
         let components = [
-            { b: 200, h: 20,  x: 0,   y: 250 },
-            { b: 12,  h: 220, x: 0,   y: 130 },
-            { b: 200, h: 20,  x: 0,   y: 10  }
+            { b: 8.0,  h: 0.5,  x: 0,   y: 9.75 },
+            { b: 0.4,  h: 9.0,  x: 0,   y: 5.0  },
+            { b: 8.0,  h: 0.5,  x: 0,   y: 0.25 }
         ];
 
         const componentsBody = document.getElementById('componentsBody');
@@ -89,10 +91,10 @@
             componentsBody.innerHTML = components.map((c, i) => `
                 <tr>
                     <td class="col-num">${i + 1}</td>
-                    <td><input type="number" data-index="${i}" data-field="b" value="${c.b}" step="1"></td>
-                    <td><input type="number" data-index="${i}" data-field="h" value="${c.h}" step="1"></td>
-                    <td><input type="number" data-index="${i}" data-field="x" value="${c.x}" step="1"></td>
-                    <td><input type="number" data-index="${i}" data-field="y" value="${c.y}" step="1"></td>
+                    <td><input type="number" data-index="${i}" data-field="b" value="${c.b}" step="0.1"></td>
+                    <td><input type="number" data-index="${i}" data-field="h" value="${c.h}" step="0.1"></td>
+                    <td><input type="number" data-index="${i}" data-field="x" value="${c.x}" step="0.1"></td>
+                    <td><input type="number" data-index="${i}" data-field="y" value="${c.y}" step="0.1"></td>
                     <td class="col-action">
                         <button class="remove-btn" data-remove="${i}" title="Remove">×</button>
                     </td>
@@ -120,7 +122,7 @@
         }
 
         addComponentBtn.addEventListener('click', () => {
-            components.push({ b: 100, h: 20, x: 0, y: 0 });
+            components.push({ b: 4, h: 0.5, x: 0, y: 0 });
             renderRows();
             drawSection();
         });
@@ -185,39 +187,39 @@
             resultsBox.innerHTML = `
                 <div class="result-row">
                     <span class="result-label">Total area (A)</span>
-                    <span class="result-value">${A_total.toFixed(0)}<span class="unit">mm²</span></span>
+                    <span class="result-value">${A_total.toFixed(2)}<span class="unit">in²</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Centroid x̄</span>
-                    <span class="result-value">${xbar.toFixed(2)}<span class="unit">mm</span></span>
+                    <span class="result-value">${xbar.toFixed(3)}<span class="unit">in</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Centroid ȳ</span>
-                    <span class="result-value">${ybar.toFixed(2)}<span class="unit">mm</span></span>
+                    <span class="result-value">${ybar.toFixed(3)}<span class="unit">in</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Ixx (about centroid)</span>
-                    <span class="result-value">${(Ixx / 1e6).toFixed(2)}<span class="unit">×10⁶ mm⁴</span></span>
+                    <span class="result-value">${Ixx.toFixed(2)}<span class="unit">in⁴</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Iyy (about centroid)</span>
-                    <span class="result-value">${(Iyy / 1e6).toFixed(2)}<span class="unit">×10⁶ mm⁴</span></span>
+                    <span class="result-value">${Iyy.toFixed(2)}<span class="unit">in⁴</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Sxx</span>
-                    <span class="result-value">${(Sxx / 1e3).toFixed(2)}<span class="unit">×10³ mm³</span></span>
+                    <span class="result-value">${Sxx.toFixed(2)}<span class="unit">in³</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Syy</span>
-                    <span class="result-value">${(Syy / 1e3).toFixed(2)}<span class="unit">×10³ mm³</span></span>
+                    <span class="result-value">${Syy.toFixed(2)}<span class="unit">in³</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Radius of gyration rx</span>
-                    <span class="result-value">${rx.toFixed(2)}<span class="unit">mm</span></span>
+                    <span class="result-value">${rx.toFixed(3)}<span class="unit">in</span></span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Radius of gyration ry</span>
-                    <span class="result-value">${ry.toFixed(2)}<span class="unit">mm</span></span>
+                    <span class="result-value">${ry.toFixed(3)}<span class="unit">in</span></span>
                 </div>
             `;
 

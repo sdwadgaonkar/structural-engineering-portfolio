@@ -1100,3 +1100,128 @@ ul.skills li:hover {
     stroke-width: 0.6;
     stroke-dasharray: 4, 3;
 }
+/* ============ Interaction diagram tool ============ */
+.interaction-svg {
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: crosshair;
+}
+
+.curve-nominal {
+    fill: none;
+    stroke: var(--text-secondary);
+    stroke-width: 1.5;
+    stroke-dasharray: 5, 4;
+}
+
+.curve-design {
+    fill: rgba(232, 93, 36, 0.08);
+    stroke: var(--accent);
+    stroke-width: 2;
+}
+
+.axis-grid {
+    stroke: var(--border);
+    stroke-width: 0.5;
+}
+
+.axis-main {
+    stroke: var(--text-secondary);
+    stroke-width: 1;
+}
+
+.axis-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    fill: var(--text-secondary);
+}
+
+.axis-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    fill: var(--text-primary);
+}
+
+.demand-point {
+    fill: white;
+    stroke: var(--text-primary);
+    stroke-width: 2;
+}
+
+.demand-point.adequate {
+    fill: #2a9d4a;
+    stroke: white;
+}
+
+.demand-point.inadequate {
+    fill: var(--accent);
+    stroke: white;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 20px;
+    height: 3px;
+}
+
+.legend-swatch.nominal { background-color: var(--text-secondary); }
+.legend-swatch.design { background-color: var(--accent); height: 3px; }
+.legend-swatch.demand-ok { background-color: #2a9d4a; width: 12px; height: 12px; border-radius: 50%; }
+.legend-swatch.demand-fail { background-color: var(--accent); width: 12px; height: 12px; border-radius: 50%; }
+
+.adequacy-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.adequacy-banner.ok {
+    background-color: rgba(42, 157, 74, 0.1);
+    color: #1d6e34;
+    border-left: 3px solid #2a9d4a;
+}
+
+.adequacy-banner.fail {
+    background-color: rgba(232, 93, 36, 0.08);
+    color: var(--accent-hover);
+    border-left: 3px solid var(--accent);
+}
+
+.section-mini {
+    background-color: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+.bar-fill {
+    fill: var(--accent);
+    stroke: var(--accent-hover);
+    stroke-width: 0.5;
+}
+
+.concrete-fill {
+    fill: rgba(15, 20, 25, 0.06);
+    stroke: var(--text-primary);
+    stroke-width: 1;
+}

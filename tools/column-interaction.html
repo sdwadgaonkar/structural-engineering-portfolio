@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Column Interaction Diagram | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Column Interaction Diagram</h1>
+            <p>Uniaxial P-M interaction diagram for rectangular reinforced concrete columns per ACI 318-19. Generates nominal and design curves and overlays a user-supplied demand point. Imperial units (kip, kip-ft, in, ksi).</p>
+        </div>
+    </header>
+
+    <section class="container">
+
+        <div class="tool-layout">
+
+            <div class="tool-panel">
+                <h3>Section</h3>
+
+                <div class="field">
+                    <label for="b">Width b (in)</label>
+                    <input type="number" id="b" value="16" step="0.5" min="6">
+                    <span class="hint">Section width perpendicular to bending axis</span>
+                </div>
+
+                <div class="field">
+                    <label for="h">Depth h (in)</label>
+                    <input type="number" id="h" value="24" step="0.5" min="6">
+                    <span class="hint">Section depth parallel to bending axis</span>
+                </div>
+
+                <div class="field">
+                    <label for="cover">Cover to bar centroid (in)</label>
+                    <input type="number" id="cover" value="2.5" step="0.25" min="1">
+                    <span class="hint">From extreme face to centroid of outermost bars</span>
+                </div>
+
+                <h3 style="margin-top: 1.5rem;">Materials</h3>
+
+                <div class="field">
+                    <label for="fc">Concrete f'c (ksi)</label>
+                    <input type="number" id="fc" value="4" step="0.5" min="2.5">
+                </div>
+
+                <div class="field">
+                    <label for="fy">Steel fy (ksi)</label>
+                    <input type="number" id="fy" value="60" step="1" min="40">
+                </div>
+
+                <h3 style="margin-top: 1.5rem;">Reinforcement</h3>
+
+                <div class="field">
+                    <label for="barsPerFace">Bars per face (top/bottom)</label>
+                    <input type="number" id="barsPerFace" value="3" step="1" min="2" max="10">
+                    <span class="hint">Number of bars on each of the two extreme faces</span>
+                </div>
+
+                <div class="field">
+                    <label for="barDia">Bar diameter (in)</label>
+                    <input type="number" id="barDia" value="1.0" step="0.125" min="0.375">
+                    <span class="hint">e.g. 0.875 (#7), 1.0 (#8), 1.128 (#9), 1.27 (#10)</span>
+                </div>
+
+                <h3 style="margin-top: 1.5rem;">Demand</h3>
+
+                <div class="field">
+                    <label for="Pu">Factored axial load Pu (kip)</label>
+                    <input type="number" id="Pu" value="560" step="10">
+                    <span class="hint">Compression positive</span>
+                </div>
+
+                <div class="field">
+                    <label for="Mu">Factored moment Mu (kip-ft)</label>
+                    <input type="number" id="Mu" value="370" step="10" min="0">
+                </div>
+
+                <button class="calc-button" id="calculateBtn">Generate Diagram</button>
+            </div>
+
+            <div class="tool-panel">
+                <h3>Section Preview</h3>
+                <svg id="sectionMini" class="section-mini" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid meet"></svg>
+                <div id="errorBox" style="margin-top: 1rem;"></div>
+                <div id="adequacyBox"></div>
+                <div id="sectionInfo" style="margin-top: 1.25rem;"></div>
+            </div>
+
+        </div>
+
+        <div class="diagram-section">
+            <div class="diagram-panel">
+                <h4>P-M interaction diagram</h4>
+                <svg id="interactionSvg" class="interaction-svg" viewBox="0 0 700 500" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-swatch nominal"></span> Nominal capacity (Pn, Mn)</span>
+                    <span class="legend-item"><span class="legend-swatch design"></span> Design capacity (φPn, φMn)</span>
+                    <span class="legend-item" id="demandLegend"><span class="legend-swatch demand-ok"></span> Design demand (Pu, Mu)</span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script>
+        // ============ Constants (imperial: psi, in, lb) ============
+        const Es = 29000000;     // Steel modulus, psi
+        const eps_cu = 0.003;    // Ultimate concrete strain (dimensionless)
+
+        // ============ Unit conversion helpers ============
+        const ksi_to_psi = 1000;
+        const lb_to_kip = 1 / 1000;
+        const lb_in_to_kip_ft = 1 / 12000;   // (1 lb·in) × (1 kip / 1000 lb) × (1 ft / 12 in)
+        const kip_to_lb = 1000;
+        const kip_ft_to_lb_in = 12000;
+
+        // ============ DOM references ============
+        const inputs = {
+            b: document.getElementById('b'),
+            h: document.getElementById('h'),
+            cover: document.getElementById('cover'),
+            fc: document.getElementById('fc'),
+            fy: document.getElementById('fy'),
+            barsPerFace: document.getElementById('barsPerFace'),
+            barDia: document.getElementById('barDia'),
+            Pu: document.getElementById('Pu'),
+            Mu: document.getElementById('Mu')
+        };
+        const calculateBtn = document.getElementById('calculateBtn');
+        const errorBox = document.getElementById('errorBox');
+        const adequacyBox = document.getElementById('adequacyBox');
+        const sectionInfo = document.getElementById('sectionInfo');
+        const sectionMini = document.getElementById('sectionMini');
+        const interactionSvg = document.getElementById('interactionSvg');
+
+        calculateBtn.addEventListener('click', generate);
+
+        // ============ ACI β1 (imperial: psi) ============
+        function beta1(fc_psi) {
+            if (fc_psi <= 4000) return 0.85;
+            if (fc_psi >= 8000) return 0.65;
+            return 0.85 - 0.05 * (fc_psi - 4000) / 1000;
+        }
+
+        // ============ Core calculation: nominal P, M for a given c ============
+        // All inputs and outputs in psi/in/lb/lb-in
+        function computePnMn(c, b_in, h_in, fc_psi, fy_psi, layers) {
+            const b1 = beta1(fc_psi);
+            const a = Math.min(b1 * c, h_in);
+            const Cc = 0.85 * fc_psi * b_in * a;        // lb
+
+            let Fs_total = 0;
+            let Ms_total = 0;
+            let eps_t = -1;
+            layers.forEach(layer => {
+                const eps_s = eps_cu * (c - layer.d) / c;       // compression positive
+                let fs = Es * eps_s;                            // psi
+                if (fs > fy_psi) fs = fy_psi;
+                if (fs < -fy_psi) fs = -fy_psi;
+                const f_eff = (layer.d <= a) ? fs - 0.85 * fc_psi : fs;
+                const F = layer.As * f_eff;                     // lb
+                Fs_total += F;
+                Ms_total += F * (h_in / 2 - layer.d);           // lb·in
+                if (-eps_s > eps_t) eps_t = -eps_s;
+            });
+
+            const Pn = Cc + Fs_total;                              // lb
+            const Mn = Cc * (h_in / 2 - a / 2) + Ms_total;         // lb·in
+
+            return { Pn, Mn, eps_t, c };
+        }
+
+        // ============ Strength reduction factor φ ============
+        function phiFactor(eps_t, fy_psi) {
+            const eps_ty = fy_psi / Es;
+            const eps_t_lim = Math.max(0.005, eps_ty + 0.003);
+            if (eps_t >= eps_t_lim) return 0.90;
+            if (eps_t <= eps_ty) return 0.65;
+            return 0.65 + 0.25 * (eps_t - eps_ty) / (eps_t_lim - eps_ty);
+        }
+
+        // ============ Generate the entire interaction curve ============
+        function generateCurve(b_in, h_in, fc_psi, fy_psi, layers) {
+            const points = [];
+
+            const Ag = b_in * h_in;
+            const Ast = layers.reduce((sum, l) => sum + l.As, 0);
+            const P0 = 0.85 * fc_psi * (Ag - Ast) + fy_psi * Ast;     // lb
+
+            points.push({ Pn: P0, Mn: 0, eps_t: -eps_cu, c: 1e9 });
+
+            const c_values = [];
+            const c_max = h_in * 5;
+            const c_min = 0.05;
+            const N = 80;
+            for (let i = 0; i <= N; i++) {
+                const t = i / N;
+                const c = c_max * Math.pow(c_min / c_max, t);
+                c_values.push(c);
+            }
+
+            c_values.forEach(c => {
+                points.push(computePnMn(c, b_in, h_in, fc_psi, fy_psi, layers));
+            });
+
+            const Pn_tension = -fy_psi * Ast;
+            points.push({ Pn: Pn_tension, Mn: 0, eps_t: 100, c: 0 });
+
+            const designPoints = points.map(p => {
+                const phi = (p.Pn < 0) ? 0.90 : phiFactor(p.eps_t, fy_psi);
+                let phiPn = phi * p.Pn;
+                let phiMn = phi * Math.abs(p.Mn);
+                const phi_cap = 0.65;
+                const phiPmax = phi_cap * 0.80 * P0;
+                if (phiPn > phiPmax) phiPn = phiPmax;
+                return { phiPn, phiMn, Pn: p.Pn, Mn: Math.abs(p.Mn), phi };
+            });
+
+            return { nominal: points, design: designPoints, P0 };
+        }
+
+        // ============ Adequacy check ============
+        function isAdequate(Pu_lb, Mu_lbin, designPoints) {
+            for (let i = 0; i < designPoints.length - 1; i++) {
+                const a = designPoints[i];
+                const b = designPoints[i + 1];
+                if ((a.phiPn >= Pu_lb && b.phiPn <= Pu_lb) || (a.phiPn <= Pu_lb && b.phiPn >= Pu_lb)) {
+                    const t = (Pu_lb - a.phiPn) / (b.phiPn - a.phiPn);
+                    const phiMn_at_Pu = a.phiMn + t * (b.phiMn - a.phiMn);
+                    return { adequate: Mu_lbin <= phiMn_at_Pu, capacity: phiMn_at_Pu };
+                }
+            }
+            return { adequate: false, capacity: 0 };
+        }
+
+        // ============ Main entry ============
+        function generate() {
+            errorBox.innerHTML = "";
+            const v = {};
+            for (const key in inputs) {
+                v[key] = parseFloat(inputs[key].value);
+                if (isNaN(v[key])) return showError(`${key} must be a number.`);
+            }
+
+            if (v.b <= 0 || v.h <= 0) return showError("Section dimensions must be positive.");
+            if (v.cover >= v.h / 2) return showError("Cover must be less than h/2.");
+            if (v.fc < 2.5) return showError("f'c must be at least 2.5 ksi.");
+            if (v.fy < 40) return showError("fy must be at least 40 ksi.");
+            if (v.barsPerFace < 2) return showError("Must have at least 2 bars per face.");
+
+            // Convert ksi to psi for internal use
+            const fc_psi = v.fc * ksi_to_psi;
+            const fy_psi = v.fy * ksi_to_psi;
+
+            const Ab = Math.PI * Math.pow(v.barDia, 2) / 4;       // in²
+            const As_per_face = v.barsPerFace * Ab;
+            const layers = [
+                { d: v.cover,           As: As_per_face },
+                { d: v.h - v.cover,     As: As_per_face }
+            ];
+            const Ast = 2 * As_per_face;
+            const rho = (Ast / (v.b * v.h)) * 100;
+
+            const result = generateCurve(v.b, v.h, fc_psi, fy_psi, layers);
+
+            sectionInfo.innerHTML = `
+                <div class="result-row">
+                    <span class="result-label">Total steel area Ast</span>
+                    <span class="result-value">${Ast.toFixed(2)}<span class="unit">in²</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Reinforcement ratio ρ</span>
+                    <span class="result-value">${rho.toFixed(2)}<span class="unit">%</span></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Pure axial capacity P0</span>
+                    <span class="result-value">${(result.P0 * lb_to_kip).toFixed(0)}<span class="unit">kip</span></span>
+                </div>
+            `;
+
+            // Convert demand to lb and lb·in for internal use
+            const Pu_lb = v.Pu * kip_to_lb;
+            const Mu_lbin = v.Mu * kip_ft_to_lb_in;
+
+            const adequacy = isAdequate(Pu_lb, Mu_lbin, result.design);
+            const cap_kip_ft = adequacy.capacity * lb_in_to_kip_ft;
+
+            adequacyBox.innerHTML = `
+                <div class="adequacy-banner ${adequacy.adequate ? 'ok' : 'fail'}">
+                    ${adequacy.adequate
+                        ? `Section is ADEQUATE. φMn at Pu = ${cap_kip_ft.toFixed(0)} kip-ft vs. Mu = ${v.Mu.toFixed(0)} kip-ft.`
+                        : `Section is INADEQUATE. φMn at Pu = ${cap_kip_ft.toFixed(0)} kip-ft vs. Mu = ${v.Mu.toFixed(0)} kip-ft.`}
+                </div>
+            `;
+
+            drawSectionMini(v.b, v.h, v.cover, v.barsPerFace, v.barDia);
+            drawDiagram(result, Pu_lb, Mu_lbin, adequacy.adequate);
+        }
+
+        // ============ Section preview drawing ============
+        function drawSectionMini(b_in, h_in, cover, barsPerFace, barDia) {
+            const margin = 30;
+            const availW = 320 - 2 * margin;
+            const availH = 320 - 2 * margin;
+            const scale = Math.min(availW / b_in, availH / h_in);
+
+            const w = b_in * scale;
+            const ht = h_in * scale;
+            const x0 = (320 - w) / 2;
+            const y0 = (320 - ht) / 2;
+
+            let svg = '';
+            svg += `<rect x="${x0}" y="${y0}" width="${w}" height="${ht}" class="concrete-fill" rx="2"/>`;
+
+            const barRadius = (barDia / 2) * scale;
+            const startX = x0 + cover * scale;
+            const endX = x0 + (b_in - cover) * scale;
+            const yTop = y0 + cover * scale;
+            const yBottom = y0 + (h_in - cover) * scale;
+
+            for (let i = 0; i < barsPerFace; i++) {
+                const t = barsPerFace === 1 ? 0.5 : i / (barsPerFace - 1);
+                const cx = startX + t * (endX - startX);
+                svg += `<circle cx="${cx}" cy="${yTop}" r="${barRadius}" class="bar-fill"/>`;
+                svg += `<circle cx="${cx}" cy="${yBottom}" r="${barRadius}" class="bar-fill"/>`;
+            }
+
+            svg += `<text x="${320 / 2}" y="${y0 - 8}" text-anchor="middle" class="dim-text">b = ${b_in}″</text>`;
+            svg += `<text x="${x0 - 8}" y="${320 / 2}" text-anchor="end" class="dim-text" transform="rotate(-90 ${x0 - 8} ${320 / 2})">h = ${h_in}″</text>`;
+
+            sectionMini.innerHTML = svg;
+        }
+
+        // ============ Interaction diagram drawing ============
+        // All input units: lb and lb·in. Display units: kip and kip-ft.
+        function drawDiagram(result, Pu_lb, Mu_lbin, adequate) {
+            const W = 700, H = 500;
+            const margin = { left: 80, right: 30, top: 30, bottom: 60 };
+            const plotW = W - margin.left - margin.right;
+            const plotH = H - margin.top - margin.bottom;
+
+            const allPoints = [...result.nominal, ...result.design.map(p => ({ Pn: p.phiPn, Mn: p.phiMn }))];
+            let M_max = 0, P_max = 0, P_min = 0;
+            allPoints.forEach(p => {
+                if (p.Mn > M_max) M_max = p.Mn;
+                if (p.Pn > P_max) P_max = p.Pn;
+                if (p.Pn < P_min) P_min = p.Pn;
+            });
+            if (Mu_lbin > M_max) M_max = Mu_lbin;
+            if (Pu_lb > P_max) P_max = Pu_lb;
+            if (Pu_lb < P_min) P_min = Pu_lb;
+
+            // Convert axis bounds to display units (kip-ft, kip) for "nice" rounding
+            const M_max_kipft = M_max * lb_in_to_kip_ft;
+            const P_max_kip = P_max * lb_to_kip;
+            const P_min_kip = P_min * lb_to_kip;
+
+            const M_axis_kipft = niceUp(M_max_kipft);
+            const P_axis_max_kip = niceUp(P_max_kip);
+            const P_axis_min_kip = P_min_kip < 0 ? -niceUp(Math.abs(P_min_kip)) : 0;
+
+            // For drawing we still need the bounds in lb / lb·in
+            const M_axis = M_axis_kipft * kip_ft_to_lb_in;
+            const P_axis_max = P_axis_max_kip * kip_to_lb;
+            const P_axis_min = P_axis_min_kip * kip_to_lb;
+
+            const toSvgX = M => margin.left + (M / M_axis) * plotW;
+            const toSvgY = P => margin.top + plotH - ((P - P_axis_min) / (P_axis_max - P_axis_min)) * plotH;
+
+            let svg = '';
+
+            const M_steps = 5, P_steps = 6;
+            for (let i = 0; i <= M_steps; i++) {
+                const M_kipft = (M_axis_kipft * i) / M_steps;
+                const M = M_kipft * kip_ft_to_lb_in;
+                const x = toSvgX(M);
+                svg += `<line x1="${x}" y1="${margin.top}" x2="${x}" y2="${margin.top + plotH}" class="axis-grid"/>`;
+                svg += `<text x="${x}" y="${margin.top + plotH + 16}" text-anchor="middle" class="axis-label">${M_kipft.toFixed(0)}</text>`;
+            }
+            for (let i = 0; i <= P_steps; i++) {
+                const P_kip = P_axis_min_kip + ((P_axis_max_kip - P_axis_min_kip) * i) / P_steps;
+                const P = P_kip * kip_to_lb;
+                const y = toSvgY(P);
+                svg += `<line x1="${margin.left}" y1="${y}" x2="${margin.left + plotW}" y2="${y}" class="axis-grid"/>`;
+                svg += `<text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" class="axis-label">${P_kip.toFixed(0)}</text>`;
+            }
+
+            svg += `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + plotH}" class="axis-main"/>`;
+            svg += `<line x1="${margin.left}" y1="${toSvgY(0)}" x2="${margin.left + plotW}" y2="${toSvgY(0)}" class="axis-main"/>`;
+
+            svg += `<text x="${margin.left + plotW / 2}" y="${H - 18}" text-anchor="middle" class="axis-title">Moment (kip-ft)</text>`;
+            svg += `<text x="20" y="${margin.top + plotH / 2}" text-anchor="middle" class="axis-title" transform="rotate(-90 20 ${margin.top + plotH / 2})">Axial Load (kip)</text>`;
+
+            const nomPath = result.nominal
+                .map((p, i) => `${i === 0 ? 'M' : 'L'} ${toSvgX(Math.abs(p.Mn))} ${toSvgY(p.Pn)}`)
+                .join(' ');
+            svg += `<path d="${nomPath}" class="curve-nominal"/>`;
+
+            const desPath = result.design
+                .map((p, i) => `${i === 0 ? 'M' : 'L'} ${toSvgX(p.phiMn)} ${toSvgY(p.phiPn)}`)
+                .join(' ') + ` L ${toSvgX(0)} ${toSvgY(result.design[result.design.length - 1].phiPn)} L ${toSvgX(0)} ${toSvgY(result.design[0].phiPn)} Z`;
+            svg += `<path d="${desPath}" class="curve-design"/>`;
+
+            const dx = toSvgX(Mu_lbin);
+            const dy = toSvgY(Pu_lb);
+            svg += `<circle cx="${dx}" cy="${dy}" r="7" class="demand-point ${adequate ? 'adequate' : 'inadequate'}"/>`;
+            svg += `<text x="${dx + 12}" y="${dy + 4}" class="value-label">Pu=${(Pu_lb * lb_to_kip).toFixed(0)}, Mu=${(Mu_lbin * lb_in_to_kip_ft).toFixed(0)}</text>`;
+
+            interactionSvg.innerHTML = svg;
+        }
+
+        function niceUp(x) {
+            if (x <= 0) return 1;
+            const exp = Math.floor(Math.log10(x));
+            const base = Math.pow(10, exp);
+            const m = x / base;
+            let nice;
+            if (m <= 1) nice = 1;
+            else if (m <= 2) nice = 2;
+            else if (m <= 5) nice = 5;
+            else nice = 10;
+            return nice * base;
+        }
+
+        function showError(message) {
+            errorBox.innerHTML = `<div class="result-error">${message}</div>`;
+            adequacyBox.innerHTML = "";
+            sectionInfo.innerHTML = "";
+            interactionSvg.innerHTML = "";
+            sectionMini.innerHTML = "";
+        }
+
+        generate();
+    </script>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+</body>
+</html>

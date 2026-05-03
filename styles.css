@@ -1225,3 +1225,190 @@ ul.skills li:hover {
     stroke: var(--text-primary);
     stroke-width: 1;
 }
+/* ============ Blog post page ============ */
+.post-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+}
+
+.post-page .post-meta {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.post-page h1 {
+    font-size: 2.75rem;
+    line-height: 1.15;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.025em;
+}
+
+.post-page .lede {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 3rem;
+}
+
+.post-body p,
+.post-body ul,
+.post-body ol {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.post-body ul,
+.post-body ol {
+    padding-left: 1.5rem;
+}
+
+.post-body ul {
+    list-style: disc;
+}
+
+.post-body ol {
+    list-style: decimal;
+}
+
+.post-body li {
+    margin-bottom: 0.5rem;
+}
+
+.post-body h2 {
+    font-size: 1.6rem;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+}
+
+.post-body h3 {
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.post-body strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.post-body code {
+    font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 0.9em;
+    background-color: var(--bg-muted);
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    color: var(--accent-hover);
+}
+
+.post-body pre {
+    background-color: #0F1419;
+    color: #FAF7F2;
+    padding: 1.25rem 1.5rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1.5rem 0 2rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.post-body pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+}
+
+.post-body blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin: 1.5rem 0 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.post-body figure {
+    margin: 2rem 0;
+}
+
+.post-body figure img,
+.post-body figure svg {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg-cream);
+}
+
+.post-body figcaption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.post-body .callout {
+    background-color: var(--bg-muted);
+    border-left: 3px solid var(--text-secondary);
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    margin: 1.5rem 0 2rem;
+}
+
+.post-body .callout p:last-child {
+    margin-bottom: 0;
+}
+
+.post-body .equation {
+    background-color: var(--bg-muted);
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    margin: 1rem 0 1.5rem;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.post-body a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.post-cta {
+    background-color: var(--bg-dark);
+    color: var(--text-on-dark);
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 3rem 0;
+    text-align: center;
+}
+
+.post-cta h3 {
+    color: var(--text-on-dark);
+    margin: 0 0 0.5rem;
+}
+
+.post-cta p {
+    color: var(--text-on-dark-muted);
+    margin: 0 0 1.25rem;
+}
+
+.post-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.post-footer a {
+    color: var(--text-secondary);
+}

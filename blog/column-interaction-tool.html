@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building an Interactive Column Interaction Diagram in the Browser | StruxLab</title>
+    <meta name="description" content="How I built a free, browser-based ACI 318-19 P-M interaction diagram tool for rectangular RC columns — the engineering, the strain compatibility loop, the SVG drawing logic, and lessons learned.">
+    <meta property="og:title" content="Building an Interactive Column Interaction Diagram in the Browser">
+    <meta property="og:description" content="How I built a free, browser-based ACI 318-19 P-M interaction diagram tool — the engineering, the code, and what I'd do differently in v2.">
+    <meta property="og:url" content="https://struxlab.netlify.app/blog/column-interaction-tool">
+    <meta property="og:type" content="article">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <article class="post-page">
+
+        <p class="post-meta">May 04, 2026 · Tools · 8 min read</p>
+
+        <h1>Building an Interactive Column Interaction Diagram in the Browser</h1>
+
+        <p class="lede">A working ACI 318-19 P-M interaction diagram tool, built from scratch as a single HTML file. Here's what's inside, why each piece works the way it does, and what I'd improve next.</p>
+
+        <div class="post-body">
+
+            <p>Most online column interaction diagram tools are one of three things: a clunky Excel download, a paywalled feature inside a $2,000/yr design suite, or a static PDF chart from a textbook appendix. None of them let you actually <em>play</em> with the section — change the cover, swap the bar size, push a different demand point — and watch the curve respond in real time. So I built one.</p>
+
+            <p>The result is a single-page tool that runs entirely in your browser: <a href="../tools/column-interaction.html">column-interaction.html</a>. No login, no install, no upload to a server. You change a number, the diagram redraws, and you can see whether your section passes the moment you type.</p>
+
+            <p>This post walks through how it works — the engineering, the code structure, and the trade-offs. It's aimed at engineers who are curious about what's behind the screen, and at developers who want to see how a small but real engineering tool gets built.</p>
+
+            <h2>The engineering, briefly</h2>
+
+            <p>A reinforced concrete column's capacity isn't a single number — it's a curve in (P, M) space. Push more axial load and the section can carry less moment. Push more moment and it can carry less axial. The interaction diagram traces the boundary of that envelope.</p>
+
+            <p>Per ACI 318-19, you trace the boundary by sweeping a single parameter: <strong>c</strong>, the depth of the neutral axis from the extreme compression fiber. For each value of <code>c</code>:</p>
+
+            <ol>
+                <li>Assume the extreme compression fiber strain is at its ultimate, <code>ε<sub>cu</sub> = 0.003</code>.</li>
+                <li>Compute strain at every reinforcement layer using strain compatibility (linear strain distribution).</li>
+                <li>Convert each layer's strain to stress, capped at ±f<sub>y</sub>.</li>
+                <li>Add up the concrete compression block force (Whitney rectangular block) and all the steel forces.</li>
+                <li>Take moments about the plastic centroid.</li>
+            </ol>
+
+            <p>That gives you one (P<sub>n</sub>, M<sub>n</sub>) point. Sweep c from a very large value (pure compression) down to zero (pure tension) and you've drawn the entire nominal envelope.</p>
+
+            <div class="equation">
+                P<sub>n</sub> = 0.85 f'<sub>c</sub> · b · a + Σ A<sub>si</sub> · f<sub>si</sub>
+            </div>
+            <div class="equation">
+                M<sub>n</sub> = 0.85 f'<sub>c</sub> · b · a · (h/2 − a/2) + Σ A<sub>si</sub> · f<sub>si</sub> · (h/2 − d<sub>i</sub>)
+            </div>
+
+            <p>For the design envelope (φP<sub>n</sub>, φM<sub>n</sub>), each point gets a strength reduction factor based on the strain in the extreme tension steel:</p>
+
+            <ul>
+                <li>Tension-controlled (ε<sub>t</sub> ≥ 0.005): <strong>φ = 0.90</strong></li>
+                <li>Compression-controlled (ε<sub>t</sub> ≤ ε<sub>ty</sub>): <strong>φ = 0.65</strong> for tied sections</li>
+                <li>Transition zone in between: linear interpolation</li>
+            </ul>
+
+            <p>And for tied columns, ACI caps the maximum design axial: <strong>φP<sub>n,max</sub> = 0.80 × φ × P<sub>0</sub></strong>. This shows up as a flat plateau across the top of the design curve. It's a recognition that even a "pure compression" column will have some accidental eccentricity in practice.</p>
+
+            <h2>Translating it to code</h2>
+
+            <p>The whole tool is a single HTML file with maybe 250 lines of JavaScript. The core is a function that takes a value of c and returns the corresponding (P<sub>n</sub>, M<sub>n</sub>):</p>
+
+            <pre><code>function computePnMn(c, b, h, fc, fy, layers) {
+    const a = Math.min(beta1(fc) * c, h);
+    const Cc = 0.85 * fc * b * a;
+
+    let Fs = 0, Ms = 0, eps_t = -1;
+    layers.forEach(layer => {
+        const eps_s = 0.003 * (c - layer.d) / c;
+        let fs = Math.max(Math.min(Es * eps_s, fy), -fy);
+        const f_eff = (layer.d <= a) ? fs - 0.85 * fc : fs;
+        Fs += layer.As * f_eff;
+        Ms += layer.As * f_eff * (h/2 - layer.d);
+        if (-eps_s > eps_t) eps_t = -eps_s;
+    });
+
+    return { Pn: Cc + Fs, Mn: Cc * (h/2 - a/2) + Ms, eps_t, c };
+}</code></pre>
+
+            <p>That's it. The whole strain compatibility loop fits in eleven lines because <code>forEach</code> handles iterating across reinforcement layers and arithmetic is just arithmetic. The little <code>f_eff</code> trick subtracts the 0.85 f'<sub>c</sub> contribution from the gross concrete area when a bar sits inside the compression block — otherwise you'd double-count that concrete.</p>
+
+            <p>To trace the envelope, the tool calls <code>computePnMn</code> at ~80 values of c, logarithmically spaced (so we get more resolution near the balanced point and less in the flat compression-controlled region). Plus two endpoints: pure compression at c → ∞, and pure tension at c = 0.</p>
+
+            <div class="callout">
+                <p><strong>The most useful trick I learned:</strong> spacing your samples logarithmically, not uniformly. Linear c-spacing gives you a beautiful pure-compression cap and a horrible balanced-point corner. Log-spacing flips that, which is exactly what you want — the interesting action is near the transition.</p>
+            </div>
+
+            <h2>Drawing it</h2>
+
+            <p>The diagram itself is SVG, not Canvas, not a charting library. SVG is the right choice here for two reasons: it's vector, so it stays crisp at any zoom, and it's just XML, so JavaScript can build the whole picture as a string and assign it to <code>innerHTML</code> in one shot. No animation framework, no D3, no Chart.js — none of it is needed for a static curve.</p>
+
+            <p>The drawing function takes the array of computed points and maps each (P, M) value to an SVG (x, y) coordinate using a tiny pair of helpers:</p>
+
+            <pre><code>const toSvgX = M => margin.left + (M / M_axis) * plotW;
+const toSvgY = P => margin.top + plotH
+                  - ((P - P_min) / (P_max - P_min)) * plotH;</code></pre>
+
+            <p>Then the path string is built by walking the points: <code>M x y L x y L x y …</code>. SVG's path syntax is the simplest possible drawing language — "move here, then draw a line to here, then a line to here." Each call to <code>generate()</code> rebuilds the entire SVG and replaces the old one. Cheap, simple, and fast enough that you can't even see it happen.</p>
+
+            <p>The axes auto-scale using a small <code>niceUp()</code> helper that rounds an axis maximum up to the nearest 1, 2, 5, or 10 × 10<sup>n</sup>. Without it, the axis labels would say things like "1683 kip" — with it, they snap to "2000 kip" and the diagram always reads cleanly.</p>
+
+            <h2>What I'd build next</h2>
+
+            <p>This is a v1. Honest list of what's missing:</p>
+
+            <ul>
+                <li><strong>Multiple bar layers.</strong> Right now I only model bars on the two extreme faces. Real columns often have intermediate side bars, especially in larger sections. Adding a third layer is a 5-line change.</li>
+                <li><strong>Biaxial bending.</strong> The current tool computes the 2D P-M curve about one axis. The full biaxial interaction surface is a 3D shape. A meaningful upgrade — probably a 2-week project to do well.</li>
+                <li><strong>Slenderness.</strong> No second-order effects. Adding a sidebar that computes slenderness ratio and applies the moment magnification per ACI Chapter 6 is the natural next addition.</li>
+                <li><strong>Code toggle.</strong> Right now it's ACI 318-19 only. IS 456 (Indian code) uses different φ factors and a different stress-block shape — switching codes would mean a small refactor of the strength reduction and stress-block functions.</li>
+                <li><strong>Hover-to-inspect.</strong> Hover any point on the curve and see (P, M, c, ε<sub>t</sub>, controlling failure mode). Pure UX polish but it's what would turn the tool from "useful for a quick check" into "useful for actually understanding a section."</li>
+            </ul>
+
+            <p>None of these are fundamentally hard. They're all evolutions of the same strain-compatibility loop and the same SVG drawing pattern. Which is the bigger lesson: once you have a working core, a real engineering tool grows by addition, not by replacement.</p>
+
+            <div class="post-cta">
+                <h3>Try the tool</h3>
+                <p>Generate your own interaction diagrams, free, no signup.</p>
+                <a href="../tools/column-interaction.html" class="btn btn-primary">Open the tool</a>
+            </div>
+
+            <h2>Why I'm building these</h2>
+
+            <p>I'm a structural engineer with six years of practice, mostly in ETABS-heavy work — diaphragm modeling, lateral systems, the usual. The tools at <a href="../tools.html">StruxLab</a> are an experiment in something I've believed for a while: that the next generation of engineering tools won't be installed software. They'll live in the browser, run instantly, and be small enough that one engineer can build, maintain, and improve them.</p>
+
+            <p>If you spotted a bug, want a feature, or have ideas for which tool to build next, I'd love to hear it: <a href="../contact.html">drop me a line</a>.</p>
+
+        </div>
+
+        <div class="post-footer">
+            <p>← <a href="../blog.html">Back to blog</a></p>
+        </div>
+
+    </article>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('blog');
+        renderFooter();
+    </script>
+
+</body>
+</html>

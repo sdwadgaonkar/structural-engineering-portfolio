@@ -11,17 +11,7 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="tools.html">Tools</a></li>
-            <li><a href="blog.html" class="active">Blog</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="resume.html">Resume</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
@@ -56,12 +46,13 @@
 
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
+
+    <script src="components.js" data-depth="0"></script>
+    <script>
+        renderNavbar('blog');
+        renderFooter();
+    </script>
 
 </body>
 </html>

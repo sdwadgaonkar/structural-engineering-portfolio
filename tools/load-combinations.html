@@ -11,17 +11,7 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="../index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="../index.html">Home</a></li>
-            <li><a href="../tools.html" class="active">Tools</a></li>
-            <li><a href="../blog.html">Blog</a></li>
-            <li><a href="../projects.html">Projects</a></li>
-            <li><a href="../resume.html">Resume</a></li>
-            <li><a href="../contact.html">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
@@ -97,19 +87,9 @@
 
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
 
     <script>
-        // ============ Load combination definitions ============
-        // Each combination is an object with a "name" and a factor for each load type.
-        // Missing factors default to 0. The factored value for any combination is:
-        //   sum over all load types: (factor for that type) * (user input for that type)
-
         const ASCE_COMBOS = [
             { name: "1.4D",                              D: 1.4 },
             { name: "1.2D + 1.6L + 0.5(Lr or S)",        D: 1.2, L: 1.6, Lr: 0.5, S: 0.5 },
@@ -136,7 +116,6 @@
             { name: "0.9D - 1.5E",       D: 0.9, E: -1.5 }
         ];
 
-        // ============ DOM references ============
         const codeAsceBtn = document.getElementById('codeAsce');
         const codeIsBtn = document.getElementById('codeIs');
         const loadInputs = {
@@ -155,15 +134,12 @@
         const comboTableBody = document.getElementById('comboTableBody');
         const copyBtn = document.getElementById('copyBtn');
 
-        // Track which code is active
         let activeCode = "ASCE";
 
-        // ============ Code toggle handlers ============
         codeAsceBtn.addEventListener('click', () => {
             activeCode = "ASCE";
             codeAsceBtn.classList.add('active');
             codeIsBtn.classList.remove('active');
-            // Lr is only used for ASCE — show it
             loadInputs.Lr.parentElement.style.display = '';
             calculate();
         });
@@ -172,18 +148,15 @@
             activeCode = "IS";
             codeIsBtn.classList.add('active');
             codeAsceBtn.classList.remove('active');
-            // Lr is not used for IS — hide it
             loadInputs.Lr.parentElement.style.display = 'none';
             calculate();
         });
 
         calculateBtn.addEventListener('click', calculate);
 
-        // ============ Main calculation ============
         function calculate() {
             errorBox.innerHTML = "";
 
-            // Read all input values
             const loads = {};
             for (const key in loadInputs) {
                 const v = parseFloat(loadInputs[key].value);
@@ -194,21 +167,16 @@
                 loads[key] = v;
             }
 
-            // Pick the right combination set
             const combos = activeCode === "ASCE" ? ASCE_COMBOS : IS_COMBOS;
 
-            // Compute each combination
             const results = combos.map(combo => {
                 let value = 0;
                 for (const key in loads) {
-                    if (combo[key]) {
-                        value += combo[key] * loads[key];
-                    }
+                    if (combo[key]) value += combo[key] * loads[key];
                 }
                 return { name: combo.name, value };
             });
 
-            // Find the governing combination (largest absolute factored value)
             let governingIndex = 0;
             results.forEach((r, i) => {
                 if (Math.abs(r.value) > Math.abs(results[governingIndex].value)) governingIndex = i;
@@ -217,7 +185,6 @@
             renderTable(results, governingIndex);
         }
 
-        // ============ Build the results table dynamically ============
         function renderTable(results, governingIndex) {
             resultsHeader.style.display = 'none';
             comboTable.style.display = '';
@@ -225,7 +192,6 @@
             copyBtn.textContent = "Copy results to clipboard";
             copyBtn.classList.remove('copied');
 
-            // Build the header row
             comboTableHead.innerHTML = `
                 <tr>
                     <th class="combo-name-col">Combination</th>
@@ -233,7 +199,6 @@
                 </tr>
             `;
 
-            // Build a row for each result
             comboTableBody.innerHTML = results.map((r, i) => {
                 const isGoverning = i === governingIndex;
                 return `
@@ -247,7 +212,6 @@
             }).join('');
         }
 
-        // ============ Copy to clipboard ============
         copyBtn.addEventListener('click', () => {
             const rows = Array.from(comboTableBody.querySelectorAll('tr'));
             const text = "Combination\tFactored value\n" + rows.map(r => {
@@ -274,8 +238,13 @@
             resultsHeader.style.display = '';
         }
 
-        // Run a calculation immediately on page load with default values
         calculate();
+    </script>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
     </script>
 
 </body>

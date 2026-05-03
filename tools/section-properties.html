@@ -11,17 +11,7 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="../index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="../index.html">Home</a></li>
-            <li><a href="../tools.html" class="active">Tools</a></li>
-            <li><a href="../blog.html">Blog</a></li>
-            <li><a href="../projects.html">Projects</a></li>
-            <li><a href="../resume.html">Resume</a></li>
-            <li><a href="../contact.html">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
@@ -79,23 +69,15 @@
 
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
 
     <script>
-        // ============ State: array of component objects ============
-        // Each component is { b, h, x, y } — width, height, centroid x and y in mm
         let components = [
-            { b: 200, h: 20,  x: 0,   y: 250 },   // top flange
-            { b: 12,  h: 220, x: 0,   y: 130 },   // web
-            { b: 200, h: 20,  x: 0,   y: 10  }    // bottom flange — default I-section
+            { b: 200, h: 20,  x: 0,   y: 250 },
+            { b: 12,  h: 220, x: 0,   y: 130 },
+            { b: 200, h: 20,  x: 0,   y: 10  }
         ];
 
-        // ============ DOM references ============
         const componentsBody = document.getElementById('componentsBody');
         const addComponentBtn = document.getElementById('addComponentBtn');
         const calculateBtn = document.getElementById('calculateBtn');
@@ -103,7 +85,6 @@
         const resultsBox = document.getElementById('results');
         const sectionPreview = document.getElementById('sectionPreview');
 
-        // ============ Render the input rows from the components array ============
         function renderRows() {
             componentsBody.innerHTML = components.map((c, i) => `
                 <tr>
@@ -118,18 +99,16 @@
                 </tr>
             `).join('');
 
-            // Wire up the input change events for every input we just rendered
             componentsBody.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', e => {
                     const idx = parseInt(e.target.dataset.index);
                     const field = e.target.dataset.field;
                     const v = parseFloat(e.target.value);
                     components[idx][field] = isNaN(v) ? 0 : v;
-                    drawSection();   // live preview update as you type
+                    drawSection();
                 });
             });
 
-            // Wire up the remove buttons
             componentsBody.querySelectorAll('.remove-btn').forEach(btn => {
                 btn.addEventListener('click', e => {
                     const idx = parseInt(e.target.dataset.remove);
@@ -140,14 +119,12 @@
             });
         }
 
-        // ============ Add a new component row ============
         addComponentBtn.addEventListener('click', () => {
             components.push({ b: 100, h: 20, x: 0, y: 0 });
             renderRows();
             drawSection();
         });
 
-        // ============ Main calculation ============
         calculateBtn.addEventListener('click', calculate);
 
         function calculate() {
@@ -158,7 +135,6 @@
                 return;
             }
 
-            // Validate
             for (let i = 0; i < components.length; i++) {
                 const c = components[i];
                 if (c.b <= 0 || c.h <= 0) {
@@ -167,7 +143,6 @@
                 }
             }
 
-            // ---- Total area and first moments ----
             let A_total = 0;
             let SumAx = 0;
             let SumAy = 0;
@@ -181,7 +156,6 @@
             const xbar = SumAx / A_total;
             const ybar = SumAy / A_total;
 
-            // ---- Moments of inertia about the centroid ----
             let Ixx = 0;
             let Iyy = 0;
             components.forEach(c => {
@@ -192,7 +166,6 @@
                 Iyy += Iyy_self + A * (c.x - xbar) ** 2;
             });
 
-            // ---- Extreme fiber distances and section moduli ----
             let yMin = Infinity, yMax = -Infinity;
             let xMin = Infinity, xMax = -Infinity;
             components.forEach(c => {
@@ -206,11 +179,9 @@
             const Sxx = Ixx / cy;
             const Syy = Iyy / cx;
 
-            // ---- Radii of gyration ----
             const rx = Math.sqrt(Ixx / A_total);
             const ry = Math.sqrt(Iyy / A_total);
 
-            // ---- Display results ----
             resultsBox.innerHTML = `
                 <div class="result-row">
                     <span class="result-label">Total area (A)</span>
@@ -253,14 +224,12 @@
             drawSection(xbar, ybar);
         }
 
-        // ============ Section preview drawing ============
         function drawSection(xbar, ybar) {
             if (components.length === 0) {
                 sectionPreview.innerHTML = `<text x="350" y="160" text-anchor="middle" class="dim-text">Add a component to see the preview.</text>`;
                 return;
             }
 
-            // Find the bounding box of all components
             let xMin = Infinity, yMin = Infinity, xMax = -Infinity, yMax = -Infinity;
             components.forEach(c => {
                 xMin = Math.min(xMin, c.x - c.b / 2);
@@ -272,33 +241,29 @@
             const widthSec = xMax - xMin || 1;
             const heightSec = yMax - yMin || 1;
 
-            // SVG viewBox is 700×320. Use a margin and pick a uniform scale.
             const margin = 40;
             const availW = 700 - 2 * margin;
             const availH = 320 - 2 * margin;
             const scale = Math.min(availW / widthSec, availH / heightSec);
 
-            // Center the section in the SVG. SVG y is inverted (down = positive).
             const cxSvg = 350;
             const cySvg = 160;
             const xMid = (xMin + xMax) / 2;
             const yMid = (yMin + yMax) / 2;
 
             const toSvgX = x => cxSvg + (x - xMid) * scale;
-            const toSvgY = y => cySvg - (y - yMid) * scale;   // y inverted
+            const toSvgY = y => cySvg - (y - yMid) * scale;
 
             let svg = '';
 
-            // Each rectangle
             components.forEach(c => {
                 const xL = toSvgX(c.x - c.b / 2);
-                const yT = toSvgY(c.y + c.h / 2);   // top-y in SVG = high-y in real
+                const yT = toSvgY(c.y + c.h / 2);
                 const w = c.b * scale;
                 const h = c.h * scale;
                 svg += `<rect x="${xL}" y="${yT}" width="${w}" height="${h}" class="preview-rect"/>`;
             });
 
-            // Centroid marker (only if calculate has been called and passed values in)
             if (typeof xbar === 'number' && typeof ybar === 'number') {
                 const cxS = toSvgX(xbar);
                 const cyS = toSvgY(ybar);
@@ -315,10 +280,15 @@
             resultsBox.innerHTML = `<div class="result-empty">Fix the issue above and try again.</div>`;
         }
 
-        // ============ Initial render ============
         renderRows();
         drawSection();
         calculate();
+    </script>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
     </script>
 
 </body>

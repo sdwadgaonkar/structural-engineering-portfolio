@@ -11,17 +11,7 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="tools.html">Tools</a></li>
-            <li><a href="blog.html">Blog</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="resume.html">Resume</a></li>
-            <li><a href="contact.html" class="active">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
@@ -35,18 +25,19 @@
         <div class="contact-box">
             <h2>Reach me directly</h2>
             <p>I'm open to collaboration on structural design projects, engineering software development, and consulting work. The fastest way to reach me is by email.</p>
-            <p><strong>Email:</strong> <a href="mailto:sdwadgaonkar@gmail.com">[sdwadgaonkar@gmail.com]</a></p>
-            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/sanketwadgaonkar">linkedin.com/in/sanketwadgaonkar</a></p>
+            <p><strong>Email:</strong> <a href="mailto:[email protected]">[email protected]</a></p>
+            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/your-profile">linkedin.com/in/your-profile</a></p>
             <p><strong>Location:</strong> Pune, Maharashtra, India</p>
         </div>
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
+
+    <script src="components.js" data-depth="0"></script>
+    <script>
+        renderNavbar('contact');
+        renderFooter();
+    </script>
 
 </body>
 </html>

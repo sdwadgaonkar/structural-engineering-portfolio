@@ -11,23 +11,13 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="tools.html">Tools</a></li>
-            <li><a href="blog.html">Blog</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="resume.html" class="active">Resume</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
             <span class="section-label">Profile</span>
             <h1>Sanket Wadgaonkar</h1>
-            <p>Structural Engineer · Pune, India</p>
+            <p>Structural Project Engineer · Pune, India</p>
         </div>
     </header>
 
@@ -58,14 +48,14 @@
             <span class="section-label">Experience</span>
 
             <article class="post">
-                <h3>Project Engineer</h3>
-                <p class="meta">Thornton Tomasetti · 2024 – Present</p>
+                <h3>Structural Project Engineer</h3>
+                <p class="meta">Your Company Name · 2020 – Present</p>
                 <p>Lead structural design and analysis for a portfolio of building projects ranging from mid-rise residential to high-rise mixed-use towers. Specialize in lateral system design, diaphragm modeling for irregular plans, and the development of VBA-based design automation tools used across the team.</p>
             </article>
 
             <article class="post">
-                <h3>Structural Engineer</h3>
-                <p class="meta">Previous Company · 2019 – 2021</p>
+                <h3>Junior Structural Engineer</h3>
+                <p class="meta">Previous Company · 2018 – 2020</p>
                 <p>Performed structural analysis and design under senior engineer supervision. Prepared structural drawings, calculation reports, and design documentation for residential and commercial projects.</p>
             </article>
         </div>
@@ -86,12 +76,12 @@
 
             <article class="post">
                 <h3>Master of Engineering, Structural Engineering</h3>
-                <p class="meta">Indian Institute of Technology, Kharagpur · 2019</p>
+                <p class="meta">Your University · Year</p>
             </article>
 
             <article class="post">
                 <h3>Bachelor of Engineering, Civil Engineering</h3>
-                <p class="meta">Visvesvaraya National Institute of Technology (VNIT), Nagpur · 2017</p>
+                <p class="meta">Your University · Year</p>
             </article>
         </div>
 
@@ -105,18 +95,19 @@
         <div class="contact-box">
             <h2>Get in touch</h2>
             <p>Open to consulting engagements, collaboration on engineering software, and select advisory roles.</p>
-            <p><strong>Email:</strong> <a href="mailto:sdwadgaonkar@gmail.com">[sdwadgaonkar@gmail.com]</a></p>
-            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/sanketwadgaonkar">linkedin.com/in/sanketwadgaonkar</a></p>
+            <p><strong>Email:</strong> <a href="mailto:[email protected]">[email protected]</a></p>
+            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/your-profile">linkedin.com/in/your-profile</a></p>
         </div>
 
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
+
+    <script src="components.js" data-depth="0"></script>
+    <script>
+        renderNavbar('resume');
+        renderFooter();
+    </script>
 
 </body>
 </html>

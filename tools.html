@@ -11,17 +11,7 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="logo">StruxLab</a>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="tools.html" class="active">Tools</a></li>
-            <li><a href="blog.html">Blog</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="resume.html">Resume</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </nav>
+    <div id="site-navbar"></div>
 
     <header class="page-header">
         <div class="page-header-inner">
@@ -42,7 +32,7 @@
             <a href="tools/beam-calculator.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Beam Calculator</h3>
-                    <p>Simply-supported beam analysis — reactions, max shear, and max moment for UDL and point load combinations.</p>
+                    <p>Simply-supported beam analysis — reactions, max shear, max moment, with live shear and bending moment diagrams.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -51,6 +41,14 @@
                 <div class="card live">
                     <h3>Load Combination Generator</h3>
                     <p>Compute factored load combinations per ASCE 7-22 (LRFD) or IS 875 (LSD), with the governing case highlighted automatically.</p>
+                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
+                </div>
+            </a>
+
+            <a href="tools/section-properties.html" style="text-decoration: none;">
+                <div class="card live">
+                    <h3>Section Property Calculator</h3>
+                    <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for built-up rectangular sections, with a live preview.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -70,24 +68,17 @@
                 <p>Visualize rigid vs. semi-rigid diaphragm load distribution across resisting elements for irregular floor plates.</p>
             </div>
 
-            <a href="tools/section-properties.html" style="text-decoration: none;">
-                <div class="card live">
-                    <h3>Section Property Calculator</h3>
-                    <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for built-up rectangular sections, with a live preview.</p>
-                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
-                </div>
-            </a>
-
         </div>
 
     </section>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-brand">StruxLab</span>
-            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
+
+    <script src="components.js" data-depth="0"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
 
 </body>
 </html>

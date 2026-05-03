@@ -6,7 +6,7 @@
     <title>Resume | Sanket Wadgaonkar | StruxLab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,79 +24,98 @@
     </nav>
 
     <header class="page-header">
-        <h1>Sanket Wadgaonkar</h1>
-        <p style="color: white; margin: 0.5rem 0 0; font-size: 1.1rem;">Structural Project Engineer · Pune, India</p>
+        <div class="page-header-inner">
+            <span class="section-label">Profile</span>
+            <h1>Sanket Wadgaonkar</h1>
+            <p>Structural Engineer · Pune, India</p>
+        </div>
     </header>
 
     <section class="container">
 
-        <h2>Summary</h2>
-        <p>Structural Project Engineer with 6 years of professional experience in the design and analysis of buildings and infrastructure. Expertise in ETABS modeling, advanced diaphragm design, lateral system analysis, and the development of in-house VBA tools that improve design efficiency. Equally comfortable in the engineering office and in code, with a focus on bringing modern software practices into structural workflows.</p>
+        <div class="resume-block">
+            <span class="section-label">Summary</span>
+            <p>Structural Project Engineer with 6 years of professional experience in the design and analysis of buildings and infrastructure. Expertise in ETABS modeling, advanced diaphragm design, lateral system analysis, and the development of in-house VBA tools that improve design efficiency. Equally comfortable in the engineering office and in code, with a focus on bringing modern software practices into structural workflows.</p>
+        </div>
 
-        <h2>Core Skills</h2>
-        <ul class="skills">
-            <li>Structural Analysis & Design</li>
-            <li>ETABS (v20+)</li>
-            <li>STAAD Pro</li>
-            <li>Diaphragm Design</li>
-            <li>Lateral System Design</li>
-            <li>AutoCAD</li>
-            <li>Revit</li>
-            <li>VBA Development</li>
-            <li>Class-Module Architecture</li>
-            <li>Engineering Code Compliance (ACI 318, ASCE 7, IS 875)</li>
-        </ul>
+        <div class="resume-block">
+            <span class="section-label">Core skills</span>
+            <ul class="skills">
+                <li>Structural Analysis & Design</li>
+                <li>ETABS (v20+)</li>
+                <li>STAAD Pro</li>
+                <li>Diaphragm Design</li>
+                <li>Lateral System Design</li>
+                <li>AutoCAD</li>
+                <li>Revit</li>
+                <li>VBA Development</li>
+                <li>Class-Module Architecture</li>
+                <li>ACI 318 / ASCE 7 / IS 875</li>
+            </ul>
+        </div>
 
-        <h2>Experience</h2>
+        <div class="resume-block">
+            <span class="section-label">Experience</span>
 
-        <article class="post">
-            <h3>Structural Project Engineer</h3>
-            <p class="meta">Your Company Name · 2020 – Present</p>
-            <p>Lead structural design and analysis for a portfolio of building projects ranging from mid-rise residential to high-rise mixed-use towers. Specialize in lateral system design, diaphragm modeling for irregular plans, and the development of VBA-based design automation tools used across the team.</p>
-        </article>
+            <article class="post">
+                <h3>Project Engineer</h3>
+                <p class="meta">Thornton Tomasetti · 2024 – Present</p>
+                <p>Lead structural design and analysis for a portfolio of building projects ranging from mid-rise residential to high-rise mixed-use towers. Specialize in lateral system design, diaphragm modeling for irregular plans, and the development of VBA-based design automation tools used across the team.</p>
+            </article>
 
-        <article class="post">
-            <h3>Junior Structural Engineer</h3>
-            <p class="meta">Previous Company · 2018 – 2020</p>
-            <p>Performed structural analysis and design under senior engineer supervision. Prepared structural drawings, calculation reports, and design documentation for residential and commercial projects.</p>
-        </article>
+            <article class="post">
+                <h3>Structural Engineer</h3>
+                <p class="meta">Previous Company · 2019 – 2021</p>
+                <p>Performed structural analysis and design under senior engineer supervision. Prepared structural drawings, calculation reports, and design documentation for residential and commercial projects.</p>
+            </article>
+        </div>
 
-        <h2>Selected Project Work</h2>
-        <p>For detailed case studies, see the <a href="projects.html">Projects page</a>.</p>
-        <ul>
-            <li>30-story residential tower — semi-rigid diaphragm modeling and load path verification</li>
-            <li>Comparative bracing stiffness study (X, V, inverted-V, K, EBF configurations)</li>
-            <li>Biaxial column interaction diagram tool (VBA, ACI 318)</li>
-            <li>Variable-bar column interaction GUI (VBA, class-module architecture)</li>
-        </ul>
+        <div class="resume-block">
+            <span class="section-label">Selected project work</span>
+            <p style="margin-bottom: 1rem;">For detailed case studies, see the <a href="projects.html">Projects page</a>.</p>
+            <article class="post">
+                <p>· 30-story residential tower — semi-rigid diaphragm modeling and load path verification</p>
+                <p>· Comparative bracing stiffness study (X, V, inverted-V, K, EBF configurations)</p>
+                <p>· Biaxial column interaction diagram tool (VBA, ACI 318)</p>
+                <p>· Variable-bar column interaction GUI (VBA, class-module architecture)</p>
+            </article>
+        </div>
 
-        <h2>Education</h2>
-        <article class="post">
-            <h3>Master of Engineering, Structural Engineering</h3>
-            <p class="meta">Your University · Year</p>
-        </article>
+        <div class="resume-block">
+            <span class="section-label">Education</span>
 
-        <article class="post">
-            <h3>Bachelor of Engineering, Civil Engineering</h3>
-            <p class="meta">Your University · Year</p>
-        </article>
+            <article class="post">
+                <h3>Master of Engineering, Structural Engineering</h3>
+                <p class="meta">Indian Institute of Technology, Kharagpur · 2019</p>
+            </article>
 
-        <h2>Certifications & Memberships</h2>
-        <ul>
-            <li>Add any professional certifications, PE/SE licenses, or membership of professional bodies</li>
-        </ul>
+            <article class="post">
+                <h3>Bachelor of Engineering, Civil Engineering</h3>
+                <p class="meta">Visvesvaraya National Institute of Technology (VNIT), Nagpur · 2017</p>
+            </article>
+        </div>
 
-        <div class="contact-box" style="margin-top: 2rem;">
+        <div class="resume-block">
+            <span class="section-label">Certifications</span>
+            <article class="post">
+                <p>Add any professional certifications, PE/SE licenses, or membership of professional bodies.</p>
+            </article>
+        </div>
+
+        <div class="contact-box">
             <h2>Get in touch</h2>
             <p>Open to consulting engagements, collaboration on engineering software, and select advisory roles.</p>
-            <p><strong>Email:</strong> <a href="mailto:[email protected]">[email protected]</a></p>
-            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/your-profile">linkedin.com/in/your-profile</a></p>
+            <p><strong>Email:</strong> <a href="mailto:[sdwadgaonkar@gmail.com]">[sdwadgaonkar@gmail.com]</a></p>
+            <p><strong>LinkedIn:</strong> <a href="linkedin.com/in/sanketwadgaonkar">linkedin.com/in/sanketwadgaonkar</a></p>
         </div>
 
     </section>
 
     <footer class="footer">
-        <p>© 2026 Sanket Wadgaonkar · StruxLab</p>
+        <div class="footer-content">
+            <span class="footer-brand">StruxLab</span>
+            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
+        </div>
     </footer>
 
 </body>

@@ -6,7 +6,7 @@
     <title>Blog | StruxLab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,28 +24,32 @@
     </nav>
 
     <header class="page-header">
-        <h1>Blog</h1>
+        <div class="page-header-inner">
+            <span class="section-label">Writing</span>
+            <h1>Blog</h1>
+            <p>Practical notes on structural engineering, modeling techniques, and the software side of the practice.</p>
+        </div>
     </header>
 
     <section class="container">
 
         <article class="post">
             <h3>Understanding Semi-Rigid Diaphragm Behavior</h3>
-            <p class="meta">Posted on March 15, 2026</p>
+            <p class="meta">March 15, 2026</p>
             <p>A practical guide to when rigid diaphragm assumptions break down, and how to model semi-rigid diaphragms correctly in ETABS for irregular floor plates.</p>
             <a href="#">Read more →</a>
         </article>
 
         <article class="post">
             <h3>Comparing Bracing Configurations: A Stiffness Study</h3>
-            <p class="meta">Posted on February 28, 2026</p>
+            <p class="meta">February 28, 2026</p>
             <p>Side-by-side stiffness comparison of X, V, inverted-V, K, and EBF bracing systems with derivations and ETABS modeling notes.</p>
             <a href="#">Read more →</a>
         </article>
 
         <article class="post">
             <h3>Building a Biaxial Interaction Diagram in VBA</h3>
-            <p class="meta">Posted on January 10, 2026</p>
+            <p class="meta">January 10, 2026</p>
             <p>How I built a custom VBA tool for biaxial column interaction diagrams per ACI 318, including class-module structure and graphical output.</p>
             <a href="#">Read more →</a>
         </article>
@@ -53,7 +57,10 @@
     </section>
 
     <footer class="footer">
-        <p>© 2026 Sanket Wadgaonkar · StruxLab</p>
+        <div class="footer-content">
+            <span class="footer-brand">StruxLab</span>
+            <p>© 2026 Sanket Wadgaonkar · Pune, India</p>
+        </div>
     </footer>
 
 </body>

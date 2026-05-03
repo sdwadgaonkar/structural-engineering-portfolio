@@ -1,0 +1,308 @@
+/* ============ Reset & base ============ */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    line-height: 1.6;
+    background-color: #fafafa;
+}
+
+a {
+    color: #1a4d7c;
+}
+
+a:hover {
+    color: #d35400;
+}
+
+h1, h2, h3 {
+    color: #1a4d7c;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ============ Navbar ============ */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #1a4d7c;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #f4a261;
+    border-bottom-color: #f4a261;
+}
+
+/* ============ Hero ============ */
+.hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem;
+    min-height: 500px;
+    background-image: url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600');
+    background-size: cover;
+    background-position: center;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(26, 77, 124, 0.65);
+}
+
+.hero h1,
+.hero p {
+    position: relative;
+    z-index: 1;
+    color: white;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+}
+
+.hero p {
+    font-size: 1.25rem;
+    max-width: 700px;
+}
+
+/* Smaller hero for inner pages */
+.page-header {
+    background-color: #1a4d7c;
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.page-header h1 {
+    color: white;
+    margin: 0;
+    font-size: 2.25rem;
+}
+
+/* ============ Skills (chips) ============ */
+ul.skills {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+ul.skills li {
+    background-color: rgba(26, 77, 124, 0.1);
+    color: #1a4d7c;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* ============ Cards ============ */
+.card-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.card {
+    flex: 1 1 280px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+/* ============ Blog list ============ */
+.post {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.post h3 {
+    margin-top: 0;
+}
+
+.post .meta {
+    color: #888;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ============ Contact box ============ */
+.contact-box {
+    background-color: rgba(26, 77, 124, 0.05);
+    border-left: 4px solid #1a4d7c;
+    padding: 1.5rem;
+    border-radius: 4px;
+}
+
+.contact-box h2 {
+    margin-top: 0;
+}
+
+/* ============ Footer ============ */
+.footer {
+    background-color: #1a4d7c;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    margin-top: 3rem;
+}
+
+.footer p {
+    margin: 0;
+}
+
+/* ============ In-progress badge ============ */
+.badge {
+    display: inline-block;
+    background-color: #f4a261;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+.card.in-progress {
+    border: 2px dashed #f4a261;
+    background-color: #fffaf3;
+}
+
+.card.in-progress h3 {
+    color: #b8651a;
+}
+
+/* ============ Tools page ============ */
+.tools-intro {
+    background-color: rgba(244, 162, 97, 0.1);
+    border-left: 4px solid #f4a261;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+.tools-intro p {
+    margin: 0;
+}
+
+/* ============ Responsive: Tablet and below ============ */
+@media (max-width: 768px) {
+
+    .navbar {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .hero {
+        padding: 4rem 1.5rem;
+        min-height: 400px;
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .container {
+        padding: 1.5rem 1rem;
+    }
+
+    .page-header {
+        padding: 2rem 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .card {
+        flex: 1 1 100%;
+    }
+
+}
+
+/* ============ Responsive: Phone ============ */
+@media (max-width: 480px) {
+
+    .nav-links {
+        font-size: 0.95rem;
+        gap: 0.75rem;
+    }
+
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+}

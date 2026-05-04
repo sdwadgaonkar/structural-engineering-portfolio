@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beam Calculator | StruxLab</title>
+    <title>Continuous Beam Calculator | StruxLab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -16,8 +16,8 @@
     <header class="page-header">
         <div class="page-header-inner">
             <span class="section-label">Tool · Live</span>
-            <h1>Simply-Supported Beam Calculator</h1>
-            <p>Reactions, max shear, max moment, and live shear and bending-moment diagrams for a simply-supported beam under a UDL plus an optional point load. Imperial units (kip, kip-ft, ft).</p>
+            <h1>Continuous Beam Calculator</h1>
+            <p>Multi-span continuous beam analysis using the direct stiffness method. Point loads, UDLs, partial-span trapezoidal loads, support settlement, and CSV export. Imperial units (kip, kip-ft, ft, in, ksi).</p>
         </div>
     </header>
 
@@ -26,41 +26,82 @@
         <div class="tool-layout">
 
             <div class="tool-panel">
-                <h3>Inputs</h3>
+                <h3>Configuration</h3>
 
-                <div class="field">
-                    <label for="span">Span (L)</label>
-                    <input type="number" id="span" value="20" step="0.5" min="0">
-                    <span class="hint">Length of the beam in feet</span>
+                <label class="result-label" style="display:block; margin-bottom:0.5rem;">Number of spans</label>
+                <div class="span-count-toggle" id="spanCountToggle">
+                    <button data-n="1">1</button>
+                    <button data-n="2">2</button>
+                    <button data-n="3" class="active">3</button>
+                    <button data-n="4">4</button>
+                    <button data-n="5">5</button>
+                    <button data-n="6">6</button>
                 </div>
 
-                <div class="field">
-                    <label for="udl">Uniformly Distributed Load (w)</label>
-                    <input type="number" id="udl" value="2" step="0.1" min="0">
-                    <span class="hint">UDL applied along the full span, in kip/ft</span>
+                <label class="result-label" style="display:block; margin-bottom:0.5rem; margin-top:1rem;">End fixity</label>
+                <div class="support-toggle">
+                    <label><input type="checkbox" id="leftFixed"> Left end fixed</label>
+                    <label><input type="checkbox" id="rightFixed"> Right end fixed</label>
                 </div>
 
-                <div class="field">
-                    <label for="pointLoad">Point Load (P) — optional</label>
-                    <input type="number" id="pointLoad" value="0" step="1" min="0">
-                    <span class="hint">Concentrated load in kip. Leave 0 if no point load.</span>
-                </div>
+                <h3 style="margin-top: 1.5rem;">Spans</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+                    Per-span L, E, I and per-support settlement. Click "Apply to all" to copy Span 1's E and I.
+                </p>
+                <table class="spans-table" id="sectionTable">
+                    <thead>
+                        <tr>
+                            <th class="col-num">Span</th>
+                            <th>L (ft)</th>
+                            <th>E (ksi)</th>
+                            <th>I (in⁴)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sectionBody"></tbody>
+                </table>
+                <button class="add-btn" id="applyAllBtn">Apply Span 1's E and I to all spans</button>
 
-                <div class="field">
-                    <label for="pointPosition">Point Load Position (a)</label>
-                    <input type="number" id="pointPosition" value="10" step="0.5" min="0">
-                    <span class="hint">Distance from left support, in feet</span>
-                </div>
+                <h4 style="font-family:'Space Grotesk',sans-serif; font-size:0.8rem; font-weight:500; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-secondary); margin-top:1rem; margin-bottom:0.5rem;">Support settlement (in)</h4>
+                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">
+                    Downward settlement positive. Leave 0 if none.
+                </p>
+                <table class="spans-table" id="settleTable">
+                    <thead>
+                        <tr>
+                            <th class="col-num">Support</th>
+                            <th>Δ (in)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="settleBody"></tbody>
+                </table>
 
-                <button class="calc-button" id="calculateBtn">Calculate</button>
+                <h3 style="margin-top: 1.5rem;">Loads</h3>
+                <div id="loadsContainer"></div>
+                <button class="add-load-btn" id="addLoadBtn">+ Add load</button>
+
+                <button class="calc-button" id="calculateBtn" style="margin-top:1.5rem;">Calculate</button>
+                <div id="errorBox" style="margin-top:1rem;"></div>
             </div>
 
             <div class="tool-panel">
-                <h3>Results</h3>
-                <div id="errorBox"></div>
-                <div id="results">
-                    <div class="result-empty">Enter values and click Calculate to see results.</div>
-                </div>
+                <h3>Reactions</h3>
+                <table class="reactions-table" id="reactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Support</th>
+                            <th>R (kip)</th>
+                            <th>M (kip-ft)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reactionsBody">
+                        <tr><td colspan="3" class="result-empty">Click Calculate to see reactions.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Per-span maxima</h3>
+                <div id="spanStatsContainer"></div>
+
+                <button class="export-btn" id="exportBtn">↓ Export results to CSV</button>
             </div>
 
         </div>
@@ -69,17 +110,22 @@
 
             <div class="diagram-panel">
                 <h4>Beam &amp; loading</h4>
-                <svg id="beamDiagram" viewBox="0 0 700 180" preserveAspectRatio="xMidYMid meet"></svg>
+                <svg id="beamDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
             <div class="diagram-panel">
-                <h4>Shear Force Diagram (SFD)</h4>
-                <svg id="sfdDiagram" viewBox="0 0 700 200" preserveAspectRatio="xMidYMid meet"></svg>
+                <h4>Shear Force Diagram (kip)</h4>
+                <svg id="sfdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
             <div class="diagram-panel">
-                <h4>Bending Moment Diagram (BMD)</h4>
-                <svg id="bmdDiagram" viewBox="0 0 700 200" preserveAspectRatio="xMidYMid meet"></svg>
+                <h4>Bending Moment Diagram (kip-ft) — sagging plotted downward</h4>
+                <svg id="bmdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+
+            <div class="diagram-panel">
+                <h4>Deflected shape (in) — downward plotted downward</h4>
+                <svg id="defDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
         </div>
@@ -89,202 +135,834 @@
     <div id="site-footer"></div>
 
     <script>
-        const spanInput = document.getElementById('span');
-        const udlInput = document.getElementById('udl');
-        const pointLoadInput = document.getElementById('pointLoad');
-        const pointPositionInput = document.getElementById('pointPosition');
+        // ============================================================
+        // STATE
+        // ============================================================
+        let nSpans = 3;
+        let spans = [];
+        let settlements = [];
+        let loads = [];
+        let leftFixed = false;
+        let rightFixed = false;
+        let lastResult = null;
+
+        // ============================================================
+        // DEFAULTS
+        // ============================================================
+        function setDefaults() {
+            spans = [];
+            for (let i = 0; i < nSpans; i++) spans.push({ L: 20, E: 29000, I: 200 });
+            settlements = Array(nSpans + 1).fill(0);
+            loads = [];
+            for (let i = 0; i < nSpans; i++) {
+                loads.push({ span: i, type: 'udl', w1: 1.5, w2: 1.5, a: 0, b: spans[i].L, P: 0 });
+            }
+        }
+
+        // ============================================================
+        // DOM
+        // ============================================================
+        const spanCountToggle = document.getElementById('spanCountToggle');
+        const leftFixedInput = document.getElementById('leftFixed');
+        const rightFixedInput = document.getElementById('rightFixed');
+        const sectionBody = document.getElementById('sectionBody');
+        const settleBody = document.getElementById('settleBody');
+        const applyAllBtn = document.getElementById('applyAllBtn');
+        const loadsContainer = document.getElementById('loadsContainer');
+        const addLoadBtn = document.getElementById('addLoadBtn');
         const calculateBtn = document.getElementById('calculateBtn');
-        const resultsBox = document.getElementById('results');
         const errorBox = document.getElementById('errorBox');
+        const reactionsBody = document.getElementById('reactionsBody');
+        const spanStatsContainer = document.getElementById('spanStatsContainer');
+        const exportBtn = document.getElementById('exportBtn');
         const beamSvg = document.getElementById('beamDiagram');
         const sfdSvg = document.getElementById('sfdDiagram');
         const bmdSvg = document.getElementById('bmdDiagram');
+        const defSvg = document.getElementById('defDiagram');
 
-        const X_LEFT = 80;
-        const X_RIGHT = 620;
-        const PLOT_WIDTH = X_RIGHT - X_LEFT;
-
-        calculateBtn.addEventListener('click', calculateBeam);
-
-        function calculateBeam() {
-            const L = parseFloat(spanInput.value);     // ft
-            const w = parseFloat(udlInput.value);      // kip/ft
-            const P = parseFloat(pointLoadInput.value); // kip
-            const a = parseFloat(pointPositionInput.value); // ft
-
-            errorBox.innerHTML = "";
-            if (isNaN(L) || L <= 0) return showError("Span must be a positive number.");
-            if (isNaN(w) || w < 0) return showError("UDL must be zero or positive.");
-            if (isNaN(P) || P < 0) return showError("Point load must be zero or positive.");
-            if (P > 0 && (a <= 0 || a >= L)) return showError("Point load position must be between 0 and the span length.");
-
-            const b = L - a;
-            const R_A = (w * L) / 2 + (P > 0 ? (P * b) / L : 0);    // kip
-            const R_B = (w * L) / 2 + (P > 0 ? (P * a) / L : 0);    // kip
-
-            const samples = sampleBeam(L, w, P, a, R_A);
-
-            let V_max = 0;
-            let M_max = 0;
-            samples.forEach(s => {
-                if (Math.abs(s.V) > Math.abs(V_max)) V_max = s.V;
-                if (s.M > M_max) M_max = s.M;
+        spanCountToggle.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                nSpans = parseInt(btn.dataset.n);
+                spanCountToggle.querySelectorAll('button').forEach(b =>
+                    b.classList.toggle('active', b === btn));
+                setDefaults();
+                renderSection();
+                renderSettle();
+                renderLoads();
+                solveAndDraw();
             });
+        });
 
-            resultsBox.innerHTML = `
-                <div class="result-row">
-                    <span class="result-label">Reaction at A (left)</span>
-                    <span class="result-value">${R_A.toFixed(2)}<span class="unit">kip</span></span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Reaction at B (right)</span>
-                    <span class="result-value">${R_B.toFixed(2)}<span class="unit">kip</span></span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Max shear (abs)</span>
-                    <span class="result-value">${Math.abs(V_max).toFixed(2)}<span class="unit">kip</span></span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Max moment</span>
-                    <span class="result-value">${M_max.toFixed(2)}<span class="unit">kip-ft</span></span>
+        leftFixedInput.addEventListener('change', () => { leftFixed = leftFixedInput.checked; solveAndDraw(); });
+        rightFixedInput.addEventListener('change', () => { rightFixed = rightFixedInput.checked; solveAndDraw(); });
+
+        applyAllBtn.addEventListener('click', () => {
+            const E = spans[0].E, I = spans[0].I;
+            spans.forEach(s => { s.E = E; s.I = I; });
+            renderSection();
+            solveAndDraw();
+        });
+
+        addLoadBtn.addEventListener('click', () => {
+            loads.push({ span: 0, type: 'point', w1: 0, w2: 0, a: spans[0].L / 2, b: spans[0].L, P: 5 });
+            renderLoads();
+        });
+
+        calculateBtn.addEventListener('click', solveAndDraw);
+        exportBtn.addEventListener('click', exportCSV);
+
+        // ============================================================
+        // RENDERING
+        // ============================================================
+        function renderSection() {
+            sectionBody.innerHTML = spans.map((s, i) => `
+                <tr>
+                    <td class="col-num">${i + 1}</td>
+                    <td><input type="number" data-i="${i}" data-f="L" value="${s.L}" step="0.5" min="0.1"></td>
+                    <td><input type="number" data-i="${i}" data-f="E" value="${s.E}" step="100" min="1"></td>
+                    <td><input type="number" data-i="${i}" data-f="I" value="${s.I}" step="10" min="0.1"></td>
+                </tr>
+            `).join('');
+            sectionBody.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', e => {
+                    const i = parseInt(e.target.dataset.i);
+                    const f = e.target.dataset.f;
+                    const v = parseFloat(e.target.value);
+                    spans[i][f] = isNaN(v) ? 0 : v;
+                });
+            });
+        }
+
+        function renderSettle() {
+            settleBody.innerHTML = settlements.map((d, i) => `
+                <tr>
+                    <td class="col-num">${String.fromCharCode(65 + i)}</td>
+                    <td><input type="number" data-i="${i}" data-f="settle" value="${d}" step="0.05"></td>
+                </tr>
+            `).join('');
+            settleBody.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', e => {
+                    const i = parseInt(e.target.dataset.i);
+                    const v = parseFloat(e.target.value);
+                    settlements[i] = isNaN(v) ? 0 : v;
+                });
+            });
+        }
+
+        function renderLoads() {
+            loadsContainer.innerHTML = loads.map((ld, i) => loadCardHtml(ld, i)).join('');
+            loadsContainer.querySelectorAll('select, input').forEach(el => {
+                el.addEventListener('input', e => {
+                    const i = parseInt(e.target.dataset.i);
+                    const f = e.target.dataset.f;
+                    const v = e.target.tagName === 'SELECT' ? e.target.value : parseFloat(e.target.value);
+                    if (f === 'span') {
+                        loads[i].span = parseInt(e.target.value);
+                        loads[i].b = Math.min(loads[i].b, spans[loads[i].span].L);
+                        loads[i].a = Math.min(loads[i].a, loads[i].b);
+                        renderLoads();
+                    } else if (f === 'type') {
+                        loads[i].type = e.target.value;
+                        if (loads[i].type === 'udl' || loads[i].type === 'trap') {
+                            loads[i].a = 0;
+                            loads[i].b = spans[loads[i].span].L;
+                        } else {
+                            loads[i].a = spans[loads[i].span].L / 2;
+                        }
+                        renderLoads();
+                    } else {
+                        loads[i][f] = isNaN(v) ? 0 : v;
+                    }
+                });
+            });
+            loadsContainer.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    loads.splice(parseInt(e.target.dataset.remove), 1);
+                    renderLoads();
+                });
+            });
+        }
+
+        function loadCardHtml(ld, i) {
+            const spanOptions = spans.map((_, k) =>
+                `<option value="${k}" ${k === ld.span ? 'selected' : ''}>Span ${k + 1}</option>`).join('');
+            const typeOptions = `
+                <option value="point" ${ld.type === 'point' ? 'selected' : ''}>Point</option>
+                <option value="udl" ${ld.type === 'udl' ? 'selected' : ''}>UDL</option>
+                <option value="trap" ${ld.type === 'trap' ? 'selected' : ''}>Trapezoidal</option>
+            `;
+            let params;
+            if (ld.type === 'point') {
+                params = `
+                    <div class="load-card-params point">
+                        <div><label>P (kip)</label><input type="number" data-i="${i}" data-f="P" value="${ld.P}" step="0.5"></div>
+                        <div><label>x (ft from left of span)</label><input type="number" data-i="${i}" data-f="a" value="${ld.a}" step="0.5"></div>
+                    </div>
+                `;
+            } else if (ld.type === 'udl') {
+                params = `
+                    <div class="load-card-params udl">
+                        <div><label>w (kip/ft)</label><input type="number" data-i="${i}" data-f="w1" value="${ld.w1}" step="0.1"></div>
+                        <div><label>From a (ft)</label><input type="number" data-i="${i}" data-f="a" value="${ld.a}" step="0.5"></div>
+                        <div><label>To b (ft)</label><input type="number" data-i="${i}" data-f="b" value="${ld.b}" step="0.5"></div>
+                    </div>
+                `;
+            } else {
+                params = `
+                    <div class="load-card-params trap">
+                        <div><label>w₁ at a (kip/ft)</label><input type="number" data-i="${i}" data-f="w1" value="${ld.w1}" step="0.1"></div>
+                        <div><label>w₂ at b (kip/ft)</label><input type="number" data-i="${i}" data-f="w2" value="${ld.w2}" step="0.1"></div>
+                        <div><label>From a (ft)</label><input type="number" data-i="${i}" data-f="a" value="${ld.a}" step="0.5"></div>
+                        <div><label>To b (ft)</label><input type="number" data-i="${i}" data-f="b" value="${ld.b}" step="0.5"></div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="load-card">
+                    <div class="load-card-header">
+                        <select data-i="${i}" data-f="type">${typeOptions}</select>
+                        <select data-i="${i}" data-f="span">${spanOptions}</select>
+                        <button class="remove-btn" data-remove="${i}" title="Remove">×</button>
+                    </div>
+                    ${params}
                 </div>
             `;
-
-            drawBeamDiagram(L, w, P, a);
-            drawSFD(samples, L);
-            drawBMD(samples, L);
         }
 
-        function showError(message) {
-            errorBox.innerHTML = `<div class="result-error">${message}</div>`;
-            resultsBox.innerHTML = `<div class="result-empty">Fix the input above and try again.</div>`;
-            beamSvg.innerHTML = "";
-            sfdSvg.innerHTML = "";
-            bmdSvg.innerHTML = "";
-        }
+        // ============================================================
+        // STIFFNESS METHOD CORE
+        //
+        // Each node has rotation θ as the primary unknown DOF (vertical
+        // translation v is fixed at every support — the only way it varies
+        // is via prescribed settlement, which becomes equivalent loading).
+        //
+        // For each span i with end nodes a, b:
+        //   M_a = (4EI/L)θ_a + (2EI/L)θ_b - (6EI/L²)(v_b - v_a) + FEM_a
+        //   M_b = (2EI/L)θ_a + (4EI/L)θ_b - (6EI/L²)(v_b - v_a) + FEM_b
+        // We rearrange so the unknowns θ are on the left and known v's
+        // (settlements) and FEMs go to the right side.
+        //
+        // Settlement contribution to the equivalent moment vector:
+        //   At node a, equivalent applied moment from chord rotation
+        //   = + (6EI/L²)(v_b - v_a)
+        //   At node b, similarly + (6EI/L²)(v_b - v_a)
+        //   (added to both, with the same sign)
+        // ============================================================
+        function solveBeam() {
+            const N = nSpans + 1;
+            const EI = spans.map(s => (s.E * 144) * (s.I / 20736));   // kip·ft²
 
-        function sampleBeam(L, w, P, a, R_A) {
-            const N = 200;
-            const samples = [];
-            for (let i = 0; i <= N; i++) {
-                const x = (L * i) / N;
-                let V = R_A - w * x;
-                let M = R_A * x - (w * x * x) / 2;
-                if (P > 0 && x >= a) {
-                    V -= P;
-                    M -= P * (x - a);
-                }
-                samples.push({ x, V, M });
+            // Settlements in feet
+            const v = settlements.map(d => d / 12);
+
+            // Fixed-end forces (per-span [V_a, M_a, V_b, M_b]) from applied loads
+            const FEF = Array(nSpans).fill(0).map(() => [0, 0, 0, 0]);
+            loads.forEach(ld => {
+                const s = ld.span;
+                if (s < 0 || s >= nSpans) return;
+                const fef = computeFEF(ld, spans[s].L);
+                for (let k = 0; k < 4; k++) FEF[s][k] += fef[k];
+            });
+
+            // Assemble K (rotation DOFs only) and load vector F
+            const K = Array.from({length: N}, () => Array(N).fill(0));
+            const F = Array(N).fill(0);
+
+            for (let s = 0; s < nSpans; s++) {
+                const L = spans[s].L;
+                const k = EI[s] / L;
+                K[s    ][s    ] += 4 * k;
+                K[s    ][s + 1] += 2 * k;
+                K[s + 1][s    ] += 2 * k;
+                K[s + 1][s + 1] += 4 * k;
+
+                F[s    ] += -FEF[s][1];
+                F[s + 1] += -FEF[s][3];
+
+                // Chord rotation from settlement (psi = (v_b - v_a)/L)
+                // adds an effective moment at both ends:
+                //   M_eq_a += (6EI/L²)(v_b - v_a)
+                //   M_eq_b += (6EI/L²)(v_b - v_a)
+                // These move to RHS as -applied (sign flips when going to F).
+                const psi = (v[s + 1] - v[s]) / L;
+                const Meq = 6 * EI[s] * psi / L;
+                F[s]     += +Meq;     // moves -(-Meq) since added moment shifts to load side
+                F[s + 1] += +Meq;
             }
-            return samples;
+
+            // Boundary conditions
+            const fixedDofs = new Set();
+            if (leftFixed)  fixedDofs.add(0);
+            if (rightFixed) fixedDofs.add(N - 1);
+            const freeDofs = [];
+            for (let i = 0; i < N; i++) if (!fixedDofs.has(i)) freeDofs.push(i);
+
+            const Kr = freeDofs.map(i => freeDofs.map(j => K[i][j]));
+            const Fr = freeDofs.map(i => F[i]);
+            const thetaFree = solveGauss(Kr, Fr);
+            const theta = Array(N).fill(0);
+            freeDofs.forEach((dof, k) => { theta[dof] = thetaFree[k]; });
+
+            // Recover end forces of each span
+            const spanEnd = [];
+            for (let s = 0; s < nSpans; s++) {
+                const L = spans[s].L;
+                const k = EI[s] / L;
+                const k1 = 6 * EI[s] / (L * L);
+                const ta = theta[s];
+                const tb = theta[s + 1];
+                const psi = (v[s + 1] - v[s]) / L;
+
+                const M_a = FEF[s][1] + 4 * k * ta + 2 * k * tb - 6 * EI[s] * psi / L;
+                const M_b = FEF[s][3] + 2 * k * ta + 4 * k * tb - 6 * EI[s] * psi / L;
+                const V_a = FEF[s][0] + k1 * (ta + tb) - 12 * EI[s] * psi / (L * L);
+                const V_b = FEF[s][2] - k1 * (ta + tb) + 12 * EI[s] * psi / (L * L);
+                spanEnd.push([V_a, M_a, V_b, M_b]);
+            }
+
+            // Reactions
+            const reactionsR = Array(N).fill(0);
+            const reactionsM = Array(N).fill(0);
+            for (let i = 0; i < N; i++) {
+                if (i > 0)      reactionsR[i] += spanEnd[i - 1][2];
+                if (i < nSpans) reactionsR[i] += spanEnd[i][0];
+            }
+            if (leftFixed)  reactionsM[0]     = spanEnd[0][1];
+            if (rightFixed) reactionsM[N - 1] = -spanEnd[nSpans - 1][3];
+
+            // Sample for diagrams
+            const samples = [];
+            const Nsamp = 100;
+            for (let s = 0; s < nSpans; s++) {
+                const L = spans[s].L;
+                const arr = [];
+                for (let i = 0; i <= Nsamp; i++) {
+                    const x = (L * i) / Nsamp;
+                    const V = shearAt(s, x, spanEnd[s][0]);
+                    const M = momentAt(s, x, spanEnd[s][0], spanEnd[s][1]);
+                    const delta = deflectionAt(s, x, EI[s], spanEnd[s][0], spanEnd[s][1], theta[s], v[s]);
+                    arr.push({ x, V, M, delta });
+                }
+                samples.push(arr);
+            }
+
+            return { reactionsR, reactionsM, spanEnd, samples, theta };
         }
 
-        function drawBeamDiagram(L, w, P, a) {
-            const beamY = 90;
-            const beamHeight = 14;
-            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
+        // ============================================================
+        // PARTIAL-SPAN FIXED-END FORCES
+        // For UDL/trapezoidal with arbitrary [a,b] within [0,L], we use
+        // numerical integration of the standard influence functions for
+        // a fixed-fixed beam. This is general and accurate.
+        //
+        // For a unit downward load at position ξ on a fixed-fixed beam:
+        //   FEM_a(ξ) = -ξ(L-ξ)²/L²
+        //   FEM_b(ξ) =  ξ²(L-ξ)/L²
+        //   V_a(ξ)   = (L-ξ)²(L+2ξ)/L³
+        //   V_b(ξ)   = ξ²(3L-2ξ)/L³
+        // For a distributed load w(ξ) over [a,b], integrate w(ξ)·influence
+        // numerically.
+        // ============================================================
+        function computeFEF(ld, L) {
+            if (ld.type === 'point') {
+                const a = ld.a;
+                if (a < 0 || a > L) return [0, 0, 0, 0];
+                const b = L - a;
+                const P = ld.P;
+                return [
+                    P * b * b * (3 * a + b) / (L * L * L),
+                    -P * a * b * b / (L * L),
+                    P * a * a * (a + 3 * b) / (L * L * L),
+                    P * a * a * b / (L * L)
+                ];
+            }
+
+            // UDL or trap: integrate w(ξ)·[V_a(ξ), M_a(ξ), V_b(ξ), M_b(ξ)] over [a,b]
+            const a = Math.max(0, Math.min(L, ld.a));
+            const b = Math.max(a, Math.min(L, ld.b));
+            if (b <= a) return [0, 0, 0, 0];
+            const w1 = ld.w1;
+            const w2 = ld.type === 'udl' ? ld.w1 : ld.w2;
+
+            const N = 200;
+            const dx = (b - a) / N;
+            let V_A = 0, M_A = 0, V_B = 0, M_B = 0;
+            for (let i = 0; i <= N; i++) {
+                const xi = a + dx * i;
+                const t = (xi - a) / (b - a);
+                const w = w1 + (w2 - w1) * t;
+                const Lm = L - xi;
+                const fVa = Lm * Lm * (L + 2 * xi) / (L * L * L);
+                const fVb = xi * xi * (3 * L - 2 * xi) / (L * L * L);
+                const fMa = -xi * Lm * Lm / (L * L);
+                const fMb = xi * xi * Lm / (L * L);
+                const wt = (i === 0 || i === N) ? 0.5 : 1;     // trapezoidal rule
+                V_A += w * fVa * wt;
+                V_B += w * fVb * wt;
+                M_A += w * fMa * wt;
+                M_B += w * fMb * wt;
+            }
+            return [V_A * dx, M_A * dx, V_B * dx, M_B * dx];
+        }
+
+        function shearAt(s, x, V_a) {
+            let V = V_a;
+            const L = spans[s].L;
+            loads.forEach(ld => {
+                if (ld.span !== s) return;
+                if (ld.type === 'point') {
+                    if (x > ld.a) V -= ld.P;
+                } else {
+                    const a = Math.max(0, Math.min(L, ld.a));
+                    const b = Math.max(a, Math.min(L, ld.b));
+                    if (x <= a) return;
+                    const xEnd = Math.min(x, b);
+                    const w1 = ld.w1;
+                    const w2 = ld.type === 'udl' ? ld.w1 : ld.w2;
+                    const wAtA = w1;
+                    const wAtX = (b > a) ? w1 + (w2 - w1) * (xEnd - a) / (b - a) : w1;
+                    V -= 0.5 * (wAtA + wAtX) * (xEnd - a);
+                }
+            });
+            return V;
+        }
+
+        function momentAt(s, x, V_a, M_a_fef) {
+            let M = -M_a_fef + V_a * x;
+            const L = spans[s].L;
+            loads.forEach(ld => {
+                if (ld.span !== s) return;
+                if (ld.type === 'point') {
+                    if (x > ld.a) M -= ld.P * (x - ld.a);
+                } else {
+                    const a = Math.max(0, Math.min(L, ld.a));
+                    const b = Math.max(a, Math.min(L, ld.b));
+                    if (x <= a) return;
+                    const xEnd = Math.min(x, b);
+                    const w1 = ld.w1;
+                    const w2 = ld.type === 'udl' ? ld.w1 : ld.w2;
+                    // Numerical integration of w(ξ)·(x − ξ) from a to xEnd
+                    const N = 50;
+                    const dxi = (xEnd - a) / N;
+                    let sum = 0;
+                    for (let i = 0; i <= N; i++) {
+                        const xi = a + dxi * i;
+                        const t = (b > a) ? (xi - a) / (b - a) : 0;
+                        const w = w1 + (w2 - w1) * t;
+                        const wt = (i === 0 || i === N) ? 0.5 : 1;
+                        sum += w * (x - xi) * wt;
+                    }
+                    M -= sum * dxi;
+                }
+            });
+            return M;
+        }
+
+        function deflectionAt(s, x, EI_s, V_a, M_a_fef, theta_a, v_a_ft) {
+            const Nint = 100;
+            const dx = x / Nint;
+            let phi = theta_a;
+            let delta = v_a_ft;
+            let M_prev = momentAt(s, 0, V_a, M_a_fef);
+            let phi_prev = phi;
+            for (let i = 1; i <= Nint; i++) {
+                const xi = dx * i;
+                const M_curr = momentAt(s, xi, V_a, M_a_fef);
+                phi += -0.5 * (M_prev + M_curr) / EI_s * dx;
+                delta += 0.5 * (phi_prev + phi) * dx;
+                M_prev = M_curr;
+                phi_prev = phi;
+            }
+            return delta * 12;     // ft → in
+        }
+
+        function solveGauss(A, b) {
+            const n = A.length;
+            if (n === 0) return [];
+            const M = A.map((row, i) => [...row, b[i]]);
+            for (let i = 0; i < n; i++) {
+                let pivot = i;
+                for (let r = i + 1; r < n; r++)
+                    if (Math.abs(M[r][i]) > Math.abs(M[pivot][i])) pivot = r;
+                [M[i], M[pivot]] = [M[pivot], M[i]];
+                if (Math.abs(M[i][i]) < 1e-12) throw new Error("Singular matrix — check supports.");
+                for (let r = i + 1; r < n; r++) {
+                    const f = M[r][i] / M[i][i];
+                    for (let c = i; c <= n; c++) M[r][c] -= f * M[i][c];
+                }
+            }
+            const x = Array(n).fill(0);
+            for (let i = n - 1; i >= 0; i--) {
+                let s = M[i][n];
+                for (let c = i + 1; c < n; c++) s -= M[i][c] * x[c];
+                x[i] = s / M[i][i];
+            }
+            return x;
+        }
+
+        // ============================================================
+        // SOLVE & DRAW
+        // ============================================================
+        function solveAndDraw() {
+            errorBox.innerHTML = "";
+            try {
+                if (spans.some(s => s.L <= 0 || s.E <= 0 || s.I <= 0))
+                    throw new Error("All span L, E, I must be > 0.");
+                lastResult = solveBeam();
+                renderReactions(lastResult);
+                renderSpanStats(lastResult);
+                drawBeam();
+                drawSFD(lastResult);
+                drawBMD(lastResult);
+                drawDeflection(lastResult);
+            } catch (err) {
+                errorBox.innerHTML = `<div class="result-error">${err.message}</div>`;
+            }
+        }
+
+        function renderReactions(result) {
+            const N = nSpans + 1;
+            reactionsBody.innerHTML = '';
+            for (let i = 0; i < N; i++) {
+                const isFixed = (i === 0 && leftFixed) || (i === N - 1 && rightFixed);
+                reactionsBody.innerHTML += `
+                    <tr>
+                        <td>${String.fromCharCode(65 + i)}${i === 0 ? ' (left)' : i === N - 1 ? ' (right)' : ''}</td>
+                        <td>${result.reactionsR[i].toFixed(2)}</td>
+                        <td>${isFixed ? result.reactionsM[i].toFixed(2) : '—'}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderSpanStats(result) {
+            spanStatsContainer.innerHTML = result.samples.map((arr, s) => {
+                let V_max = 0, M_max = 0, M_min = 0, d_max = 0;
+                arr.forEach(p => {
+                    if (Math.abs(p.V) > Math.abs(V_max)) V_max = p.V;
+                    if (p.M > M_max) M_max = p.M;
+                    if (p.M < M_min) M_min = p.M;
+                    if (p.delta > d_max) d_max = p.delta;
+                });
+                return `
+                    <div class="span-card">
+                        <div class="span-card-header">Span ${s + 1}</div>
+                        <table class="span-stats-table">
+                            <tr><td>Max |shear|</td><td>${Math.abs(V_max).toFixed(2)} kip</td></tr>
+                            <tr><td>Max +moment</td><td>${M_max.toFixed(2)} kip-ft</td></tr>
+                            <tr><td>Max −moment</td><td>${M_min.toFixed(2)} kip-ft</td></tr>
+                            <tr><td>Max downward deflection</td><td>${d_max.toFixed(3)} in</td></tr>
+                        </table>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // DRAWING
+        // ============================================================
+        const X_LEFT = 60;
+        const X_RIGHT = 660;
+        const PLOT_W = X_RIGHT - X_LEFT;
+
+        function totalLength() { return spans.reduce((s, sp) => s + sp.L, 0); }
+
+        function nodeXPositions() {
+            const Ltot = totalLength();
+            const xs = [X_LEFT];
+            let acc = 0;
+            for (let s = 0; s < nSpans; s++) {
+                acc += spans[s].L;
+                xs.push(X_LEFT + (acc / Ltot) * PLOT_W);
+            }
+            return xs;
+        }
+
+        // ----- Beam diagram with collision-resistant labels -----
+        // Layout (top to bottom):
+        //   y=18    Load value text band 1
+        //   y=36    Load value text band 2
+        //   y=58    Load arrow tail line
+        //   y=58-90 Load arrows (varies)
+        //   y=110   Beam top
+        //   y=124   Beam bottom
+        //   y=140   Support markers
+        //   y=164   Support letter labels
+        //   y=190   Span dimension labels (L = X ft)
+        function drawBeam() {
+            const beamY = 110;
+            const beamH = 14;
+            const xs = nodeXPositions();
+            const supports = xs.length;
 
             let svg = '';
 
-            if (w > 0) {
-                const arrowCount = 12;
-                for (let i = 0; i <= arrowCount; i++) {
-                    const x = X_LEFT + (i / arrowCount) * PLOT_WIDTH;
-                    svg += `<line x1="${x}" y1="35" x2="${x}" y2="${beamY - 2}" class="load-arrow"/>`;
-                    svg += `<polygon points="${x - 3},${beamY - 6} ${x + 3},${beamY - 6} ${x},${beamY - 1}" class="load-arrow"/>`;
+            // Loads first (so beam sits on top of arrow tails crossing into beam)
+            const loadLabels = drawLoadsOnBeam(xs);
+            svg += loadLabels.svg;
+
+            // Beam body (drawn after arrows so it covers their bottom 2px)
+            svg += `<rect x="${X_LEFT}" y="${beamY}" width="${PLOT_W}" height="${beamH}" class="beam-fill"/>`;
+
+            // Supports
+            xs.forEach((x, i) => {
+                const isFixed = (i === 0 && leftFixed) || (i === supports - 1 && rightFixed);
+                if (isFixed) {
+                    svg += `<rect x="${x - 6}" y="${beamY - 12}" width="12" height="${beamH + 26}" class="support-mark"/>`;
+                    for (let h = 0; h < 4; h++) {
+                        svg += `<line x1="${x - 8}" y1="${beamY + beamH + 16 + h * 4}" x2="${x + 8}" y2="${beamY + beamH + 20 + h * 4}" stroke="#333" stroke-width="1"/>`;
+                    }
+                } else {
+                    svg += `<polygon points="${x},${beamY + beamH} ${x - 10},${beamY + beamH + 16} ${x + 10},${beamY + beamH + 16}" class="support-mark"/>`;
                 }
-                svg += `<line x1="${X_LEFT}" y1="35" x2="${X_RIGHT}" y2="35" class="load-arrow"/>`;
-                svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="28" text-anchor="middle" class="value-label-accent">w = ${w} kip/ft</text>`;
+                if (settlements[i] !== 0) {
+                    svg += `<rect x="${x - 11}" y="${beamY + beamH + 17}" width="22" height="3" class="settle-marker"/>`;
+                    svg += `<text x="${x}" y="${beamY + beamH + 30}" text-anchor="middle" class="value-label-accent" font-size="10">Δ ${settlements[i]}″</text>`;
+                }
+            });
+
+            // Support letter labels — placed BELOW the support glyph
+            xs.forEach((x, i) => {
+                svg += `<text x="${x}" y="${beamY + beamH + 50}" text-anchor="middle" class="support-label">${String.fromCharCode(65 + i)}</text>`;
+            });
+
+            // Span dimension labels — ALL the way at the bottom, no chance of collision
+            for (let s = 0; s < nSpans; s++) {
+                const xMid = (xs[s] + xs[s + 1]) / 2;
+                svg += `<text x="${xMid}" y="${beamY + beamH + 75}" text-anchor="middle" class="span-dim-label">L = ${spans[s].L} ft</text>`;
             }
-
-            if (P > 0) {
-                const px = toSvgX(a);
-                svg += `<line x1="${px}" y1="20" x2="${px}" y2="${beamY - 2}" class="load-arrow" stroke-width="2.5"/>`;
-                svg += `<polygon points="${px - 5},${beamY - 8} ${px + 5},${beamY - 8} ${px},${beamY - 1}" class="load-arrow"/>`;
-                svg += `<text x="${px}" y="14" text-anchor="middle" class="value-label-accent">P = ${P} kip</text>`;
-            }
-
-            svg += `<rect x="${X_LEFT}" y="${beamY}" width="${PLOT_WIDTH}" height="${beamHeight}" class="beam-fill"/>`;
-
-            const supportTopY = beamY + beamHeight;
-            const supportSize = 14;
-            svg += `<polygon points="${X_LEFT},${supportTopY} ${X_LEFT - supportSize},${supportTopY + supportSize * 1.4} ${X_LEFT + supportSize},${supportTopY + supportSize * 1.4}" class="support-fill"/>`;
-            svg += `<polygon points="${X_RIGHT},${supportTopY} ${X_RIGHT - supportSize},${supportTopY + supportSize * 1.4} ${X_RIGHT + supportSize},${supportTopY + supportSize * 1.4}" class="support-fill"/>`;
-            svg += `<line x1="${X_RIGHT - supportSize - 4}" y1="${supportTopY + supportSize * 1.4 + 4}" x2="${X_RIGHT + supportSize + 4}" y2="${supportTopY + supportSize * 1.4 + 4}" class="beam-stroke"/>`;
-
-            svg += `<text x="${X_LEFT}" y="${supportTopY + supportSize * 1.4 + 22}" text-anchor="middle" class="value-label">A</text>`;
-            svg += `<text x="${X_RIGHT}" y="${supportTopY + supportSize * 1.4 + 22}" text-anchor="middle" class="value-label">B</text>`;
-
-            const dimY = 165;
-            svg += `<line x1="${X_LEFT}" y1="${dimY}" x2="${X_RIGHT}" y2="${dimY}" class="dim-line"/>`;
-            svg += `<line x1="${X_LEFT}" y1="${dimY - 4}" x2="${X_LEFT}" y2="${dimY + 4}" class="dim-line"/>`;
-            svg += `<line x1="${X_RIGHT}" y1="${dimY - 4}" x2="${X_RIGHT}" y2="${dimY + 4}" class="dim-line"/>`;
-            svg += `<text x="${X_LEFT + PLOT_WIDTH / 2}" y="${dimY - 6}" text-anchor="middle" class="dim-text">L = ${L} ft</text>`;
 
             beamSvg.innerHTML = svg;
         }
 
-        function drawSFD(samples, L) {
-            const baseY = 100;
-            const maxY = 30;
+        // Returns SVG string for ALL loads on the beam, with smart label
+        // placement. Two label bands above the arrow tail line prevent
+        // labels from overlapping each other.
+        function drawLoadsOnBeam(xs) {
+            const beamY = 110;
+            const arrowTailY = 58;     // arrows emanate from this line
+            const labelBand1 = 36;     // first row of labels
+            const labelBand2 = 18;     // second row (when band 1 is taken)
 
-            let V_pos_max = 0, V_neg_max = 0;
-            samples.forEach(s => {
-                if (s.V > V_pos_max) V_pos_max = s.V;
-                if (s.V < V_neg_max) V_neg_max = s.V;
+            // Track horizontal extents already used per band so we can detect
+            // collisions and bump labels to the second band.
+            const band1Extents = [];
+            const band2Extents = [];
+
+            const fits = (extents, x, halfWidth) => {
+                for (const [lo, hi] of extents) {
+                    if (x - halfWidth < hi + 8 && x + halfWidth > lo - 8) return false;
+                }
+                return true;
+            };
+
+            let svg = '';
+
+            // Sort loads by their leftmost SVG x so labels get assigned bands
+            // in a predictable left-to-right order.
+            const ordered = [...loads.entries()].map(([i, ld]) => ({ i, ld }))
+                .filter(({ ld }) => ld.span >= 0 && ld.span < nSpans)
+                .map(({ i, ld }) => {
+                    const s = ld.span;
+                    const Lspan = spans[s].L;
+                    const x0 = xs[s], x1 = xs[s + 1];
+                    let leftSvgX, rightSvgX, midSvgX;
+                    if (ld.type === 'point') {
+                        leftSvgX = rightSvgX = midSvgX = x0 + (ld.a / Lspan) * (x1 - x0);
+                    } else {
+                        leftSvgX  = x0 + (Math.max(0, ld.a) / Lspan) * (x1 - x0);
+                        rightSvgX = x0 + (Math.min(Lspan, ld.b) / Lspan) * (x1 - x0);
+                        midSvgX = (leftSvgX + rightSvgX) / 2;
+                    }
+                    return { i, ld, s, Lspan, x0, x1, leftSvgX, rightSvgX, midSvgX };
+                })
+                .sort((a, b) => a.midSvgX - b.midSvgX);
+
+            ordered.forEach(({ ld, leftSvgX, rightSvgX, midSvgX, x0, x1, Lspan }) => {
+                // Build the label text first (we need its width for collision math)
+                let labelText;
+                if (ld.type === 'point') {
+                    labelText = `${ld.P}k`;
+                } else if (ld.type === 'udl') {
+                    labelText = `${ld.w1} k/ft`;
+                } else {
+                    labelText = (ld.w1 === ld.w2)
+                        ? `${ld.w1} k/ft`
+                        : `${ld.w1}→${ld.w2} k/ft`;
+                }
+                const approxWidth = labelText.length * 6.5;       // rough at 11px Space Grotesk
+                const halfW = approxWidth / 2 + 4;
+
+                let labelY = labelBand1;
+                if (fits(band1Extents, midSvgX, halfW)) {
+                    band1Extents.push([midSvgX - halfW, midSvgX + halfW]);
+                } else {
+                    labelY = labelBand2;
+                    band2Extents.push([midSvgX - halfW, midSvgX + halfW]);
+                }
+
+                // Draw label background pill so the text is fully readable
+                svg += `<rect x="${midSvgX - halfW}" y="${labelY - 11}" width="${halfW * 2}" height="14" rx="3" class="load-tag-bg"/>`;
+                svg += `<text x="${midSvgX}" y="${labelY}" text-anchor="middle" class="load-tag">${labelText}</text>`;
+
+                // Draw the arrows
+                if (ld.type === 'point') {
+                    svg += `<line x1="${midSvgX}" y1="${arrowTailY + 8}" x2="${midSvgX}" y2="${beamY - 2}" class="load-arrow" stroke-width="2.2"/>`;
+                    svg += `<polygon points="${midSvgX - 5},${beamY - 9} ${midSvgX + 5},${beamY - 9} ${midSvgX},${beamY - 1}" class="load-arrow"/>`;
+                } else {
+                    const widthPx = rightSvgX - leftSvgX;
+                    const arrowCount = Math.max(3, Math.min(12, Math.round(widthPx / 32)));
+                    for (let k = 0; k <= arrowCount; k++) {
+                        const t = k / arrowCount;
+                        const px = leftSvgX + t * widthPx;
+                        const wHere = (ld.type === 'udl') ? ld.w1 : ld.w1 + (ld.w2 - ld.w1) * t;
+                        const baseTopY = arrowTailY + 14;
+                        const maxArrowH = beamY - 2 - baseTopY;
+                        const wMax = (ld.type === 'udl') ? Math.abs(ld.w1) : Math.max(Math.abs(ld.w1), Math.abs(ld.w2));
+                        if (wMax < 1e-6) continue;
+                        const arrowH = Math.max(8, (Math.abs(wHere) / wMax) * maxArrowH);
+                        const arrowTopY = beamY - 2 - arrowH;
+                        svg += `<line x1="${px}" y1="${arrowTopY}" x2="${px}" y2="${beamY - 2}" class="load-arrow" stroke-width="1.4"/>`;
+                        svg += `<polygon points="${px - 2.5},${beamY - 7} ${px + 2.5},${beamY - 7} ${px},${beamY - 1}" class="load-arrow"/>`;
+                    }
+                    // Top-of-arrows envelope line
+                    if (ld.type === 'udl') {
+                        const baseTopY = arrowTailY + 14;
+                        const arrowH = beamY - 2 - baseTopY;
+                        svg += `<line x1="${leftSvgX}" y1="${beamY - 2 - arrowH}" x2="${rightSvgX}" y2="${beamY - 2 - arrowH}" class="load-arrow" stroke-width="1.4"/>`;
+                    } else {
+                        const baseTopY = arrowTailY + 14;
+                        const wMax = Math.max(Math.abs(ld.w1), Math.abs(ld.w2));
+                        if (wMax > 1e-6) {
+                            const yL = beamY - 2 - Math.max(8, (Math.abs(ld.w1) / wMax) * (beamY - 2 - baseTopY));
+                            const yR = beamY - 2 - Math.max(8, (Math.abs(ld.w2) / wMax) * (beamY - 2 - baseTopY));
+                            svg += `<line x1="${leftSvgX}" y1="${yL}" x2="${rightSvgX}" y2="${yR}" class="load-arrow" stroke-width="1.4"/>`;
+                        }
+                    }
+                }
             });
-            const V_abs = Math.max(V_pos_max, Math.abs(V_neg_max));
-            if (V_abs === 0) { sfdSvg.innerHTML = ""; return; }
 
-            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
-            const scale = (baseY - maxY) / V_abs;
-            const toSvgY = V => baseY - V * scale;
-
-            let path = `M ${toSvgX(samples[0].x)} ${baseY}`;
-            samples.forEach(s => { path += ` L ${toSvgX(s.x)} ${toSvgY(s.V)}`; });
-            path += ` L ${toSvgX(samples[samples.length - 1].x)} ${baseY} Z`;
-
-            let svg = '';
-            svg += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
-            svg += `<path d="${path}" class="sfd-fill"/>`;
-            svg += `<text x="${X_LEFT - 6}" y="${toSvgY(samples[0].V) - 6}" text-anchor="end" class="value-label">+${samples[0].V.toFixed(1)} kip</text>`;
-            const endV = samples[samples.length - 1].V;
-            svg += `<text x="${X_RIGHT + 6}" y="${toSvgY(endV) + 14}" text-anchor="start" class="value-label">${endV.toFixed(1)} kip</text>`;
-
-            sfdSvg.innerHTML = svg;
+            return { svg };
         }
 
-        function drawBMD(samples, L) {
-            const baseY = 30;
-            const maxY = 170;
+        function drawSFD(result) { drawDiagram(sfdSvg, result, 'V', 2, false); }
+        function drawBMD(result) { drawDiagram(bmdSvg, result, 'M', 2, true); }
+        function drawDeflection(result) { drawDiagram(defSvg, result, 'delta', 3, true); }
 
-            let M_max = 0;
-            samples.forEach(s => { if (s.M > M_max) M_max = s.M; });
-            if (M_max === 0) { bmdSvg.innerHTML = ""; return; }
+        function drawDiagram(svg, result, key, decimals, sagPositiveDown) {
+            const xs = nodeXPositions();
+            const baseY = 110;
+            const halfH = 80;
 
-            const toSvgX = x => X_LEFT + (x / L) * PLOT_WIDTH;
-            const scale = (maxY - baseY) / M_max;
-            const toSvgY = M => baseY + M * scale;
+            let absMax = 0;
+            result.samples.forEach(arr => arr.forEach(p => {
+                if (Math.abs(p[key]) > absMax) absMax = Math.abs(p[key]);
+            }));
+            if (absMax === 0) absMax = 1;
+            const scale = halfH / absMax;
+            const dirSign = sagPositiveDown ? +1 : -1;
+            const toSvgY = v => baseY + dirSign * v * scale;
 
-            let path = `M ${toSvgX(samples[0].x)} ${baseY}`;
-            samples.forEach(s => { path += ` L ${toSvgX(s.x)} ${toSvgY(s.M)}`; });
-            path += ` L ${toSvgX(samples[samples.length - 1].x)} ${baseY} Z`;
+            let svgStr = '';
+            svgStr += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
+            xs.forEach(x => {
+                svgStr += `<line x1="${x}" y1="${baseY - halfH - 5}" x2="${x}" y2="${baseY + halfH + 5}" class="axis-grid"/>`;
+            });
 
-            let svg = '';
-            svg += `<line x1="${X_LEFT}" y1="${baseY}" x2="${X_RIGHT}" y2="${baseY}" class="axis-zero"/>`;
-            svg += `<path d="${path}" class="bmd-fill"/>`;
+            for (let s = 0; s < nSpans; s++) {
+                const arr = result.samples[s];
+                const x0 = xs[s], x1 = xs[s + 1];
+                const toX = lx => x0 + (lx / spans[s].L) * (x1 - x0);
+                let path = `M ${toX(arr[0].x)} ${baseY}`;
+                arr.forEach(p => { path += ` L ${toX(p.x)} ${toSvgY(p[key])}`; });
+                path += ` L ${toX(arr[arr.length - 1].x)} ${baseY} Z`;
+                const cls = key === 'V' ? 'sfd-fill' : key === 'M' ? 'bmd-fill' : 'deflect-fill';
+                svgStr += `<path d="${path}" class="${cls}"/>`;
+            }
 
-            let M_peak = 0, x_peak = 0;
-            samples.forEach(s => { if (s.M > M_peak) { M_peak = s.M; x_peak = s.x; } });
-            const peakSx = toSvgX(x_peak);
-            const peakSy = toSvgY(M_peak);
-            svg += `<line x1="${peakSx}" y1="${baseY}" x2="${peakSx}" y2="${peakSy}" stroke="rgba(232,93,36,0.4)" stroke-dasharray="3,3"/>`;
-            svg += `<text x="${peakSx}" y="${peakSy + 16}" text-anchor="middle" class="value-label-accent">${M_peak.toFixed(2)} kip-ft @ x = ${x_peak.toFixed(2)} ft</text>`;
+            // Span letter labels along baseline (same x positions as beam diagram)
+            xs.forEach((x, i) => {
+                svgStr += `<text x="${x}" y="${baseY + halfH + 28}" text-anchor="middle" class="support-label" font-size="11">${String.fromCharCode(65 + i)}</text>`;
+            });
 
-            bmdSvg.innerHTML = svg;
+            // Per-span peak labels — placed clear of the curve
+            for (let s = 0; s < nSpans; s++) {
+                const arr = result.samples[s];
+                let peak = arr[0], antipeak = arr[0];
+                arr.forEach(p => {
+                    if (p[key] > peak[key]) peak = p;
+                    if (p[key] < antipeak[key]) antipeak = p;
+                });
+                const x0 = xs[s], x1 = xs[s + 1];
+                const toX = lx => x0 + (lx / spans[s].L) * (x1 - x0);
+                if (Math.abs(peak[key]) > absMax * 0.05) {
+                    const yLabel = toSvgY(peak[key]) + (dirSign > 0 ? 14 : -6);
+                    svgStr += `<text x="${toX(peak.x)}" y="${yLabel}" text-anchor="middle" class="value-label-accent">${peak[key].toFixed(decimals)}</text>`;
+                }
+                if (Math.abs(antipeak[key]) > absMax * 0.05 && Math.sign(antipeak[key]) !== Math.sign(peak[key])) {
+                    const yLabel = toSvgY(antipeak[key]) + (dirSign > 0 ? -6 : 14);
+                    svgStr += `<text x="${toX(antipeak.x)}" y="${yLabel}" text-anchor="middle" class="value-label-accent">${antipeak[key].toFixed(decimals)}</text>`;
+                }
+            }
+
+            svg.innerHTML = svgStr;
         }
 
-        calculateBeam();
+        // ============================================================
+        // CSV EXPORT
+        // ============================================================
+        function exportCSV() {
+            if (!lastResult) return;
+            const N = nSpans + 1;
+            let csv = 'StruxLab Continuous Beam — Results\n\n';
+
+            csv += 'Reactions\n';
+            csv += 'Support,R (kip),M (kip-ft)\n';
+            for (let i = 0; i < N; i++) {
+                const isFixed = (i === 0 && leftFixed) || (i === N - 1 && rightFixed);
+                csv += `${String.fromCharCode(65 + i)},${lastResult.reactionsR[i].toFixed(3)},${isFixed ? lastResult.reactionsM[i].toFixed(3) : ''}\n`;
+            }
+
+            csv += '\nPer-span maxima\n';
+            csv += 'Span,Max |V| (kip),Max +M (kip-ft),Max -M (kip-ft),Max defl (in)\n';
+            lastResult.samples.forEach((arr, s) => {
+                let Vm = 0, Mp = 0, Mn = 0, dm = 0;
+                arr.forEach(p => {
+                    if (Math.abs(p.V) > Math.abs(Vm)) Vm = p.V;
+                    if (p.M > Mp) Mp = p.M;
+                    if (p.M < Mn) Mn = p.M;
+                    if (p.delta > dm) dm = p.delta;
+                });
+                csv += `${s + 1},${Math.abs(Vm).toFixed(3)},${Mp.toFixed(3)},${Mn.toFixed(3)},${dm.toFixed(4)}\n`;
+            });
+
+            csv += '\nFull sample arrays (x in ft, V in kip, M in kip-ft, deflection in in)\n';
+            csv += 'Span,x_local,x_global,V,M,Deflection\n';
+            let xGlobal = 0;
+            lastResult.samples.forEach((arr, s) => {
+                arr.forEach(p => {
+                    csv += `${s + 1},${p.x.toFixed(3)},${(xGlobal + p.x).toFixed(3)},${p.V.toFixed(3)},${p.M.toFixed(3)},${p.delta.toFixed(4)}\n`;
+                });
+                xGlobal += spans[s].L;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `struxlab-beam-${nSpans}span-${Date.now()}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================================
+        // INITIAL RUN
+        // ============================================================
+        setDefaults();
+        renderSection();
+        renderSettle();
+        renderLoads();
+        solveAndDraw();
     </script>
 
     <script src="../components.js" data-depth="1"></script>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | Sanket Wadgaonkar | StruxLab</title>
+    <meta name="description" content="Sanket Wadgaonkar is a structural engineer in Pune who builds browser-based engineering tools to prove that structural logic can be written as real software.">
+    <meta property="og:title" content="About Sanket Wadgaonkar">
+    <meta property="og:description" content="Six years in structural practice. Building open, readable engineering tools for engineers who want to understand the math, not just run it.">
+    <meta property="og:url" content="https://struxlab.netlify.app/about">
+    <meta property="og:type" content="profile">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <article class="post-page">
+
+        <p class="post-meta">About</p>
+        <h1>Sanket Wadgaonkar</h1>
+
+        <p class="lede">I'm a structural engineer in Pune. Six years of practice, lateral systems, and ETABS models — and a growing conviction that structural engineering logic can be expressed as real, working software.</p>
+
+        <div class="post-body">
+
+            <h2>The experiment</h2>
+
+            <p>Most structural analysis software is a black box. You enter numbers, results come out, and the math in between is invisible. I wanted to know what would happen if I wrote the math myself — not as a spreadsheet, but as code.</p>
+
+            <p>StruxLab started as that experiment. Could I implement strain compatibility from scratch and draw a P-M interaction curve in a browser? Could I assemble a stiffness matrix and solve a multi-span beam without any libraries? Could I derive lateral stiffness for a braced frame from first principles and make it interactive?</p>
+
+            <p>The answer, it turns out, is yes. And once you've written it, you understand it in a way that using software never gives you.</p>
+
+            <div class="callout">
+                <p>Engineering logic is just math with physical meaning. If the math can be written, the software can be built.</p>
+            </div>
+
+            <h2>What StruxLab is for</h2>
+
+            <p>The tools and writing here are aimed at engineers who want to understand the engineering, not just run it. Students who've worked through textbook derivations but never watched them move. Junior engineers trying to build intuition before they trust the black box.</p>
+
+            <p>Every tool on this site is built around a single concept — and every concept is explained. The diagrams are drawn by the math. The source is readable. If something looks wrong, you can trace it. That's intentional.</p>
+
+            <p>I occasionally take on consulting work in structural design, lateral system analysis, and engineering software development. If you're looking for someone who understands both sides of the problem, I'd like to hear from you.</p>
+
+            <h2>Background</h2>
+
+            <p>Six years in structural practice in Pune — building design and analysis across mid-rise residential to high-rise mixed-use, with a focus on lateral system design and diaphragm modeling for irregular plans. Before StruxLab, I was writing VBA tools to automate the parts of the job that engineers were still doing by hand.</p>
+
+            <p>StruxLab is where that practice goes public.</p>
+
+            <p><a href="resume.html">View my full resume →</a></p>
+
+            <div class="contact-box" style="margin-top: 3rem;">
+                <h2>Get in touch</h2>
+                <p>Open to consulting engagements in structural design, lateral systems, and engineering software development. Also happy to hear from students, fellow engineers, or anyone who found an error in the math.</p>
+                <p><strong>Email:</strong> <a href="mailto:sdwadgaonkar@gmail.com">sdwadgaonkar@gmail.com</a></p>
+                <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/your-profile">linkedin.com/in/your-profile</a></p>
+            </div>
+
+        </div>
+
+        <div class="post-footer">
+            <p>← <a href="index.html">Back to home</a></p>
+        </div>
+
+    </article>
+
+    <div id="site-footer"></div>
+
+    <script src="components.js" data-depth="0"></script>
+    <script>
+        renderNavbar('about');
+        renderFooter();
+    </script>
+
+</body>
+</html>

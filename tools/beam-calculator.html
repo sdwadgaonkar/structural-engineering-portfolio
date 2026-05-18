@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -608,6 +609,17 @@
             try {
                 if (spans.some(s => s.L <= 0 || s.E <= 0 || s.I <= 0))
                     throw new Error("All span L, E, I must be > 0.");
+                for (let i = 0; i < loads.length; i++) {
+                    const ld = loads[i];
+                    const L = spans[ld.span].L;
+                    if (ld.type === 'point') {
+                        if (ld.a < 0 || ld.a > L)
+                            throw new Error(`Load ${i + 1}: point load position ${ld.a.toFixed(2)} ft is outside span ${ld.span + 1} (0 – ${L} ft).`);
+                    } else {
+                        if (ld.a < 0 || ld.b > L + 1e-9 || ld.a >= ld.b)
+                            throw new Error(`Load ${i + 1}: range [${ld.a.toFixed(2)}, ${ld.b.toFixed(2)}] ft is invalid for span ${ld.span + 1} (0 – ${L} ft). Ensure 0 ≤ a < b ≤ L.`);
+                    }
+                }
                 lastResult = solveBeam();
                 renderReactions(lastResult);
                 renderSpanStats(lastResult);

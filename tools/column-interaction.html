@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -256,9 +257,14 @@
 
             if (v.b <= 0 || v.h <= 0) return showError("Section dimensions must be positive.");
             if (v.cover >= v.h / 2) return showError("Cover must be less than h/2.");
-            if (v.fc < 2.5) return showError("f'c must be at least 2.5 ksi.");
+            if (v.fc < 2.5) return showError("fʼc must be at least 2.5 ksi.");
             if (v.fy < 40) return showError("fy must be at least 40 ksi.");
+            if (v.fy > 100) return showError("fy should not exceed 100 ksi for standard reinforcing steel (ASTM A615/A706).");
             if (v.barsPerFace < 2) return showError("Must have at least 2 bars per face.");
+            if (v.barDia <= 0) return showError("Bar diameter must be positive.");
+            if (v.Mu < 0) return showError("Mu must be ≥ 0 kip-ft. The interaction diagram is symmetric about M = 0 — use the positive side.");
+            const minCover = parseFloat((v.barDia / 2 + 1.5).toFixed(2));
+            if (v.cover < minCover) return showError(`Cover to bar centroid must be ≥ ${minCover} in (= 1.5 in face cover + dᵇ/2 = ${(v.barDia / 2).toFixed(3)} in). Check ACI 318-19 Table 20.6.1.3.`);
 
             // Convert ksi to psi for internal use
             const fc_psi = v.fc * ksi_to_psi;
@@ -272,6 +278,9 @@
             ];
             const Ast = 2 * As_per_face;
             const rho = (Ast / (v.b * v.h)) * 100;
+
+            if (rho < 1.0) return showError(`Reinforcement ratio ρ = ${rho.toFixed(2)}% is below the ACI 318-19 minimum of 1.0% (§10.6.1.1). Increase bar count or size.`);
+            if (rho > 8.0) return showError(`Reinforcement ratio ρ = ${rho.toFixed(2)}% exceeds the ACI 318-19 maximum of 8.0% (§10.6.1.1). Reduce bar count or size.`);
 
             const result = generateCurve(v.b, v.h, fc_psi, fy_psi, layers);
 

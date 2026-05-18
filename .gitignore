@@ -1,0 +1,19 @@
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# VS Code
+.vscode/
+
+# Claude Code
+.claude/
+
+# Node (if ever added)
+node_modules/
+.env
+.env.local
+
+# Build output (if ever added)
+dist/
+_site/

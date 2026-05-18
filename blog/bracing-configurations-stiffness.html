@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparing Bracing Configurations: A Stiffness Study | StruxLab</title>
+    <meta name="description" content="A first-principles stiffness comparison of single diagonal, X-brace, chevron (V-brace), and eccentric bracing — with derivations, worked numbers, and the practical guidance that doesn't fit in a textbook.">
+    <meta property="og:title" content="Comparing Bracing Configurations: A Stiffness Study">
+    <meta property="og:description" content="Four bracing geometries, the same bay, the same member — but stiffness values that vary by nearly 2:1. Here's the derivation and what actually drives the choice.">
+    <meta property="og:url" content="https://struxlab.netlify.app/blog/bracing-configurations-stiffness">
+    <meta property="og:type" content="article">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <article class="post-page">
+
+        <p class="post-meta">May 18, 2026 · Lateral systems · 10 min read</p>
+
+        <h1>Comparing Bracing Configurations: A Stiffness Study</h1>
+
+        <p class="lede">Four bracing geometries, the same bay, the same member size — but lateral stiffness values that vary by nearly 2:1. The differences trace back to one formula and one geometric parameter. Here's the derivation, the comparison, and what actually drives the choice.</p>
+
+        <div class="post-body">
+
+            <p>Almost every bracing configuration decision I've watched get made in practice runs through the same sequence: constructability first, then erection sequence, then seismic detailing, then somewhere in the middle someone says "X-bracing is stiffer, right?" Sometimes. "V-braces are basically the same as X." For a specific bay geometry, yes — almost identical. The actual numbers depend on geometry in a way that's worth deriving once, so you can look at a structural model with more confidence about what you're reading.</p>
+
+            <p>This post works through the lateral stiffness of four configurations from first principles. The math is nothing beyond the truss stiffness equation. What it produces is a framework for reasoning about system selection that replaces intuition with a formula you can evaluate by hand.</p>
+
+            <h2>The building block — one diagonal brace</h2>
+
+            <p>For a single diagonal brace in a bay of width <em>L</em> and height <em>h</em>, the lateral stiffness follows directly from the member's axial stiffness and its orientation. Under a lateral force <em>F</em> at the top, the brace carries axial force:</p>
+
+            <div class="equation">
+                N = F / cos θ
+            </div>
+
+            <p>where θ is the angle between the brace and horizontal, and cos θ = L/d with d = √(L² + h²). The axial deformation of the brace is δ = Nd/(EA). The horizontal component of that deformation is the lateral displacement:</p>
+
+            <div class="equation">
+                Δ = δ / cos θ = F·d / (EA·cos²θ)
+            </div>
+
+            <p>Rearranging, the lateral stiffness of a single diagonal is:</p>
+
+            <div class="equation">
+                k<sub>1</sub> = F/Δ = EA·cos²θ / d
+            </div>
+
+            <p>Substituting cos θ = L/d:</p>
+
+            <div class="equation">
+                k<sub>1</sub> = EA·L² / d³ = EA·L² / (L² + h²)<sup>3/2</sup>
+            </div>
+
+            <p>Three things follow immediately. Stiffness scales linearly with EA — bigger or stiffer members give proportionally more stiffness. For a fixed bay width L, stiffness decreases as story height h increases — taller bays are softer for the same member. And the geometric dependence collapses to a single parameter: the aspect ratio β = h/L.</p>
+
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 700 230" preserveAspectRatio="xMidYMid meet">
+                    <!-- Left panel: Single diagonal -->
+                    <text x="170" y="18" text-anchor="middle" class="diaphragm-label-bold">Single diagonal</text>
+                    <!-- Columns -->
+                    <rect x="70" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="262" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Beam -->
+                    <rect x="70" y="35" width="200" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Ground line -->
+                    <line x1="50" y1="180" x2="282" y2="180" stroke="#1A1A1A" stroke-width="2"/>
+                    <!-- Ground hatch -->
+                    <line x1="56" y1="180" x2="50" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="70" y1="180" x2="64" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="84" y1="180" x2="78" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="98" y1="180" x2="92" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="112" y1="180" x2="106" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="126" y1="180" x2="120" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="140" y1="180" x2="134" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="154" y1="180" x2="148" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="168" y1="180" x2="162" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="182" y1="180" x2="176" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="196" y1="180" x2="190" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="210" y1="180" x2="204" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="224" y1="180" x2="218" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="238" y1="180" x2="232" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="252" y1="180" x2="246" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="266" y1="180" x2="260" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="280" y1="180" x2="274" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Single diagonal brace (bottom-left to top-right) -->
+                    <line x1="74" y1="180" x2="266" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Load arrow -->
+                    <line x1="28" y1="39" x2="66" y2="39" stroke="#1A1A1A" stroke-width="2"/>
+                    <polygon points="63,34 74,39 63,44" fill="#1A1A1A"/>
+                    <text x="20" y="43" text-anchor="middle" class="diaphragm-label-bold" font-size="11">F</text>
+                    <!-- Dimension labels -->
+                    <text x="170" y="200" text-anchor="middle" class="diaphragm-label">L</text>
+                    <text x="294" y="112" text-anchor="start" class="diaphragm-label">h</text>
+                    <text x="190" y="98" text-anchor="middle" class="diaphragm-label-accent" font-size="11">θ</text>
+                    <!-- d label along brace -->
+                    <text x="180" y="115" text-anchor="middle" class="diaphragm-label" font-size="10" transform="rotate(-34 180 115)">d = √(L²+h²)</text>
+
+                    <!-- Right panel: X-brace -->
+                    <text x="530" y="18" text-anchor="middle" class="diaphragm-label-bold">X-brace</text>
+                    <!-- Columns -->
+                    <rect x="430" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="622" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Beam -->
+                    <rect x="430" y="35" width="200" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Ground line -->
+                    <line x1="410" y1="180" x2="642" y2="180" stroke="#1A1A1A" stroke-width="2"/>
+                    <!-- Ground hatch -->
+                    <line x1="416" y1="180" x2="410" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="430" y1="180" x2="424" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="444" y1="180" x2="438" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="458" y1="180" x2="452" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="472" y1="180" x2="466" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="486" y1="180" x2="480" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="500" y1="180" x2="494" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="514" y1="180" x2="508" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="528" y1="180" x2="522" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="542" y1="180" x2="536" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="556" y1="180" x2="550" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="570" y1="180" x2="564" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="584" y1="180" x2="578" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="598" y1="180" x2="592" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="612" y1="180" x2="606" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="626" y1="180" x2="620" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="640" y1="180" x2="634" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- X-brace diagonals -->
+                    <line x1="434" y1="180" x2="626" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="434" y1="43" x2="626" y2="180" stroke="#E85D24" stroke-width="2.5" stroke-dasharray="5,3"/>
+                    <!-- Dashed = compression diagonal (tension-only design) -->
+                    <!-- Load arrow -->
+                    <line x1="388" y1="39" x2="426" y2="39" stroke="#1A1A1A" stroke-width="2"/>
+                    <polygon points="423,34 434,39 423,44" fill="#1A1A1A"/>
+                    <text x="380" y="43" text-anchor="middle" class="diaphragm-label-bold" font-size="11">F</text>
+                    <!-- Caption for dashed line -->
+                    <text x="530" y="208" text-anchor="middle" class="diaphragm-label" font-size="10">Dashed = compression diagonal. Solid = tension diagonal.</text>
+                </svg>
+                <figcaption>Left: a single diagonal brace. Right: X-bracing with both diagonals shown. In tension-only design, the dashed (compression) diagonal is ignored for stiffness calculations.</figcaption>
+            </figure>
+
+            <div class="callout">
+                <p>At β = h/L = 1 (square bay), the diagonal is at 45° — the angle that maximizes the horizontal component of axial stiffness. As β increases above 1 (tall, narrow bays), the brace becomes more vertical and less efficient at resisting lateral load. As β decreases below 0.5 (wide, shallow bays), efficiency improves but brace lengths get shorter.</p>
+            </div>
+
+            <h2>X-bracing</h2>
+
+            <p>X-bracing adds a second diagonal, crossing the first. In the elastic range, if both diagonals carry load — which requires both to be designed for compression — the lateral stiffness doubles:</p>
+
+            <div class="equation">
+                k<sub>X</sub> = 2k<sub>1</sub>
+            </div>
+
+            <p>This requires members with sufficient compactness and slenderness to sustain compression before seismic demand exceeds elastic behavior. AISC 341-22 §F2 governs this for Special Concentrically Braced Frames (SCBF): members must meet seismic compactness requirements and KL/r ≤ 200. The crossing point is typically treated as a mid-length brace for slenderness calculations when the two diagonals are connected at the cross — this halves the effective unbraced length and dramatically improves compression capacity.</p>
+
+            <p>For tension-only design — where the compression diagonal is slender enough to be treated as carrying no compression — the effective stiffness drops back to k<sub>1</sub>, exactly the same as a single diagonal. The symmetry of X-bracing in this case just means the system works in both lateral directions, not that it's stiffer in either one. Tension-only design is permitted for certain Ordinary CBF (OCBF) configurations under AISC 341-22 §F1.6a, with restrictions.</p>
+
+            <h2>Chevron (V) bracing</h2>
+
+            <p>Chevron bracing puts two diagonals on the same story, meeting at the midpoint of the beam. Each diagonal spans from a floor corner to the beam midpoint — a different geometry that changes the stiffness formula.</p>
+
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 700 230" preserveAspectRatio="xMidYMid meet">
+                    <!-- Left panel: Chevron brace (V-brace, vertex at top) -->
+                    <text x="170" y="18" text-anchor="middle" class="diaphragm-label-bold">Chevron brace</text>
+                    <rect x="70" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="262" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="70" y="35" width="200" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <line x1="50" y1="180" x2="282" y2="180" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="56" y1="180" x2="50" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="70" y1="180" x2="64" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="84" y1="180" x2="78" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="98" y1="180" x2="92" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="112" y1="180" x2="106" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="126" y1="180" x2="120" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="140" y1="180" x2="134" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="154" y1="180" x2="148" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="168" y1="180" x2="162" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="182" y1="180" x2="176" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="196" y1="180" x2="190" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="210" y1="180" x2="204" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="224" y1="180" x2="218" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="238" y1="180" x2="232" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="252" y1="180" x2="246" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="266" y1="180" x2="260" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="280" y1="180" x2="274" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Chevron braces: bottom-left → top-center, bottom-right → top-center -->
+                    <line x1="74" y1="180" x2="170" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="266" y1="180" x2="170" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Beam midpoint marker -->
+                    <circle cx="170" cy="43" r="4" fill="#E85D24"/>
+                    <!-- Dimension labels -->
+                    <text x="108" y="145" text-anchor="middle" class="diaphragm-label" font-size="10" transform="rotate(-43 108 145)">d<tspan dy="3" font-size="8">v</tspan></text>
+                    <text x="130" y="200" text-anchor="middle" class="diaphragm-label" font-size="10">L/2</text>
+                    <text x="230" y="200" text-anchor="middle" class="diaphragm-label" font-size="10">L/2</text>
+                    <!-- Load arrow -->
+                    <line x1="28" y1="39" x2="66" y2="39" stroke="#1A1A1A" stroke-width="2"/>
+                    <polygon points="63,34 74,39 63,44" fill="#1A1A1A"/>
+                    <text x="20" y="43" text-anchor="middle" class="diaphragm-label-bold" font-size="11">F</text>
+
+                    <!-- Right panel: K-brace -->
+                    <text x="530" y="18" text-anchor="middle" class="diaphragm-label-bold">K-brace</text>
+                    <rect x="430" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="622" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <rect x="430" y="35" width="200" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <line x1="410" y1="180" x2="642" y2="180" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="416" y1="180" x2="410" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="430" y1="180" x2="424" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="444" y1="180" x2="438" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="458" y1="180" x2="452" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="472" y1="180" x2="466" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="486" y1="180" x2="480" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="500" y1="180" x2="494" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="514" y1="180" x2="508" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="528" y1="180" x2="522" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="542" y1="180" x2="536" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="556" y1="180" x2="550" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="570" y1="180" x2="564" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="584" y1="180" x2="578" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="598" y1="180" x2="592" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="612" y1="180" x2="606" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="626" y1="180" x2="620" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="640" y1="180" x2="634" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- K-brace: two diagonals meeting at mid-height of right column -->
+                    <!-- Mid-height of right column: x≈626, y=(35+180)/2=107 -->
+                    <line x1="434" y1="180" x2="626" y2="107" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="434" y1="43" x2="626" y2="107" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Mid-height marker on right column -->
+                    <circle cx="626" cy="107" r="4" fill="#E85D24"/>
+                    <!-- Warning label -->
+                    <text x="530" y="208" text-anchor="middle" fill="#E85D24" font-family="'Space Grotesk', sans-serif" font-size="10" font-weight="500">AISC 341-22 prohibits K-bracing in SCBF and OCBF</text>
+                    <!-- Load arrow -->
+                    <line x1="388" y1="39" x2="426" y2="39" stroke="#1A1A1A" stroke-width="2"/>
+                    <polygon points="423,34 434,39 423,44" fill="#1A1A1A"/>
+                    <text x="380" y="43" text-anchor="middle" class="diaphragm-label-bold" font-size="11">F</text>
+                </svg>
+                <figcaption>Left: chevron (V) bracing — two diagonals meeting at the beam midpoint (orange circle). Right: K-bracing — diagonals meeting at mid-height of a column. K-bracing is prohibited in seismic design because the post-buckling unbalanced force acts at column mid-height.</figcaption>
+            </figure>
+
+            <p>For a symmetric chevron brace under lateral force F:</p>
+
+            <ul>
+                <li>Each diagonal has horizontal projection L/2 and vertical h</li>
+                <li>Brace length: d<sub>v</sub> = √((L/2)² + h²)</li>
+                <li>Horizontal angle: cos θ<sub>v</sub> = (L/2) / d<sub>v</sub></li>
+                <li>By symmetry each brace carries F/2 horizontal force</li>
+            </ul>
+
+            <p>The total lateral stiffness:</p>
+
+            <div class="equation">
+                k<sub>V</sub> = 2 · EA · cos²θ<sub>v</sub> / d<sub>v</sub> = EA · L² / (2 · d<sub>v</sub>³)
+            </div>
+
+            <p>The ratio of chevron stiffness to single diagonal stiffness depends only on β = h/L:</p>
+
+            <div class="equation">
+                k<sub>V</sub> / k<sub>1</sub> = d³ / (2 · d<sub>v</sub>³) = (L² + h²)<sup>3/2</sup> / (2 · ((L/2)² + h²)<sup>3/2</sup>)
+            </div>
+
+            <p>This ratio is not obvious, and it's worth computing it across the range of typical bay geometries:</p>
+
+            <table style="width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.875rem;">
+                <thead>
+                    <tr style="background:var(--bg-muted);">
+                        <th style="padding:0.55rem 1rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">β = h/L</th>
+                        <th style="padding:0.55rem 1rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Typical geometry</th>
+                        <th style="padding:0.55rem 1rem; text-align:right; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">k<sub>V</sub> / k<sub>1</sub></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">0.4</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">10 ft / 25 ft — wide industrial bay</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">2.30</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">0.5</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">12 ft / 24 ft — typical commercial</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">1.98</td>
+                    </tr>
+                    <tr style="background:rgba(232,93,36,0.06);">
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">0.54</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">13 ft / 24 ft — worked example below</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500; color:var(--accent);">1.84</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">0.6</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">12 ft / 20 ft — office building</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">1.66</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">0.8</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">12 ft / 15 ft — tall, narrow bay</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">1.25</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;">1.0</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary);">15 ft / 15 ft — square bay</td>
+                        <td style="padding:0.45rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">1.01</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 1rem; font-variant-numeric:tabular-nums;">1.5</td>
+                        <td style="padding:0.45rem 1rem; color:var(--text-secondary);">15 ft / 10 ft — high story, narrow bay</td>
+                        <td style="padding:0.45rem 1rem; text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">0.74</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <p>For typical commercial construction with β ≈ 0.5 (12 ft floors, 24 ft bays), a chevron brace provides nearly twice the lateral stiffness of a single diagonal with the same member. This approaches the elastic stiffness of a full X-brace. For taller or narrower bays (β &gt; 1), the advantage disappears — and below X-brace stiffness with the same total steel weight.</p>
+            </div>
+
+            <p>The counterweight to this efficiency is the beam. Under seismic loading, when the compression diagonal buckles, the tension diagonal continues carrying load but the buckled member drops its vertical force contribution. The beam midpoint receives an unbalanced upward force — the load that was previously balanced by the buckled compression diagonal. AISC 341-22 §F2.4c requires the beam to carry this unbalanced force without yielding, which typically means a heavier, more compact beam section than would be needed without bracing.</p>
+
+            <h2>K-bracing — why it's prohibited for seismic</h2>
+
+            <p>K-bracing connects the diagonals to a column at mid-story height rather than to the beam. The two members form the shape of the letter K, with the vertex on the column face (see right panel of the figure above).</p>
+
+            <p>The stiffness formula follows the same diagonal mechanics. The problem isn't stiffness — it's what happens after the compression diagonal buckles. In a CBF with X or chevron bracing, the post-buckling unbalanced force acts on the beam, which is designed to carry it. In K-bracing, the unbalanced force acts on the column at mid-height. The column becomes a beam-column at its weakest point — mid-span between floors — with no inherent design provision for the lateral load it suddenly carries.</p>
+
+            <p>AISC 341-22 §F2.1 (SCBF) and §F1.1 (OCBF) explicitly prohibit K-bracing in all seismic design categories. It still appears in buildings designed for wind only, in low-seismic zones where AISC 341 does not apply, provided the column is explicitly designed for the resulting flexural demand. If your project requires AISC 341 compliance, K-bracing is not an option regardless of stiffness.</p>
+
+            <h2>Eccentric bracing — trading stiffness for ductility</h2>
+
+            <p>The eccentric braced frame (EBF) is a different kind of lateral system. Where concentrically braced frames are designed to stay elastic as long as possible, the EBF is designed to yield at a specific location: the link.</p>
+
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 500 230" preserveAspectRatio="xMidYMid meet">
+                    <text x="250" y="18" text-anchor="middle" class="diaphragm-label-bold">Eccentric braced frame (split-K EBF)</text>
+                    <!-- Left column -->
+                    <rect x="70" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Right column -->
+                    <rect x="422" y="35" width="8" height="145" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Top beam (with link segment highlighted) -->
+                    <!-- Left beam segment -->
+                    <rect x="70" y="35" width="120" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Link beam (highlighted) -->
+                    <rect x="190" y="32" width="120" height="14" fill="rgba(232,93,36,0.18)" stroke="#E85D24" stroke-width="2"/>
+                    <!-- Link label -->
+                    <text x="250" y="26" text-anchor="middle" fill="#E85D24" font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="600">link (e)</text>
+                    <!-- Right beam segment -->
+                    <rect x="310" y="35" width="120" height="8" fill="#E8E4DC" stroke="#1A1A1A" stroke-width="1.2"/>
+                    <!-- Ground line -->
+                    <line x1="50" y1="180" x2="442" y2="180" stroke="#1A1A1A" stroke-width="2"/>
+                    <!-- Ground hatch -->
+                    <line x1="56" y1="180" x2="50" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="70" y1="180" x2="64" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="84" y1="180" x2="78" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="98" y1="180" x2="92" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="112" y1="180" x2="106" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="126" y1="180" x2="120" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="140" y1="180" x2="134" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="154" y1="180" x2="148" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="168" y1="180" x2="162" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="182" y1="180" x2="176" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="196" y1="180" x2="190" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="210" y1="180" x2="204" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="224" y1="180" x2="218" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="238" y1="180" x2="232" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="252" y1="180" x2="246" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="266" y1="180" x2="260" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="280" y1="180" x2="274" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="294" y1="180" x2="288" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="308" y1="180" x2="302" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="322" y1="180" x2="316" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="336" y1="180" x2="330" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="350" y1="180" x2="344" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="364" y1="180" x2="358" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="378" y1="180" x2="372" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="392" y1="180" x2="386" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="406" y1="180" x2="400" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="420" y1="180" x2="414" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="434" y1="180" x2="428" y2="187" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- EBF braces: two diagonals meeting the ends of the link -->
+                    <line x1="74" y1="180" x2="190" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="426" y1="180" x2="310" y2="43" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Link end markers -->
+                    <circle cx="190" cy="43" r="4" fill="#E85D24"/>
+                    <circle cx="310" cy="43" r="4" fill="#E85D24"/>
+                    <!-- Dimension line for e -->
+                    <line x1="190" y1="55" x2="310" y2="55" stroke="#E85D24" stroke-width="1" stroke-dasharray="3,2"/>
+                    <text x="250" y="68" text-anchor="middle" fill="#E85D24" font-family="'Space Grotesk',sans-serif" font-size="10">e</text>
+                    <!-- Load arrow -->
+                    <line x1="28" y1="39" x2="66" y2="39" stroke="#1A1A1A" stroke-width="2"/>
+                    <polygon points="63,34 74,39 63,44" fill="#1A1A1A"/>
+                    <text x="20" y="43" text-anchor="middle" class="diaphragm-label-bold" font-size="11">F</text>
+                    <!-- Labels -->
+                    <text x="250" y="208" text-anchor="middle" class="diaphragm-label">The link (orange) is the ductile fuse — it yields before the braces buckle or connections fail.</text>
+                </svg>
+                <figcaption>EBF with a central link beam. The two diagonals connect to the ends of the link segment, length e. The link yields in shear (short links) or flexure (long links) under large lateral demand.</figcaption>
+            </figure>
+
+            <p>The link is a short segment of the beam between the two brace-to-beam connections. Under large lateral demand, the link yields in shear (for short links, where e &lt; 1.6M<sub>p</sub>/V<sub>p</sub>) or flexure (for longer links). The diagonals, columns, and connections are capacity-designed to remain elastic — the link is the fuse. When the link yields, it absorbs energy with stable hysteresis loops that don't degrade across repeated cycles.</p>
+
+            <p>Elastic lateral stiffness for an EBF is lower than a comparable CBF because the link adds flexibility. The reduction depends on the link length ratio e/L and the relative stiffnesses of the brace and link. A useful rule of thumb: EBF elastic stiffness is typically 10–25% lower than a comparably sized CBF. The exact value requires a frame analysis — the link's shear and flexural stiffness need to be modeled explicitly in ETABS rather than relying on a hand formula.</p>
+
+            <p>This stiffness reduction is deliberate. For buildings in high-seismic zones where post-earthquake functional performance matters, an EBF with a properly designed link provides better energy dissipation and more predictable post-yield behavior than an SCBF. The building may drift more in the elastic range, but the structural damage is concentrated in a replaceable link rather than buckled brace members or damaged connections.</p>
+
+            <h2>Putting numbers on the comparison</h2>
+
+            <p>To make the comparison concrete, consider a single bay: L = 24 ft, h = 13 ft (β = 0.54), with all brace members using A = 5 in², E = 29,000 ksi.</p>
+
+            <p><strong>Single diagonal:</strong> d = √(288² + 156²) = 327.5 in, cos θ = 288/327.5 = 0.879</p>
+            <div class="equation">k<sub>1</sub> = 29,000 × 5 × 0.879² / 327.5 = <strong>342 kip/in</strong></div>
+
+            <p><strong>X-brace (both active):</strong></p>
+            <div class="equation">k<sub>X</sub> = 2 × 342 = <strong>685 kip/in</strong></div>
+
+            <p><strong>Chevron brace:</strong> d<sub>v</sub> = √(144² + 156²) = 212.3 in, cos θ<sub>v</sub> = 144/212.3 = 0.678</p>
+            <div class="equation">k<sub>V</sub> = 2 × 29,000 × 5 × 0.678² / 212.3 = <strong>629 kip/in</strong></div>
+
+            <table style="width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.875rem;">
+                <thead>
+                    <tr style="background:var(--bg-muted);">
+                        <th style="padding:0.55rem 1rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Configuration</th>
+                        <th style="padding:0.55rem 1rem; text-align:right; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">k (kip/in)</th>
+                        <th style="padding:0.55rem 1rem; text-align:right; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">k / k<sub>1</sub></th>
+                        <th style="padding:0.55rem 1rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border);">Single diagonal</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">342</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">1.00</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary); font-size:0.8rem;">Baseline</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border);">X-brace (both active)</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">685</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:600;">2.00</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary); font-size:0.8rem;">Requires seismic compactness &amp; KL/r ≤ 200</td>
+                    </tr>
+                    <tr style="background:rgba(232,93,36,0.04);">
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border);">Chevron (V-brace)</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">629</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums; font-weight:600; color:var(--accent);">1.84</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary); font-size:0.8rem;">Beam must carry post-buckling unbalanced force</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border);">EBF</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">~280–310</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); text-align:right; font-variant-numeric:tabular-nums;">~0.82–0.91</td>
+                        <td style="padding:0.5rem 1rem; border-bottom:1px solid var(--border); color:var(--text-secondary); font-size:0.8rem;">Link-dependent; superior post-yield ductility</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.5rem 1rem;">K-brace</td>
+                        <td style="padding:0.5rem 1rem; text-align:right; color:var(--text-muted);">—</td>
+                        <td style="padding:0.5rem 1rem; text-align:right; color:var(--text-muted);">—</td>
+                        <td style="padding:0.5rem 1rem; color:var(--accent); font-size:0.8rem; font-weight:500;">Prohibited in SCBF and OCBF (AISC 341-22)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>For this bay (β = 0.54), the chevron brace delivers 92% of the X-brace's elastic stiffness while using the same member size for each diagonal. The practical difference is real but small. The decision between the two comes down to the factors the table doesn't show.</p>
+
+            <h2>What the formula doesn't tell you</h2>
+
+            <p>The stiffness formulas cover the elastic range. Several other factors carry equal or greater weight in practice:</p>
+
+            <h3>Connection complexity</h3>
+            <p>X-bracing requires a connection at the crossing point — a gusset plate that must accommodate the two diagonals at an intersection that falls in the middle of open air. Fit-up tolerances are tight and erection sequencing is constrained. Chevron bracing eliminates the crossing connection but requires a stiffened connection at the beam midpoint where the tension-compression couple transfers. EBF requires specially qualified welds at the link ends; AISC 341 §F3.5b mandates that link-to-column connections meet seismic qualification requirements.</p>
+
+            <h3>Beam demands</h3>
+            <p>X-bracing imposes minimal demands on the beam between brace points — the brace forces transfer directly to the column-beam joints. Chevron bracing requires the beam to carry the post-buckling unbalanced vertical force, which AISC 341-22 §F2.4c specifies as the difference between the expected tension capacity and 0.3 times the expected compression capacity of the diagonal. This often governs beam size and frequently requires compact sections. EBF beam design is driven by the link — the beam outside the link must be designed for the link's expected strength, amplified by the strain hardening overstrength factor Ω = 1.25 (for shear links).</p>
+
+            <h3>Column demands</h3>
+            <p>In any braced frame, columns accumulate unbalanced brace forces as you move down the building. For SCBF, AISC 341-22 §F2.3 requires the column to be designed for the expected post-buckling forces — not just the elastic design forces. This "capacity design" provision is what keeps columns intact when braces buckle or yield above them. EBF columns adjacent to the link carry the link's expected shear capacity as an applied force — a large fraction of the brace's full axial capacity.</p>
+
+            <h3>Seismic system designation and R-factors</h3>
+
+            <table style="width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.875rem;">
+                <thead>
+                    <tr style="background:var(--bg-muted);">
+                        <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">System</th>
+                        <th style="padding:0.5rem 0.75rem; text-align:center; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">R</th>
+                        <th style="padding:0.5rem 0.75rem; text-align:center; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Ω<sub>0</sub></th>
+                        <th style="padding:0.5rem 0.75rem; text-align:center; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">C<sub>d</sub></th>
+                        <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid var(--border); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Max SDC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border);">SCBF</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">6</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">2</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">5</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border);">F</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border);">OCBF</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">3.25</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">2</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border); text-align:center; font-variant-numeric:tabular-nums;">3.25</td>
+                        <td style="padding:0.45rem 0.75rem; border-bottom:1px solid var(--border);">C (limited)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.45rem 0.75rem;">EBF</td>
+                        <td style="padding:0.45rem 0.75rem; text-align:center; font-variant-numeric:tabular-nums;">8</td>
+                        <td style="padding:0.45rem 0.75rem; text-align:center; font-variant-numeric:tabular-nums;">2</td>
+                        <td style="padding:0.45rem 0.75rem; text-align:center; font-variant-numeric:tabular-nums;">4</td>
+                        <td style="padding:0.45rem 0.75rem;">F</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>The higher R-factor for EBF means you can design for a lower seismic base shear — the ductility buys you a reduction in demand. SCBF's R = 6 means its design forces are already significantly reduced from elastic demands. The difference in R between SCBF (6) and EBF (8) often justifies the added detailing complexity for mid- to high-rise construction in high-seismic zones.</p>
+
+            <h2>The practical selection framework</h2>
+
+            <p>After working through the formulas, the actual configuration decision comes down to four questions in roughly this order:</p>
+
+            <ol>
+                <li><strong>Seismic Design Category.</strong> SDC A/B → OCBF is usually sufficient. SDC C → SCBF or OCBF depending on height. SDC D/E/F → SCBF or EBF, full stop. K-bracing is off the table for all seismic categories.</li>
+                <li><strong>Bay aspect ratio β = h/L.</strong> Below 0.6, chevron bracing approaches X-brace stiffness and the beam demand is manageable. Above 1.0, a single diagonal per story competes well. Between 0.6 and 1.0, it's genuinely a tradeoff.</li>
+                <li><strong>Architectural constraints.</strong> X-bracing fills the bay and blocks openings. Chevron leaves the lower half of the bay open. An EBF configured with the link at one end (D-brace configuration) can clear most of the bay for a corridor or window. The geometry that works architecturally often decides the configuration before the stiffness calculation does.</li>
+                <li><strong>Post-yield performance intent.</strong> If the building must remain operational after the design earthquake — hospital, emergency operations center, critical facility — EBF's stable energy dissipation and predictable damage location is worth the lower elastic stiffness and added detailing cost.</li>
+            </ol>
+
+            <div class="callout">
+                <p>The formula k = EA·cos²θ/d is the thread running through all of these. The configuration changes the geometry, which changes θ and d, which changes stiffness — but the mechanism is always the same diagonal member carrying axial force. Once you see it that way, ETABS output for braced frames becomes legible in a way it isn't when you're just reading numbers. You can look at the drift contribution from a given story, trace it back to k, and immediately see whether the geometry is working efficiently or working against itself.</p>
+            </div>
+
+            <div class="post-cta">
+                <h3>Bracing stiffness visualizer — coming soon</h3>
+                <p>An interactive tool to compare lateral stiffness across configurations for a user-defined bay geometry and member size — with live diagrams updating as you change inputs.</p>
+                <a href="../tools.html" class="btn btn-primary">See the tools page</a>
+            </div>
+
+            <p>If you've modeled braced frames where configuration choice affected the final design in a surprising way, or have a question about something I glossed over here, <a href="../contact.html">drop me a line</a>. The cases where the formula said one thing and the model said another are usually the most instructive.</p>
+
+        </div>
+
+        <div class="post-footer">
+            <p>← <a href="../blog.html">Back to blog</a></p>
+        </div>
+
+    </article>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('blog');
+        renderFooter();
+    </script>
+
+</body>
+</html>

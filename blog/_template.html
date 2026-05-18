@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--
+=============================================================================
+  STRUXLAB BLOG POST TEMPLATE
+=============================================================================
+  HOW TO USE THIS FILE:
+    1. Copy this file to: blog/your-post-slug.html
+       (slug = lowercase, hyphens-only, no spaces — e.g. "steel-beam-design.html")
+    2. Work through every TODO: comment in order from top to bottom
+    3. When done, add the post card to blog.html and index.html
+    4. Push to main — Netlify auto-deploys
+
+  CHECKLIST (tick off as you go):
+    [ ] <title> updated
+    [ ] meta description written (1–2 sentences, plain language)
+    [ ] og:title updated (same as <title> minus " | StruxLab")
+    [ ] og:description updated (can differ slightly from meta description)
+    [ ] og:url updated to final slug
+    [ ] <h1> written
+    [ ] post-meta updated (date, category, read time)
+    [ ] lede paragraph written
+    [ ] post body complete
+    [ ] post-cta updated (or removed if not needed)
+    [ ] blog.html updated with post card
+    [ ] index.html updated if it should appear in "Recent writing"
+=============================================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- TODO: Replace with your post title. Format: "Post Title | StruxLab" -->
+    <title>Your Post Title Here | StruxLab</title>
+
+    <!-- TODO: Write a 1–2 sentence description of the post in plain language.
+         This appears in Google search results and link previews.
+         Aim for 140–160 characters. -->
+    <meta name="description" content="A one or two sentence description of your post. Write it for someone who hasn't read it yet — what will they learn?">
+
+    <!-- Open Graph tags — controls how the link looks when shared on LinkedIn, Twitter, etc. -->
+    <!-- TODO: Same title as <title> above, minus " | StruxLab" -->
+    <meta property="og:title" content="Your Post Title Here">
+    <!-- TODO: 1–2 sentences. Can be slightly different from meta description — more conversational. -->
+    <meta property="og:description" content="The conversational version of your description — what you'd say if someone asked you what the post is about.">
+    <!-- TODO: Replace your-post-slug with the filename (without .html) -->
+    <meta property="og:url" content="https://struxlab.netlify.app/blog/your-post-slug">
+    <meta property="og:type" content="article">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- JetBrains Mono is included because blog posts often contain code snippets.
+         If this post has no code, you can remove the &family=JetBrains+Mono:wght@400;500 part. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <article class="post-page">
+
+        <!-- post-meta: date · category · read time
+             Category options: Practice notes, Tools, Case study, Tutorial
+             Read time: count words in post-body, divide by 200, round up -->
+        <!-- TODO: Update date, category, and read time -->
+        <p class="post-meta">Month DD, YYYY · Category · X min read</p>
+
+        <!-- TODO: Your full post title, matching <title> above (minus " | StruxLab") -->
+        <h1>Your Post Title Here</h1>
+
+        <!-- lede: the hook. 2–3 sentences max. Rendered larger than body text.
+             Answer: what is this post about and why should the reader care? -->
+        <!-- TODO: Write the lede — this is the most important sentence in the post -->
+        <p class="lede">Your hook paragraph goes here. State what the post is about and what the reader will leave knowing. This is rendered larger than body text, so keep it punchy — two or three sentences maximum.</p>
+
+        <div class="post-body">
+
+            <!-- ============================================================
+                 BODY CONTENT COMPONENTS — USE WHAT YOU NEED, DELETE THE REST
+                 ============================================================ -->
+
+            <!-- --- REGULAR PARAGRAPH --- -->
+            <p>Regular paragraph text. This is what most of your post will be made of. Write in first person. Technical vocabulary is fine — your readers are engineers. Short sentences beat long ones.</p>
+
+            <!-- --- SECTION HEADING (h2) --- -->
+            <h2>Section heading — use for major topics</h2>
+
+            <p>Content under this heading. Aim for one clear idea per section. If a section grows past 4–5 paragraphs, consider splitting it with an h3 or into a new h2.</p>
+
+            <!-- --- SUBSECTION HEADING (h3) --- -->
+            <h3>Subsection heading — use within a major section</h3>
+
+            <p>Content under this subsection. Useful when you have 3–4 closely related sub-topics under one h2 heading (e.g., four types of a problem, four steps of a process).</p>
+
+            <!-- --- UNORDERED LIST (bullets) --- -->
+            <p>Use a list when items don't have a natural order and you have 3 or more of them:</p>
+            <ul>
+                <li><strong>Bold label, if useful.</strong> Description of this item. Can be a full sentence or a short phrase.</li>
+                <li>Another item. Keep each item parallel in structure — all noun phrases, or all full sentences, but not mixed.</li>
+                <li>A third item.</li>
+            </ul>
+
+            <!-- --- ORDERED LIST (numbered steps) --- -->
+            <p>Use a numbered list for sequential steps or ranked items:</p>
+            <ol>
+                <li><strong>First step.</strong> Explain what to do and why.</li>
+                <li><strong>Second step.</strong> Keep each step to one action if possible.</li>
+                <li><strong>Third step.</strong> The reader should be able to follow these in order.</li>
+            </ol>
+
+            <!-- --- CALLOUT BOX --- -->
+            <!-- Use callouts for key insights, warnings, rules of thumb, or
+                 anything you want the reader to take away even if they skim. -->
+            <div class="callout">
+                <p>Key insight or rule of thumb. Use this sparingly — one or two per post maximum. If everything is highlighted, nothing is highlighted.</p>
+            </div>
+
+            <!-- --- EQUATION --- -->
+            <!-- Use <sub> for subscripts, <sup> for superscripts.
+                 For more complex math, write it out in words or use unicode symbols. -->
+            <div class="equation">
+                V<sub>n</sub> = A<sub>cv</sub> [α<sub>c</sub> λ √f'<sub>c</sub> + ρ<sub>t</sub> f<sub>y</sub>]
+            </div>
+
+            <!-- --- CODE BLOCK --- -->
+            <!-- Use for actual code (JavaScript, Python, VBA, etc.)
+                 The <pre> preserves whitespace; <code> applies monospace styling.
+                 Indent your code inside the <code> tag exactly as it should appear. -->
+            <pre><code>function exampleFunction(input) {
+    // Your code here
+    const result = input * 2;
+    return result;
+}</code></pre>
+
+            <!-- --- INLINE CODE --- -->
+            <p>For short code references inline, use <code>&lt;code&gt;</code> tags: for example, the variable <code>neutralAxisDepth</code> or the function <code>computeCapacity()</code>.</p>
+
+            <!-- --- SVG DIAGRAM --- -->
+            <!-- Use for diagrams, sketches, or visualizations.
+                 blog-svg class sets width: 100%, max-width: 700px, auto margins.
+                 Design your SVG in a 700×300 viewBox (adjust height as needed).
+                 Available CSS classes for SVG elements — defined in styles.css:
+                   Diagram lines:   .diaphragm-slab, .diaphragm-wall, .diaphragm-deflect
+                   Labels:          .diaphragm-label, .diaphragm-label-bold, .diaphragm-label-accent
+                   Loads/arrows:    .diaphragm-load
+                   Beam diagrams:   .beam-fill, .beam-stroke, .load-arrow, .dim-line
+                   SFD/BMD:         .sfd-fill, .bmd-fill
+                   Interaction:     .curve-nominal, .curve-design, .demand-point -->
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 700 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- TODO: Replace with your actual SVG content.
+                         Delete this placeholder if you don't need a diagram. -->
+                    <rect x="50" y="40" width="600" height="120" fill="none" stroke="#E5DFD3" stroke-width="1" stroke-dasharray="4,4"/>
+                    <text x="350" y="105" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" fill="#8A8A8A">Your diagram goes here — delete this placeholder</text>
+                </svg>
+                <!-- TODO: Write a caption that explains what the diagram shows -->
+                <figcaption>Caption: what does this diagram show, and what should the reader take away from it?</figcaption>
+            </figure>
+
+            <!-- --- CALL TO ACTION (post-cta) --- -->
+            <!-- Use at the end of the post body to link to a related tool or next post.
+                 Dark background, orange button. Use sparingly — one per post maximum.
+                 Delete this entire block if the post doesn't naturally connect to a tool. -->
+            <div class="post-cta">
+                <!-- TODO: Update heading, description, and button link -->
+                <h3>Try the related tool</h3>
+                <p>One sentence describing what the tool does and why it's relevant to this post.</p>
+                <a href="../tools/your-tool.html" class="btn btn-primary">Open the tool</a>
+            </div>
+
+            <!-- Closing paragraph: optional, but a good place for a personal note,
+                 invitation to discuss, or pointer to further reading. -->
+            <p>If you have questions, spotted an error, or want to push back on something, <a href="../contact.html">drop me a line</a>. The posts that get better feedback are always the ones that make a strong claim.</p>
+
+        </div>
+
+        <div class="post-footer">
+            <p>← <a href="../blog.html">Back to blog</a></p>
+        </div>
+
+    </article>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('blog');
+        renderFooter();
+    </script>
+
+</body>
+</html>

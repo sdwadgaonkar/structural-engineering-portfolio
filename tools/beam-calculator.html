@@ -529,7 +529,7 @@
         }
 
         function momentAt(s, x, V_a, M_a_fef) {
-            let M = -M_a_fef + V_a * x;
+            let M = M_a_fef + V_a * x;
             const L = spans[s].L;
             loads.forEach(ld => {
                 if (ld.span !== s) return;

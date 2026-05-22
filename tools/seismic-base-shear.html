@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seismic Base Shear | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Spinner removal ────────────────────────────────── */
+        .sbs-sidebar input[type="number"]::-webkit-inner-spin-button,
+        .sbs-sidebar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .sbs-sidebar input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Layout ─────────────────────────────────────────── */
+        .sbs-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 2rem;
+        }
+
+        /* ── Sidebar ────────────────────────────────────────── */
+        .sbs-sidebar {
+            width: 270px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 1.1rem 1.1rem 1.5rem;
+            scrollbar-width: thin;
+        }
+        .sbs-sidebar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted, #8a8a8a);
+            margin: 1.1rem 0 0.55rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border, #e5dfd3);
+        }
+        .sbs-sidebar h3:first-child { margin-top: 0; }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+            gap: 0.4rem;
+        }
+        .field label {
+            font-size: 0.82rem;
+            color: var(--text-secondary, #5a5a5a);
+            flex: 1;
+            line-height: 1.3;
+        }
+        .field label sub { font-size: 0.65rem; }
+        .field input[type="number"] {
+            width: 72px;
+            padding: 4px 8px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+            text-align: right;
+        }
+        .field input[type="number"]:focus {
+            outline: 1px solid var(--accent, #e85d24);
+            border-color: var(--accent, #e85d24);
+        }
+        .field select {
+            width: 148px;
+            padding: 4px 6px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 5px;
+            font-size: 0.80rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+        }
+        .field select:focus {
+            outline: 1px solid var(--accent, #e85d24);
+            border-color: var(--accent, #e85d24);
+        }
+        .field-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin: -0.25rem 0 0.45rem;
+            line-height: 1.4;
+        }
+
+        /* ── Location lookup ─────────────────────────────────── */
+        .lookup-row {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 0.45rem;
+        }
+        .lookup-row input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 5px 8px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 5px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+        }
+        .lookup-row input[type="text"]:focus {
+            outline: 1px solid var(--accent, #e85d24);
+            border-color: var(--accent, #e85d24);
+        }
+        .btn-lookup {
+            padding: 5px 10px;
+            background: var(--accent, #e85d24);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+        .btn-lookup:hover { opacity: 0.88; }
+        .btn-lookup:disabled { opacity: 0.5; cursor: not-allowed; }
+        .lookup-status {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            min-height: 1.4em;
+            line-height: 1.5;
+        }
+        .lookup-status.ok  { color: #15803d; }
+        .lookup-status.err { color: #b91c1c; }
+
+        /* ── USGS tag ────────────────────────────────────────── */
+        .usgs-tag {
+            display: none;
+            font-size: 0.60rem;
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        /* ── R/Omega/Cd strip ────────────────────────────────── */
+        .r-strip {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.45rem;
+        }
+        .r-chip {
+            flex: 1;
+            background: var(--bg-muted, #f2efe8);
+            border-radius: 5px;
+            padding: 5px 0;
+            text-align: center;
+        }
+        .r-chip .r-label {
+            font-size: 0.60rem;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: block;
+        }
+        .r-chip .r-val {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* ── Main area ───────────────────────────────────────── */
+        .sbs-main { flex: 1; min-width: 0; }
+
+        /* ── Result banner ───────────────────────────────────── */
+        .result-banner {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.4rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .result-block-label {
+            font-size: 0.72rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        .result-v {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: var(--accent, #e85d24);
+            line-height: 1;
+        }
+        .result-sub {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 3px;
+        }
+        .result-sub strong { color: var(--text-primary); }
+        .sdc-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 1rem;
+            border-radius: 99px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Chart card ──────────────────────────────────────── */
+        .chart-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem 1rem 0.6rem;
+            margin-bottom: 1.25rem;
+        }
+        .chart-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .chart-card svg { width: 100%; display: block; }
+
+        /* ── Parameter table ─────────────────────────────────── */
+        .param-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+        .param-table th {
+            background: var(--bg-muted, #f2efe8);
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .param-table td {
+            padding: 0.45rem 0.85rem;
+            border-top: 1px solid #f0ece4;
+        }
+        .param-table td:first-child { color: var(--text-secondary); }
+        .param-table td:last-child {
+            text-align: right;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .param-table .hl-row td { background: #fff7ed; }
+        .param-table .hl-row td:last-child { color: var(--accent); font-weight: 700; }
+
+        /* ── Warning ─────────────────────────────────────────── */
+        .sbs-warning {
+            display: none;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            color: #78350f;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+        .sbs-warning.visible { display: block; }
+
+        /* ── Notes ───────────────────────────────────────────── */
+        .sbs-notes {
+            padding: 0.85rem 1rem;
+            background: var(--bg-muted);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .sbs-notes strong { color: var(--text-primary); }
+
+        @media (max-width: 780px) {
+            .sbs-layout { flex-direction: column; }
+            .sbs-sidebar { width: 100%; position: static; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>Seismic Base Shear</h1>
+            <p>ASCE 7-22 Equivalent Lateral Force procedure. Type an address to auto-fetch USGS seismic parameters, choose your system, and get V.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1100px; padding-top:2.5rem; padding-bottom:5rem;">
+
+        <div class="sbs-layout">
+
+            <!-- ── Sidebar ──────────────────────────────────────────── -->
+            <aside class="sbs-sidebar">
+
+                <h3>Location</h3>
+                <div class="lookup-row">
+                    <input type="text" id="inp-addr" value="Los Angeles, CA" placeholder="City, State or full address">
+                    <button class="btn-lookup" id="btn-lookup" onclick="lookupParams()">Look Up</button>
+                </div>
+                <div class="lookup-status" id="lookup-status">Select Site Class and Risk Category first, then click Look Up.</div>
+
+                <h3>Site</h3>
+                <div class="field-hint">These are sent to the USGS API — select before looking up.</div>
+                <div class="field">
+                    <label>Site Class</label>
+                    <select id="inp-sc" onchange="calc()">
+                        <option value="A">A — Hard rock</option>
+                        <option value="B">B — Rock</option>
+                        <option value="BC">BC — Transition</option>
+                        <option value="C">C — Very dense soil</option>
+                        <option value="CD">CD — Transition</option>
+                        <option value="D" selected>D — Stiff soil</option>
+                        <option value="DE">DE — Transition</option>
+                        <option value="E">E — Soft clay</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Risk Category</label>
+                    <select id="inp-rc" onchange="calc()">
+                        <option value="I">I</option>
+                        <option value="II" selected>II</option>
+                        <option value="III">III</option>
+                        <option value="IV">IV</option>
+                    </select>
+                </div>
+
+                <h3>Spectral Parameters <span class="usgs-tag" id="usgs-tag">USGS</span></h3>
+                <div class="field-hint">Auto-filled from USGS after lookup. Edit to override.</div>
+                <div class="field">
+                    <label>S<sub>S</sub> (g)</label>
+                    <input type="number" id="inp-Ss" value="1.500" min="0" max="10" step="0.01" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>S<sub>1</sub> (g)</label>
+                    <input type="number" id="inp-S1" value="0.600" min="0" max="10" step="0.01" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>S<sub>DS</sub> (g)</label>
+                    <input type="number" id="inp-SDS" value="1.000" min="0" max="10" step="0.001" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>S<sub>D1</sub> (g)</label>
+                    <input type="number" id="inp-SD1" value="0.600" min="0" max="10" step="0.001" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>T<sub>L</sub> (s)</label>
+                    <input type="number" id="inp-TL" value="8" min="1" max="16" step="1" oninput="calc()">
+                </div>
+
+                <h3>Seismic System</h3>
+                <div class="field">
+                    <label>SFRS</label>
+                    <select id="inp-sfrs" style="width:148px; font-size:0.78rem;"></select>
+                </div>
+                <div class="r-strip">
+                    <div class="r-chip"><span class="r-label">R</span><span class="r-val" id="disp-R">8</span></div>
+                    <div class="r-chip"><span class="r-label">&#937;&#8320;</span><span class="r-val" id="disp-O">3</span></div>
+                    <div class="r-chip"><span class="r-label">C<sub>d</sub></span><span class="r-val" id="disp-Cd">5.5</span></div>
+                </div>
+
+                <h3>Building</h3>
+                <div class="field">
+                    <label>Height h<sub>n</sub> (ft)</label>
+                    <input type="number" id="inp-hn" value="60" min="5" max="2000" step="5" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Structure type</label>
+                    <select id="inp-stype" onchange="calc()" style="width:148px; font-size:0.78rem;">
+                        <option value="smf"   selected>Steel moment frame</option>
+                        <option value="rcmf"         >RC moment frame</option>
+                        <option value="ebf"          >Steel EBF</option>
+                        <option value="brbf"         >Steel BRBF</option>
+                        <option value="other"        >All other systems</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Seismic weight W (kips)</label>
+                    <input type="number" id="inp-W" value="1500" min="1" max="500000" step="50" oninput="calc()">
+                </div>
+
+            </aside>
+
+            <!-- ── Main area ─────────────────────────────────────────── -->
+            <div class="sbs-main">
+
+                <!-- Result banner -->
+                <div class="result-banner">
+                    <div>
+                        <div class="result-block-label">Base Shear</div>
+                        <div class="result-v" id="disp-V">— kips</div>
+                    </div>
+                    <div>
+                        <div class="result-sub">C<sub>s,gov</sub> = <strong id="disp-Cs">—</strong></div>
+                        <div class="result-sub" style="margin-top:5px;">T<sub>a</sub> = <strong id="disp-Ta">—</strong> s</div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <div class="result-block-label">Seismic Design Category</div>
+                        <div class="sdc-pill" id="disp-sdc-pill" style="background:#f1f5f9;color:#64748b;">—</div>
+                    </div>
+                </div>
+
+                <!-- SDC D/E/F warning -->
+                <div class="sbs-warning" id="warn-sdc">
+                    <strong>SDC D, E, or F:</strong> ELF is permitted for most regular structures per ASCE 7-22 §12.6. For structures with horizontal or vertical irregularities, verify ELF applicability per Table 12.6-1.
+                </div>
+
+                <!-- DRS Chart -->
+                <div class="chart-card">
+                    <div class="chart-title">Design Response Spectrum &mdash; ASCE 7-22 &sect;11.4.5</div>
+                    <svg id="svg-drs" viewBox="0 0 500 280" role="img" aria-label="Design Response Spectrum"></svg>
+                </div>
+
+                <!-- Intermediate values -->
+                <div class="param-card">
+                    <table class="param-table">
+                        <thead>
+                            <tr><th colspan="2">Intermediate Values</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>F<sub>a</sub></td>                                               <td id="pv-Fa">—</td></tr>
+                            <tr><td>F<sub>v</sub></td>                                               <td id="pv-Fv">—</td></tr>
+                            <tr><td>S<sub>MS</sub> = F<sub>a</sub> &times; S<sub>S</sub></td>        <td id="pv-SMS">—</td></tr>
+                            <tr><td>S<sub>M1</sub> = F<sub>v</sub> &times; S<sub>1</sub></td>        <td id="pv-SM1">—</td></tr>
+                            <tr><td>S<sub>DS</sub> = &frac23; S<sub>MS</sub></td>                    <td id="pv-SDS">—</td></tr>
+                            <tr><td>S<sub>D1</sub> = &frac23; S<sub>M1</sub></td>                    <td id="pv-SD1">—</td></tr>
+                            <tr><td>I<sub>e</sub></td>                                               <td id="pv-Ie">—</td></tr>
+                            <tr><td>T<sub>0</sub> = 0.2 &times; S<sub>D1</sub>/S<sub>DS</sub></td>  <td id="pv-T0">—</td></tr>
+                            <tr><td>T<sub>s</sub> = S<sub>D1</sub>/S<sub>DS</sub></td>               <td id="pv-Ts">—</td></tr>
+                            <tr><td>T<sub>L</sub></td>                                               <td id="pv-TL">—</td></tr>
+                            <tr><td>T<sub>a</sub> = C<sub>t</sub> h<sub>n</sub><sup>x</sup></td>    <td id="pv-Ta">—</td></tr>
+                            <tr><td>C<sub>s</sub> = S<sub>DS</sub> / (R/I<sub>e</sub>)</td>         <td id="pv-Cs">—</td></tr>
+                            <tr><td>C<sub>s,upper</sub></td>                                         <td id="pv-CsUp">—</td></tr>
+                            <tr><td>C<sub>s,lower</sub></td>                                         <td id="pv-CsLo">—</td></tr>
+                            <tr class="hl-row"><td><strong>C<sub>s,governing</sub></strong></td>     <td id="pv-CsGov">—</td></tr>
+                            <tr class="hl-row"><td><strong>V = C<sub>s</sub> &times; W</strong></td><td id="pv-V">—</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Notes -->
+                <div class="sbs-notes">
+                    <strong>Reference:</strong> ASCE 7-22 &sect;11.4, &sect;12.8 &nbsp;&middot;&nbsp;
+                    <strong>Seismic data:</strong> USGS Design Maps Web Services (free, no key required) &nbsp;&middot;&nbsp;
+                    <strong>Scope:</strong> ELF base shear V only. Vertical force distribution (&sect;12.8.3), overstrength &Omega;<sub>0</sub>, and deflection amplification C<sub>d</sub> are not computed. &nbsp;&middot;&nbsp;
+                    <strong>All loads factored (LRFD).</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── SFRS data (ASCE 7-22 Table 12.2-1) ─────────────────────────────────
+    const SFRS_DATA = [
+        ['Special Steel Moment Frame (SMF)',         8,    3,   5.5, 'Moment Frames'],
+        ['Intermediate Steel Moment Frame (IMF)',    4.5,  3,   4,   'Moment Frames'],
+        ['Ordinary Steel Moment Frame (OMF)',        3.5,  3,   3,   'Moment Frames'],
+        ['Special RC Moment Frame',                  8,    3,   5.5, 'Moment Frames'],
+        ['Intermediate RC Moment Frame',             5,    3,   4.5, 'Moment Frames'],
+        ['Ordinary RC Moment Frame',                 3,    3,   2.5, 'Moment Frames'],
+        ['Steel SCBF',                               6,    2,   5,   'Braced Frames'],
+        ['Steel OCBF',                               3.25, 2,   3.25,'Braced Frames'],
+        ['Steel EBF (moment conn. at columns)',      8,    2,   4,   'Braced Frames'],
+        ['Steel BRBF',                               8,    2.5, 5,   'Braced Frames'],
+        ['Special Plate Shear Wall (SPSW)',          7,    2,   6,   'Braced Frames'],
+        ['Special RC Shear Walls',                   6,    2.5, 5,   'Shear Walls'],
+        ['Ordinary RC Shear Walls',                  5,    2.5, 4.5, 'Shear Walls'],
+        ['Special RC Shear Walls + SMRF (Dual)',     7,    2.5, 5.5, 'Dual Systems'],
+        ['SCBF + SMRF (Dual)',                       7,    2.5, 5.5, 'Dual Systems'],
+        ['BRBF + SMRF (Dual)',                       8,    2.5, 5,   'Dual Systems'],
+    ];
+
+    // Build SFRS dropdown with optgroups
+    (function buildSFRS() {
+        const sel = document.getElementById('inp-sfrs');
+        let curGroup = '', curOG = null;
+        for (const [lbl, R, O, Cd, grp] of SFRS_DATA) {
+            if (grp !== curGroup) {
+                curGroup = grp;
+                curOG = document.createElement('optgroup');
+                curOG.label = grp;
+                sel.appendChild(curOG);
+            }
+            const opt = document.createElement('option');
+            opt.textContent = lbl;
+            opt.dataset.r  = R;
+            opt.dataset.o  = O;
+            opt.dataset.cd = Cd;
+            curOG.appendChild(opt);
+        }
+        sel.addEventListener('change', () => { updateRStrip(); calc(); });
+    })();
+
+    function updateRStrip() {
+        const opt = document.getElementById('inp-sfrs').selectedOptions[0];
+        if (!opt) return;
+        document.getElementById('disp-R').textContent  = opt.dataset.r;
+        document.getElementById('disp-O').textContent  = opt.dataset.o;
+        document.getElementById('disp-Cd').textContent = opt.dataset.cd;
+    }
+
+    // ── Ct / x per structure type (Table 12.8-2) ────────────────────────────
+    const CT_X = {
+        smf:   { Ct: 0.028, x: 0.8  },
+        rcmf:  { Ct: 0.016, x: 0.9  },
+        ebf:   { Ct: 0.030, x: 0.75 },
+        brbf:  { Ct: 0.030, x: 0.75 },
+        other: { Ct: 0.020, x: 0.75 },
+    };
+
+    // ── Importance factor (Table 1.5-2) ────────────────────────────────────
+    const IE_MAP = { I: 1.0, II: 1.0, III: 1.25, IV: 1.5 };
+
+    // ── SDC badge colors ────────────────────────────────────────────────────
+    const SDC_STYLE = {
+        A: { bg: '#f1f5f9', color: '#64748b' },
+        B: { bg: '#dbeafe', color: '#1d4ed8' },
+        C: { bg: '#fef9c3', color: '#854d0e' },
+        D: { bg: '#ffedd5', color: '#9a3412' },
+        E: { bg: '#fee2e2', color: '#991b1b' },
+        F: { bg: '#fee2e2', color: '#991b1b' },
+    };
+
+    // ── Cached USGS response data ───────────────────────────────────────────
+    let usgsData = null;
+
+    // ── Address lookup ──────────────────────────────────────────────────────
+    async function lookupParams() {
+        const addr   = document.getElementById('inp-addr').value.trim();
+        const sc     = document.getElementById('inp-sc').value;
+        const rc     = document.getElementById('inp-rc').value;
+        const btn    = document.getElementById('btn-lookup');
+        const status = document.getElementById('lookup-status');
+
+        if (!addr) {
+            status.textContent = 'Please enter an address.';
+            status.className = 'lookup-status err';
+            return;
+        }
+
+        btn.disabled = true;
+        status.textContent = 'Looking up location…';
+        status.className = 'lookup-status';
+
+        try {
+            // Step 1: Geocode with Nominatim
+            const geoRes  = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`
+            );
+            const geoJson = await geoRes.json();
+            if (!geoJson.length) throw new Error('Address not found. Try a US city and state (e.g. "Chicago, IL").');
+
+            const { lat, lon, display_name } = geoJson[0];
+            const latF = parseFloat(lat), lonF = parseFloat(lon);
+
+            status.textContent = `Fetching USGS data for ${latF.toFixed(3)}°N ${Math.abs(lonF).toFixed(3)}°W…`;
+
+            // Step 2: USGS Design Maps API
+            const usgsUrl = `https://earthquake.usgs.gov/ws/designmaps/asce7-22.json` +
+                `?latitude=${lat}&longitude=${lon}&riskCategory=${rc}&siteClass=${sc}&title=StruxLab`;
+            const usgsRes = await fetch(usgsUrl);
+            if (!usgsRes.ok) throw new Error(`USGS API returned ${usgsRes.status}. Enter values manually.`);
+            const usgsJson = await usgsRes.json();
+
+            if (!usgsJson.response || !usgsJson.response.data) {
+                throw new Error('USGS returned no data for this location. Try a US address.');
+            }
+
+            const d = usgsJson.response.data;
+            usgsData = d;
+
+            // Populate spectral fields
+            const fill = { 'inp-Ss': d.ss, 'inp-S1': d.s1, 'inp-SDS': d.sds, 'inp-SD1': d.sd1, 'inp-TL': d.tl };
+            for (const [id, val] of Object.entries(fill)) {
+                if (val != null) document.getElementById(id).value = parseFloat(val).toFixed(3);
+            }
+
+            document.getElementById('usgs-tag').style.display = 'inline-block';
+            const city = display_name.split(',').slice(0, 2).join(',');
+            status.textContent = `✓ ${city} — ${latF.toFixed(3)}°N ${Math.abs(lonF).toFixed(3)}°W`;
+            status.className = 'lookup-status ok';
+
+        } catch (err) {
+            usgsData = null;
+            document.getElementById('usgs-tag').style.display = 'none';
+            status.textContent = err.message || 'Lookup failed — enter values manually.';
+            status.className = 'lookup-status err';
+        } finally {
+            btn.disabled = false;
+        }
+
+        calc();
+    }
+
+    // Enter key triggers lookup
+    document.getElementById('inp-addr').addEventListener('keydown', e => {
+        if (e.key === 'Enter') lookupParams();
+    });
+
+    // ── SVG helpers ─────────────────────────────────────────────────────────
+    const NS = 'http://www.w3.org/2000/svg';
+    function svgEl(tag, attrs, txt) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        if (txt !== undefined) e.textContent = txt;
+        return e;
+    }
+
+    // ── Draw Design Response Spectrum ───────────────────────────────────────
+    function drawDRS(SDS, SD1, TL, Ta) {
+        const svg = document.getElementById('svg-drs');
+        svg.innerHTML = '';
+        if (SDS <= 0 || SD1 <= 0 || TL <= 0) return;
+
+        const VW = 500, VH = 280;
+        const ML = 52, MR = 18, MT = 22, MB = 44;
+        const CW = VW - ML - MR, CH = VH - MT - MB;
+
+        const T0   = 0.2 * SD1 / SDS;
+        const Ts   = SD1 / SDS;
+        const Tmax = Math.max(3.0, 2.2 * Ta, 2.5 * Ts);
+        const Samax = SDS * 1.18;
+
+        const toX = T  => ML + (T  / Tmax)  * CW;
+        const toY = Sa => MT + (1 - Math.min(Sa, Samax * 1.1) / Samax) * CH;
+
+        function SaAt(T) {
+            if (T <= 0)  return SDS * 0.4;
+            if (T <= T0) return SDS * (0.4 + 0.6 * T / T0);
+            if (T <= Ts) return SDS;
+            if (T <= TL) return SD1 / T;
+            return SD1 * TL / (T * T);
+        }
+
+        // Gridlines
+        const GRID = '#e5e7eb';
+        const step = SDS > 1.5 ? 0.4 : SDS > 0.6 ? 0.2 : 0.1;
+        for (let sa = 0; sa <= Samax + 0.001; sa += step) {
+            const y = toY(sa);
+            if (y < MT - 2) break;
+            svg.appendChild(svgEl('line', { x1: ML, y1: y, x2: ML+CW, y2: y, stroke: GRID, 'stroke-width': '0.8' }));
+            svg.appendChild(svgEl('text', { x: ML-4, y: y+3.5, 'text-anchor': 'end', 'font-size': '9', fill: '#94a3b8', 'font-family': 'Inter, sans-serif' }, sa.toFixed(1)));
+        }
+        const Tstep = Tmax > 4 ? 1.0 : 0.5;
+        for (let t = 0; t <= Tmax + 0.001; t += Tstep) {
+            const x = toX(t);
+            svg.appendChild(svgEl('line', { x1: x, y1: MT, x2: x, y2: MT+CH, stroke: GRID, 'stroke-width': '0.8' }));
+            svg.appendChild(svgEl('text', { x: x, y: MT+CH+13, 'text-anchor': 'middle', 'font-size': '9', fill: '#94a3b8', 'font-family': 'Inter, sans-serif' }, t.toFixed(Tstep < 1 ? 1 : 0)));
+        }
+
+        // Plateau shading (T0 to Ts)
+        svg.appendChild(svgEl('rect', {
+            x: toX(T0), y: MT, width: Math.max(0, toX(Ts) - toX(T0)), height: CH,
+            fill: '#e85d24', opacity: '0.08'
+        }));
+
+        // DRS curve
+        const pts = [];
+        for (let i = 0; i <= 240; i++) {
+            const T  = (i / 240) * Tmax;
+            const Sa = SaAt(T);
+            const y  = toY(Sa);
+            if (y >= MT - 2) pts.push(`${toX(T).toFixed(1)},${y.toFixed(1)}`);
+        }
+        svg.appendChild(svgEl('polyline', {
+            points: pts.join(' '), fill: 'none',
+            stroke: '#e85d24', 'stroke-width': '2.2',
+            'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        }));
+
+        // Ta marker
+        const xTa = toX(Ta), yTa = toY(SaAt(Ta));
+        svg.appendChild(svgEl('line', {
+            x1: xTa, y1: MT, x2: xTa, y2: MT + CH,
+            stroke: '#3b82f6', 'stroke-width': '1.5', 'stroke-dasharray': '5,3'
+        }));
+        svg.appendChild(svgEl('circle', { cx: xTa, cy: yTa, r: '4.5', fill: '#3b82f6' }));
+        const lblX = xTa + 5 < ML + CW - 52 ? xTa + 5 : xTa - 60;
+        svg.appendChild(svgEl('text', {
+            x: lblX, y: MT + 14, 'font-size': '9.5', fill: '#3b82f6',
+            'font-family': 'Inter, sans-serif', 'font-weight': '600'
+        }, `Ta = ${Ta.toFixed(2)}s`));
+
+        // Axes
+        const AC = '#64748b';
+        svg.appendChild(svgEl('line', { x1: ML, y1: MT, x2: ML, y2: MT+CH, stroke: AC, 'stroke-width': '1.2' }));
+        svg.appendChild(svgEl('line', { x1: ML, y1: MT+CH, x2: ML+CW, y2: MT+CH, stroke: AC, 'stroke-width': '1.2' }));
+
+        // Axis labels
+        svg.appendChild(svgEl('text', {
+            x: ML - 36, y: MT + CH/2,
+            'font-size': '10', fill: AC, 'font-family': 'Inter, sans-serif', 'text-anchor': 'middle',
+            transform: `rotate(-90, ${ML - 36}, ${MT + CH/2})`
+        }, 'Sa (g)'));
+        svg.appendChild(svgEl('text', {
+            x: ML + CW/2, y: VH - 4,
+            'font-size': '10', fill: AC, 'font-family': 'Inter, sans-serif', 'text-anchor': 'middle'
+        }, 'Period T (s)'));
+
+        // T0, Ts markers on X axis
+        for (const [T, lbl] of [[T0, 'T₀'], [Ts, 'Tₛ']]) {
+            const x = toX(T);
+            svg.appendChild(svgEl('line', { x1: x, y1: MT+CH, x2: x, y2: MT+CH+5, stroke: '#94a3b8', 'stroke-width': '1' }));
+            svg.appendChild(svgEl('text', { x: x, y: MT+CH+26, 'text-anchor': 'middle', 'font-size': '8.5', fill: '#94a3b8', 'font-family': 'Inter, sans-serif' }, lbl));
+        }
+
+        // SDS label
+        const ySDS = toY(SDS);
+        svg.appendChild(svgEl('text', {
+            x: ML - 4, y: ySDS + 3.5, 'text-anchor': 'end',
+            'font-size': '8.5', fill: '#e85d24', 'font-family': 'Inter, sans-serif', 'font-weight': '600'
+        }, 'Sᴰˢ'));
+    }
+
+    // ── Main calculation ──────────────────────────────────────────────────
+    function calc() {
+        const Ss  = parseFloat(document.getElementById('inp-Ss').value)  || 1.5;
+        const S1  = parseFloat(document.getElementById('inp-S1').value)  || 0.6;
+        const SDS = parseFloat(document.getElementById('inp-SDS').value) || 1.0;
+        const SD1 = parseFloat(document.getElementById('inp-SD1').value) || 0.6;
+        const TL  = parseFloat(document.getElementById('inp-TL').value)  || 8;
+        const rc  = document.getElementById('inp-rc').value;
+        const hn  = parseFloat(document.getElementById('inp-hn').value)  || 60;
+        const W   = parseFloat(document.getElementById('inp-W').value)   || 1500;
+        const stype = document.getElementById('inp-stype').value;
+
+        const opt = document.getElementById('inp-sfrs').selectedOptions[0];
+        const R   = parseFloat(opt?.dataset.r  || 8);
+        const Ie  = IE_MAP[rc] || 1.0;
+
+        const { Ct, x } = CT_X[stype] || CT_X.other;
+        const Ta = Ct * Math.pow(hn, x);
+
+        const T0 = 0.2 * SD1 / SDS;
+        const Ts = SD1 / SDS;
+
+        // Seismic response coefficient
+        const Cs = SDS / (R / Ie);
+        const Cs_upper = Ta <= TL
+            ? SD1 / (Ta * (R / Ie))
+            : SD1 * TL / (Ta * Ta * (R / Ie));
+        let Cs_lower = Math.max(0.044 * SDS * Ie, 0.01);
+        const s1floor = S1 >= 0.6;
+        if (s1floor) Cs_lower = Math.max(Cs_lower, 0.5 * S1 / (R / Ie));
+        const Cs_gov = Math.max(Cs_lower, Math.min(Cs, Cs_upper));
+        const V = Cs_gov * W;
+
+        // Fa / Fv / SMS / SM1 / SDC from USGS if available
+        const Fa  = usgsData?.fa  ?? null;
+        const Fv  = usgsData?.fv  ?? null;
+        const SMS = usgsData?.sms ?? null;
+        const SM1 = usgsData?.sm1 ?? null;
+        const SDC = usgsData?.sdc ? String(usgsData.sdc).toUpperCase() : '—';
+
+        // SDC warning
+        document.getElementById('warn-sdc').classList.toggle('visible', ['D','E','F'].includes(SDC));
+
+        // ── Result banner ─────────────────────────────────────────────────
+        document.getElementById('disp-V').textContent  = `${V.toFixed(1)} kips`;
+        document.getElementById('disp-Cs').textContent = Cs_gov.toFixed(4);
+        document.getElementById('disp-Ta').textContent = Ta.toFixed(2);
+
+        const pill = document.getElementById('disp-sdc-pill');
+        pill.textContent = `SDC ${SDC}`;
+        const sty = SDC_STYLE[SDC] || SDC_STYLE.A;
+        pill.style.background = sty.bg;
+        pill.style.color = sty.color;
+
+        // ── Parameter table ───────────────────────────────────────────────
+        const f3 = v => v != null ? parseFloat(v).toFixed(3) : '—';
+        document.getElementById('pv-Fa').textContent   = Fa  != null ? f3(Fa)           : 'Use Look Up';
+        document.getElementById('pv-Fv').textContent   = Fv  != null ? f3(Fv)           : 'Use Look Up';
+        document.getElementById('pv-SMS').textContent  = SMS != null ? f3(SMS) + ' g'   : '—';
+        document.getElementById('pv-SM1').textContent  = SM1 != null ? f3(SM1) + ' g'   : '—';
+        document.getElementById('pv-SDS').textContent  = f3(SDS) + ' g';
+        document.getElementById('pv-SD1').textContent  = f3(SD1) + ' g';
+        document.getElementById('pv-Ie').textContent   = Ie.toFixed(2);
+        document.getElementById('pv-T0').textContent   = f3(T0) + ' s';
+        document.getElementById('pv-Ts').textContent   = f3(Ts) + ' s';
+        document.getElementById('pv-TL').textContent   = TL.toFixed(1) + ' s';
+        document.getElementById('pv-Ta').textContent   = Ta.toFixed(3) + ' s';
+        document.getElementById('pv-Cs').textContent   = Cs.toFixed(4);
+        document.getElementById('pv-CsUp').textContent = Cs_upper.toFixed(4) + (Ta > TL ? '  ← TL branch' : '');
+        document.getElementById('pv-CsLo').textContent = Cs_lower.toFixed(4) + (s1floor ? '  ← S₁ ≥ 0.6g' : '');
+        document.getElementById('pv-CsGov').textContent= Cs_gov.toFixed(4);
+        document.getElementById('pv-V').textContent    = V.toFixed(1) + ' kips';
+
+        // ── Chart ─────────────────────────────────────────────────────────
+        drawDRS(SDS, SD1, TL, Ta);
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────────
+    updateRStrip();
+    calc();
+    </script>
+
+</body>
+</html>

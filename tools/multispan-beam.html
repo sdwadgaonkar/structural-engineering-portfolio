@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Span Beam Analyzer | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Tool-specific overrides ─────────────────────────────── */
+        .fem-select {
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.78rem;
+            font-family: inherit;
+        }
+        .fem-select:focus { outline: 1px solid var(--accent, #e85d24); }
+
+        /* ── Remove number input spinners ────────────────────────── */
+        .fem-sidebar input[type="number"]::-webkit-inner-spin-button,
+        .fem-sidebar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .fem-sidebar input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Sidebar + diagrams layout ───────────────────────────── */
+        .fem-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 2rem;
+        }
+        .fem-sidebar {
+            width: 340px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 1.25rem 1.25rem 1.5rem;
+            scrollbar-width: thin;
+        }
+        .fem-sidebar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.45rem;
+            border-bottom: 1px solid var(--border, #e5dfd3);
+            color: var(--text-primary, #1a1a1a);
+        }
+        .fem-sidebar h3:first-child { margin-top: 0; }
+        .fem-sidebar hr {
+            border: none;
+            border-top: 2px solid var(--border, #e5dfd3);
+            margin: 1.25rem 0;
+        }
+        .fem-diagrams {
+            flex: 1;
+            min-width: 0;
+        }
+        .fem-diagrams .diagram-panel { margin-bottom: 1rem; }
+
+        /* ── Hover readout bar ───────────────────────────────────── */
+        .hover-bar {
+            background: var(--bg-cream, #faf7f2);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 6px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-muted, #8a8a8a);
+            display: flex;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            min-height: 1.9rem;
+            align-items: center;
+            margin-top: 0.4rem;
+        }
+        .hover-val { color: var(--text-primary, #1a1a1a); font-weight: 600; }
+
+        /* ── Extremes grid ───────────────────────────────────────── */
+        .extremes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+        .extreme-card {
+            background: var(--bg-cream, #faf7f2);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 6px;
+            padding: 0.45rem 0.55rem;
+        }
+        .extreme-card .elabel { font-size: 0.68rem; color: var(--text-muted, #8a8a8a); text-transform: uppercase; letter-spacing: 0.08em; }
+        .extreme-card .evalue { font-size: 0.92rem; font-weight: 700; color: var(--text-primary, #1a1a1a); margin-top: 1px; }
+        .extreme-card .esub   { font-size: 0.68rem; color: var(--text-muted, #8a8a8a); }
+
+        /* ── Load row cards ─────────────────────────────────────── */
+        .load-row {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+            padding: 0.4rem 0.5rem;
+            margin-bottom: 0.3rem;
+            background: var(--bg-cream, #faf7f2);
+            border-radius: 6px;
+            border: 1px solid var(--border, #e5dfd3);
+        }
+        .load-row .lnum { font-size: 0.72rem; color: var(--text-muted); min-width: 0.9rem; }
+        .load-row .lunit { font-size: 0.75rem; color: var(--text-secondary, #5a5a5a); white-space: nowrap; }
+        .load-row input[type="number"] { font-size: 0.78rem; }
+
+        /* ── Reactions table compact ─────────────────────────────── */
+        .reactions-table th, .reactions-table td { font-size: 0.78rem; padding: 0.3rem 0.4rem; }
+
+        /* ── Responsive collapse ─────────────────────────────────── */
+        @media (max-width: 960px) {
+            .fem-layout { flex-direction: column; }
+            .fem-sidebar { width: 100%; position: static; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Multi-Span Beam Analyzer</h1>
+            <p>Euler-Bernoulli FEM solver for continuous beams with 1–3 spans. Point loads, UDLs, trapezoidal loads, applied moments, and support settlement. Sagging-positive convention. Imperial units (kip, kip-ft, ft, in, ksi).</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1500px;padding-left:2rem;padding-right:2rem;">
+        <div class="fem-layout">
+
+            <!-- ══════════════════════════════════════════════════════════
+                 SIDEBAR — all inputs + results
+            ══════════════════════════════════════════════════════════ -->
+            <div class="fem-sidebar">
+
+                <h3>Spans</h3>
+                <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                    1–3 spans. E (ksi), I (in⁴).
+                </p>
+                <table class="spans-table" id="spansTable">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>L (ft)</th>
+                            <th>E (ksi)</th>
+                            <th>I (in⁴)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="spansBody"></tbody>
+                </table>
+                <div style="display:flex;gap:0.4rem;margin-top:0.35rem;flex-wrap:wrap;">
+                    <button class="add-btn" id="addSpanBtn">+ Span</button>
+                    <button class="add-btn" id="applyEIBtn">Copy E&amp;I to all</button>
+                </div>
+
+                <h3>Supports</h3>
+                <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                    x from left end (ft). Settlement ↓+ (in).
+                </p>
+                <table class="spans-table" id="supportsTable">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>x (ft)</th>
+                            <th>Type</th>
+                            <th>Δ (in)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="supportsBody"></tbody>
+                </table>
+                <button class="add-btn" id="addSupportBtn" style="margin-top:0.35rem;">+ Support</button>
+
+                <h3>Loads</h3>
+                <div id="loadsContainer"></div>
+                <button class="add-load-btn" id="addLoadBtn">+ Add load</button>
+
+                <button class="calc-button" id="analyzeBtn" style="margin-top:1.25rem;">Analyze</button>
+                <div id="errorBox" style="margin-top:0.6rem;"></div>
+
+                <hr>
+
+                <h3 style="margin-top:0;">Reactions</h3>
+                <table class="reactions-table" id="reactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Sup.</th>
+                            <th>x</th>
+                            <th>R<sub>y</sub> (k)</th>
+                            <th>M<sub>z</sub> (k-ft)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reactionsBody">
+                        <tr><td colspan="4" class="result-empty">Run Analyze.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Extremes</h3>
+                <div class="extremes-grid">
+                    <div class="extreme-card"><div class="elabel">V<sub>max</sub></div><div class="evalue" id="vmax">—</div><div class="esub">kip</div></div>
+                    <div class="extreme-card"><div class="elabel">V<sub>min</sub></div><div class="evalue" id="vmin">—</div><div class="esub">kip</div></div>
+                    <div class="extreme-card"><div class="elabel">M<sub>max</sub></div><div class="evalue" id="mmax">—</div><div class="esub">kip-ft</div></div>
+                    <div class="extreme-card"><div class="elabel">M<sub>min</sub></div><div class="evalue" id="mmin">—</div><div class="esub">kip-ft</div></div>
+                    <div class="extreme-card"><div class="elabel">δ<sub>max↓</sub></div><div class="evalue" id="dmax">—</div><div class="esub">in ↓</div></div>
+                    <div class="extreme-card"><div class="elabel">δ<sub>max↑</sub></div><div class="evalue" id="dmin">—</div><div class="esub">in ↑</div></div>
+                </div>
+
+                <button class="export-btn" id="exportBtn" style="margin-top:0.9rem;width:100%;">↓ Export reactions CSV</button>
+
+            </div><!-- end .fem-sidebar -->
+
+            <!-- ══════════════════════════════════════════════════════════
+                 DIAGRAMS — right-hand area
+            ══════════════════════════════════════════════════════════ -->
+            <div class="fem-diagrams">
+
+                <div class="diagram-panel">
+                    <h4>Beam &amp; Loading</h4>
+                    <svg id="beamSvg" viewBox="0 0 700 270" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+
+                <div class="diagram-panel">
+                    <h4>Shear Force Diagram (kip)</h4>
+                    <svg id="sfdSvg" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                    <div class="hover-bar" id="sfdHover">Hover over diagram for values</div>
+                </div>
+
+                <div class="diagram-panel">
+                    <h4>Bending Moment Diagram (kip-ft) — sagging plotted downward</h4>
+                    <svg id="bmdSvg" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                    <div class="hover-bar" id="bmdHover">Hover over diagram for values</div>
+                </div>
+
+                <div class="diagram-panel">
+                    <h4>Deflected Shape (in) — downward plotted downward</h4>
+                    <svg id="defSvg" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                    <div class="hover-bar" id="defHover">Hover over diagram for values</div>
+                </div>
+
+            </div><!-- end .fem-diagrams -->
+
+        </div><!-- end .fem-layout -->
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script src="lib/beam-fem.js"></script>
+    <script src="lib/beam-diagram.js"></script>
+    <script>
+    // ════════════════════════════════════════════════════════════════════════
+    // STATE
+    // ════════════════════════════════════════════════════════════════════════
+
+    let spans    = [{ L: 20, E: 29000, I: 500 }, { L: 20, E: 29000, I: 500 }];
+    let supports = [
+        { xGlobal: 0,  type: 'pin',    settlement: 0 },
+        { xGlobal: 20, type: 'roller', settlement: 0 },
+        { xGlobal: 40, type: 'pin',    settlement: 0 }
+    ];
+    let loads = [
+        { type: 'udl', xStart: 0, xEnd: 40, w: 2 }
+    ];
+    let lastResult = null;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // DOM REFERENCES
+    // ════════════════════════════════════════════════════════════════════════
+
+    const spansBody      = document.getElementById('spansBody');
+    const supportsBody   = document.getElementById('supportsBody');
+    const loadsContainer = document.getElementById('loadsContainer');
+    const errorBox       = document.getElementById('errorBox');
+    const reactionsBody  = document.getElementById('reactionsBody');
+
+    const beamSvg = document.getElementById('beamSvg');
+    const sfdSvg  = document.getElementById('sfdSvg');
+    const bmdSvg  = document.getElementById('bmdSvg');
+    const defSvg  = document.getElementById('defSvg');
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER INPUTS
+    // ════════════════════════════════════════════════════════════════════════
+
+    function renderSpans() {
+        spansBody.innerHTML = spans.map((sp, i) => `
+            <tr>
+                <td class="col-num">${i + 1}</td>
+                <td><input type="number" min="0.1" step="0.5" value="${sp.L}"
+                    oninput="spans[${i}].L=+this.value;syncSupportBounds();renderSupports();onInput()"
+                    style="width:58px"></td>
+                <td><input type="number" min="1" step="1000" value="${sp.E}"
+                    oninput="spans[${i}].E=+this.value;onInput()"
+                    style="width:68px"></td>
+                <td><input type="number" min="1" step="50" value="${sp.I}"
+                    oninput="spans[${i}].I=+this.value;onInput()"
+                    style="width:68px"></td>
+                <td>${spans.length > 1 ? `<button class="add-btn" onclick="removeSpan(${i})">✕</button>` : ''}</td>
+            </tr>`).join('');
+    }
+
+    function renderSupports() {
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        supportsBody.innerHTML = supports.map((sup, i) => `
+            <tr>
+                <td class="col-num">${i + 1}</td>
+                <td><input type="number" min="0" max="${totalL}" step="0.5" value="${sup.xGlobal}"
+                    oninput="supports[${i}].xGlobal=+this.value;onInput()"
+                    style="width:58px"></td>
+                <td>
+                    <select class="fem-select" onchange="supports[${i}].type=this.value;onInput()">
+                        <option value="pin"    ${sup.type==='pin'    ? 'selected':''}>Pin</option>
+                        <option value="roller" ${sup.type==='roller' ? 'selected':''}>Roller</option>
+                        <option value="fixed"  ${sup.type==='fixed'  ? 'selected':''}>Fixed</option>
+                    </select>
+                </td>
+                <td><input type="number" step="0.01" value="${sup.settlement || 0}"
+                    oninput="supports[${i}].settlement=+this.value;onInput()"
+                    style="width:58px"></td>
+                <td>${supports.length > 2 ? `<button class="add-btn" onclick="removeSupport(${i})">✕</button>` : ''}</td>
+            </tr>`).join('');
+    }
+
+    function renderLoads() {
+        loadsContainer.innerHTML = loads.map((ld, i) => buildLoadRow(ld, i)).join('');
+    }
+
+    function buildLoadRow(ld, i) {
+        const typeSelector = `
+            <select class="fem-select" onchange="changeLoadType(${i},this.value)">
+                <option value="udl"    ${ld.type==='udl'    ?'selected':''}>UDL</option>
+                <option value="trap"   ${ld.type==='trap'   ?'selected':''}>Trap</option>
+                <option value="point"  ${ld.type==='point'  ?'selected':''}>Point</option>
+                <option value="moment" ${ld.type==='moment' ?'selected':''}>Moment</option>
+            </select>`;
+
+        let fields = '';
+        if (ld.type === 'udl') {
+            fields = `
+                <span class="lunit">x:</span>
+                <input type="number" step="0.5" value="${ld.xStart}" style="width:54px"
+                    oninput="loads[${i}].xStart=+this.value;onInput()">
+                <span class="lunit">–</span>
+                <input type="number" step="0.5" value="${ld.xEnd}" style="width:54px"
+                    oninput="loads[${i}].xEnd=+this.value;onInput()">
+                <span class="lunit">ft&nbsp;w:</span>
+                <input type="number" step="0.1" value="${ld.w}" style="width:56px"
+                    oninput="loads[${i}].w=+this.value;onInput()">
+                <span class="lunit">k/ft↓+</span>`;
+        } else if (ld.type === 'trap') {
+            fields = `
+                <span class="lunit">x:</span>
+                <input type="number" step="0.5" value="${ld.xStart}" style="width:52px"
+                    oninput="loads[${i}].xStart=+this.value;onInput()">
+                <span class="lunit">–</span>
+                <input type="number" step="0.5" value="${ld.xEnd}" style="width:52px"
+                    oninput="loads[${i}].xEnd=+this.value;onInput()">
+                <span class="lunit">ft&nbsp;w₁:</span>
+                <input type="number" step="0.1" value="${ld.w1}" style="width:52px"
+                    oninput="loads[${i}].w1=+this.value;onInput()">
+                <span class="lunit">w₂:</span>
+                <input type="number" step="0.1" value="${ld.w2}" style="width:52px"
+                    oninput="loads[${i}].w2=+this.value;onInput()">
+                <span class="lunit">k/ft↓+</span>`;
+        } else if (ld.type === 'point') {
+            fields = `
+                <span class="lunit">x:</span>
+                <input type="number" step="0.5" value="${ld.xGlobal}" style="width:58px"
+                    oninput="loads[${i}].xGlobal=+this.value;onInput()">
+                <span class="lunit">ft&nbsp;P:</span>
+                <input type="number" step="0.5" value="${ld.P}" style="width:62px"
+                    oninput="loads[${i}].P=+this.value;onInput()">
+                <span class="lunit">kip↓+</span>`;
+        } else if (ld.type === 'moment') {
+            fields = `
+                <span class="lunit">x:</span>
+                <input type="number" step="0.5" value="${ld.xGlobal}" style="width:58px"
+                    oninput="loads[${i}].xGlobal=+this.value;onInput()">
+                <span class="lunit">ft&nbsp;M:</span>
+                <input type="number" step="1" value="${ld.M}" style="width:62px"
+                    oninput="loads[${i}].M=+this.value;onInput()">
+                <span class="lunit">k-ft CCW+</span>`;
+        }
+
+        return `<div class="load-row">
+            <span class="lnum">${i + 1}</span>
+            ${typeSelector}
+            ${fields}
+            <button class="add-btn" onclick="removeLoad(${i})" style="margin-left:auto;">✕</button>
+        </div>`;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // STATE MUTATIONS
+    // ════════════════════════════════════════════════════════════════════════
+
+    function syncSupportBounds() {
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        for (const sup of supports) { if (sup.xGlobal > totalL) sup.xGlobal = totalL; }
+    }
+
+    function addSpan() {
+        if (spans.length >= 3) return;
+        spans.push({ L: 20, E: spans[0].E, I: spans[0].I });
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        const rightmost = supports.reduce((a, b) => a.xGlobal > b.xGlobal ? a : b);
+        rightmost.xGlobal = totalL;
+        renderAll(); onInput();
+    }
+
+    function removeSpan(i) {
+        if (spans.length <= 1) return;
+        spans.splice(i, 1);
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        for (const sup of supports) { if (sup.xGlobal > totalL) sup.xGlobal = totalL; }
+        const seen = new Set();
+        supports = supports.filter(s => {
+            const k = Math.round(s.xGlobal * 1000);
+            if (seen.has(k)) return false; seen.add(k); return true;
+        });
+        renderAll(); onInput();
+    }
+
+    function addSupport() {
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        supports.push({ xGlobal: totalL / 2, type: 'roller', settlement: 0 });
+        renderSupports(); onInput();
+    }
+
+    function removeSupport(i) {
+        if (supports.length <= 2) return;
+        supports.splice(i, 1);
+        renderSupports(); onInput();
+    }
+
+    function addLoad() {
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        loads.push({ type: 'udl', xStart: 0, xEnd: totalL, w: 1 });
+        renderLoads(); onInput();
+    }
+
+    function removeLoad(i) {
+        loads.splice(i, 1);
+        renderLoads(); onInput();
+    }
+
+    function changeLoadType(i, newType) {
+        const totalL = spans.reduce((s, sp) => s + sp.L, 0);
+        const defaults = {
+            udl:    { type:'udl',    xStart:0, xEnd:totalL, w:1 },
+            trap:   { type:'trap',   xStart:0, xEnd:totalL, w1:1, w2:2 },
+            point:  { type:'point',  xGlobal:totalL/2, P:10 },
+            moment: { type:'moment', xGlobal:totalL/2, M:50 }
+        };
+        loads[i] = Object.assign({}, defaults[newType]);
+        renderLoads(); onInput();
+    }
+
+    function applyEI() {
+        const E = spans[0].E, I = spans[0].I;
+        spans.forEach(sp => { sp.E = E; sp.I = I; });
+        renderSpans(); onInput();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SOLVE + DRAW
+    // ════════════════════════════════════════════════════════════════════════
+
+    function buildInput() {
+        return {
+            spans: spans.map(sp => ({ L: sp.L, E: sp.E, I: sp.I })),
+            supports: supports.map(s => ({ xGlobal: s.xGlobal, type: s.type, settlement: s.settlement || 0 })),
+            loads: loads.map(ld => Object.assign({}, ld)),
+            options: { nSub: 10 }
+        };
+    }
+
+    function onInput() { solveAndDraw(); }
+
+    function solveAndDraw() {
+        const inp = buildInput();
+        const res = BeamFEM.solve(inp);
+
+        if (!res.ok) {
+            showError(res.error);
+            lastResult = null;
+            BeamDiagram.drawElevation(beamSvg, inp, null);
+            clearDiagrams();
+            return;
+        }
+        clearError();
+        lastResult = res.results;
+        const r = res.results;
+
+        BeamDiagram.drawElevation(beamSvg, inp, r);
+        BeamDiagram.drawSFD(sfdSvg, r, inp);
+        BeamDiagram.drawBMD(bmdSvg, r, inp);
+        BeamDiagram.drawDeflection(defSvg, r, inp);
+
+        const totalL = inp.spans.reduce((s, sp) => s + sp.L, 0);
+        bindAllHovers(r, totalL);
+
+        reactionsBody.innerHTML = r.rxnTable.map(rx => {
+            const Mz = rx.Mz !== null ? rx.Mz.toFixed(2) : '—';
+            return `<tr>
+                <td><strong>${rx.label}</strong></td>
+                <td>${rx.x.toFixed(1)}</td>
+                <td style="font-weight:600">${rx.Fy.toFixed(3)}</td>
+                <td>${Mz}</td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('vmax').textContent = r.Vmax.toFixed(3);
+        document.getElementById('vmin').textContent = r.Vmin.toFixed(3);
+        document.getElementById('mmax').textContent = r.Mmax.toFixed(3);
+        document.getElementById('mmin').textContent = r.Mmin.toFixed(3);
+        document.getElementById('dmax').textContent = r.dmin.toFixed(4); // most downward
+        document.getElementById('dmin').textContent = r.dmax.toFixed(4); // most upward
+    }
+
+    function clearDiagrams() {
+        [sfdSvg, bmdSvg, defSvg].forEach(s => { while (s.firstChild) s.removeChild(s.firstChild); });
+        ['sfdHover','bmdHover','defHover'].forEach(id => {
+            document.getElementById(id).textContent = 'Hover over diagram for values';
+        });
+    }
+
+    function bindAllHovers(r, totalL) {
+        const f = v => v.toFixed(3);
+        BeamDiagram.bindHover(sfdSvg, r, totalL, info => {
+            const el = document.getElementById('sfdHover');
+            if (!info) { el.innerHTML = 'Hover for values'; return; }
+            el.innerHTML = `x = <span class="hover-val">${info.x.toFixed(2)} ft</span>&nbsp;&nbsp;V = <span class="hover-val">${f(info.V)} kip</span>`;
+        });
+        BeamDiagram.bindHover(bmdSvg, r, totalL, info => {
+            const el = document.getElementById('bmdHover');
+            if (!info) { el.innerHTML = 'Hover for values'; return; }
+            el.innerHTML = `x = <span class="hover-val">${info.x.toFixed(2)} ft</span>&nbsp;&nbsp;M = <span class="hover-val">${f(info.M)} kip-ft</span>`;
+        });
+        BeamDiagram.bindHover(defSvg, r, totalL, info => {
+            const el = document.getElementById('defHover');
+            if (!info) { el.innerHTML = 'Hover for values'; return; }
+            el.innerHTML = `x = <span class="hover-val">${info.x.toFixed(2)} ft</span>&nbsp;&nbsp;δ = <span class="hover-val">${info.d.toFixed(4)} in</span>`;
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ERROR DISPLAY
+    // ════════════════════════════════════════════════════════════════════════
+
+    function showError(msg) {
+        errorBox.innerHTML = `<div style="background:#fff5f5;border:1px solid #c0392b;border-radius:6px;
+            padding:0.5rem 0.7rem;color:#c0392b;font-size:0.8rem;">${msg}</div>`;
+    }
+    function clearError() { errorBox.innerHTML = ''; }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER ALL + EVENT WIRING + INIT
+    // ════════════════════════════════════════════════════════════════════════
+
+    function renderAll() { renderSpans(); renderSupports(); renderLoads(); }
+
+    document.getElementById('addSpanBtn').addEventListener('click', addSpan);
+    document.getElementById('applyEIBtn').addEventListener('click', applyEI);
+    document.getElementById('addSupportBtn').addEventListener('click', addSupport);
+    document.getElementById('addLoadBtn').addEventListener('click', addLoad);
+    document.getElementById('analyzeBtn').addEventListener('click', solveAndDraw);
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        if (!lastResult) return;
+        const rows = [['Support','x (ft)','Type','Ry (kip)','Mz (kip-ft)']];
+        for (const rx of lastResult.rxnTable) {
+            rows.push([rx.label, rx.x.toFixed(2), rx.type,
+                       rx.Fy.toFixed(4), rx.Mz !== null ? rx.Mz.toFixed(4) : '']);
+        }
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv,' + encodeURIComponent(csv);
+        a.download = 'reactions.csv';
+        a.click();
+    });
+
+    renderAll();
+    solveAndDraw();
+
+    </script>
+
+</body>
+</html>

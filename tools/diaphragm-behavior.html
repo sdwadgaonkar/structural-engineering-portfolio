@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diaphragm Behavior Tool | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Spinner removal ─────────────────────────────── */
+        .db-sidebar input[type="number"]::-webkit-inner-spin-button,
+        .db-sidebar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .db-sidebar input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Layout ──────────────────────────────────────── */
+        .db-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 2rem;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────── */
+        .db-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 1.1rem 1.1rem 1.5rem;
+            scrollbar-width: thin;
+        }
+        .db-sidebar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: var(--text-muted, #8a8a8a);
+            margin: 1.1rem 0 0.6rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border, #e5dfd3);
+        }
+        .db-sidebar h3:first-child { margin-top: 0; }
+
+        /* ── Input rows ──────────────────────────────────── */
+        .db-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.55rem;
+        }
+        .db-row label {
+            font-size: 0.82rem;
+            color: var(--text-secondary, #5a5a5a);
+            flex: 1;
+        }
+        .db-row input[type="number"] {
+            width: 68px;
+            padding: 4px 7px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+            text-align: right;
+        }
+        .db-row input[type="number"]:focus {
+            outline: 1px solid var(--accent, #e85d24);
+            border-color: var(--accent, #e85d24);
+        }
+
+        /* ── Frame table ─────────────────────────────────── */
+        .frame-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-bottom: 0.25rem;
+        }
+        .frame-table th {
+            text-align: left;
+            color: var(--text-muted, #8a8a8a);
+            font-weight: 500;
+            padding: 0 4px 4px;
+            border-bottom: 1px solid var(--border, #e5dfd3);
+        }
+        .frame-table td {
+            padding: 4px 4px;
+            vertical-align: middle;
+        }
+        .frame-table td:first-child { color: var(--text-secondary); font-weight: 500; }
+        .frame-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .frame-table input[type="number"] {
+            width: 58px;
+            padding: 3px 6px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 4px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary);
+            text-align: right;
+        }
+        .frame-table input[type="number"]:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* ── Diaphragm toggle ────────────────────────────── */
+        .db-toggle {
+            display: flex;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+        .db-toggle button {
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            background: var(--bg-cream, #faf7f2);
+            font-size: 0.8rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            color: var(--text-secondary, #5a5a5a);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .db-toggle button:not(:last-child) { border-right: 1px solid var(--border); }
+        .db-toggle button.active {
+            background: var(--text-primary, #1a1a1a);
+            color: #fff;
+        }
+
+        /* ── Alpha slider ────────────────────────────────── */
+        .db-alpha-wrap {
+            display: none;
+            margin-bottom: 0.5rem;
+        }
+        .db-alpha-wrap.visible { display: block; }
+        .db-alpha-wrap label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .db-alpha-wrap input[type="range"] {
+            width: 100%;
+            accent-color: var(--text-primary, #1a1a1a);
+        }
+        .alpha-ends {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── Results ─────────────────────────────────────── */
+        .db-results-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.82rem;
+            margin-bottom: 0.35rem;
+            color: var(--text-secondary);
+        }
+        .db-results-row strong { color: var(--text-primary); font-weight: 600; }
+        .db-results-row .val { font-family: 'Space Grotesk', sans-serif; font-weight: 500; }
+
+        .db-force-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 0.5rem;
+        }
+        .db-force-table th {
+            text-align: right;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0 4px 4px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+        .db-force-table th:first-child { text-align: left; }
+        .db-force-table td {
+            padding: 4px 4px;
+            text-align: right;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .db-force-table td:first-child { text-align: left; color: var(--text-secondary); }
+        .db-force-table tr:not(:last-child) td { border-bottom: 1px solid #f0ece4; }
+
+        /* ── Main area ───────────────────────────────────── */
+        .db-main {
+            flex: 1;
+            min-width: 0;
+        }
+        .db-svg-card {
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .db-svg-card svg { width: 100%; display: block; }
+
+        /* ── Comparison bars ─────────────────────────────── */
+        .db-bars-card {
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+        }
+        .db-bars-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.85rem;
+        }
+        .db-bar-group { margin-bottom: 0.85rem; }
+        .db-bar-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .db-bar-pair { display: flex; flex-direction: column; gap: 4px; }
+        .db-bar-row { display: flex; align-items: center; gap: 0.5rem; }
+        .db-bar-tag {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            width: 52px;
+            flex-shrink: 0;
+        }
+        .db-bar-track {
+            flex: 1;
+            height: 7px;
+            background: var(--bg-muted, #f2efe8);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .db-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+        .db-bar-pct {
+            font-size: 0.78rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            width: 36px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* ── Notes ───────────────────────────────────────── */
+        .db-notes {
+            margin-top: 1.25rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg-muted, #f2efe8);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .db-notes strong { color: var(--text-primary); }
+
+        /* ── Warning badge ───────────────────────────────── */
+        .db-warning {
+            display: none;
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.78rem;
+            color: #713f12;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+        .db-warning.visible { display: block; }
+
+        @media (max-width: 800px) {
+            .db-layout { flex-direction: column; }
+            .db-sidebar { width: 100%; position: static; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>Diaphragm Behavior Tool</h1>
+            <p>Compare how rigid vs. flexible diaphragm assumptions redistribute lateral load across resisting frames — and see the torsional effect of eccentricity.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1100px; padding-top:2.5rem; padding-bottom:5rem;">
+
+        <div class="db-layout">
+
+            <!-- ── Sidebar ─────────────────────────────────────── -->
+            <aside class="db-sidebar">
+
+                <h3>Floor Geometry</h3>
+                <div class="db-row">
+                    <label>Width B (ft) <span style="font-size:0.72rem;color:var(--text-muted);">(Y-direction)</span></label>
+                    <input type="number" id="inp-B" value="100" min="20" max="500" step="5">
+                </div>
+
+                <h3>Lateral Load</h3>
+                <div class="db-row">
+                    <label>Force F (kips) <span style="font-size:0.72rem;color:var(--text-muted);">(X-direction)</span></label>
+                    <input type="number" id="inp-F" value="100" min="1" max="10000" step="10">
+                </div>
+
+                <h3>Resisting Frames</h3>
+                <table class="frame-table">
+                    <thead>
+                        <tr>
+                            <th>Frame</th>
+                            <th>Y pos (ft)</th>
+                            <th>Stiff.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#3b82f6;"></span>1</td>
+                            <td><input type="number" id="inp-y1" value="0" min="0" step="1"></td>
+                            <td><input type="number" id="inp-k1" value="1" min="0.1" step="0.5"></td>
+                        </tr>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#8b5cf6;"></span>2</td>
+                            <td><input type="number" id="inp-y2" value="30" min="0" step="1"></td>
+                            <td><input type="number" id="inp-k2" value="1" min="0.1" step="0.5"></td>
+                        </tr>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#f97316;"></span>3</td>
+                            <td><input type="number" id="inp-y3" value="100" min="0" step="1"></td>
+                            <td><input type="number" id="inp-k3" value="3" min="0.1" step="0.5"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="db-warning" id="warn-order">Frame positions must be in ascending order (y1 &lt; y2 &lt; y3).</div>
+
+                <h3>Diaphragm Assumption</h3>
+                <div class="db-toggle">
+                    <button id="btn-rigid" class="active" onclick="setMode('rigid')">Rigid</button>
+                    <button id="btn-semi" onclick="setMode('semi')">Semi-rigid</button>
+                    <button id="btn-flex" onclick="setMode('flex')">Flexible</button>
+                </div>
+                <div class="db-alpha-wrap" id="alpha-wrap">
+                    <label>
+                        <span>Rigidity factor &alpha;</span>
+                        <span id="alpha-val" style="font-family:'Space Grotesk';font-weight:600;">0.50</span>
+                    </label>
+                    <input type="range" id="inp-alpha" min="0" max="1" step="0.01" value="0.5">
+                    <div class="alpha-ends"><span>Flexible (0)</span><span>Rigid (1)</span></div>
+                </div>
+
+                <h3>Results</h3>
+                <div class="db-results-row">
+                    <span>Center of mass y<sub>CM</sub></span>
+                    <span class="val" id="out-ycm">—</span>
+                </div>
+                <div class="db-results-row" id="row-ycr">
+                    <span>Center of rigidity y<sub>CR</sub></span>
+                    <span class="val" id="out-ycr">—</span>
+                </div>
+                <div class="db-results-row" id="row-ecc">
+                    <span>Eccentricity e</span>
+                    <span class="val" id="out-ecc">—</span>
+                </div>
+
+                <table class="db-force-table">
+                    <thead>
+                        <tr>
+                            <th>Frame</th>
+                            <th>V (kips)</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#3b82f6;"></span>1</td>
+                            <td id="out-v1">—</td>
+                            <td id="out-p1">—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#8b5cf6;"></span>2</td>
+                            <td id="out-v2">—</td>
+                            <td id="out-p2">—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="frame-dot" style="background:#f97316;"></span>3</td>
+                            <td id="out-v3">—</td>
+                            <td id="out-p3">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </aside>
+
+            <!-- ── Main area ───────────────────────────────────── -->
+            <div class="db-main">
+
+                <div class="db-svg-card">
+                    <svg id="plan-svg" viewBox="0 0 520 320" role="img" aria-label="Floor plan showing diaphragm load distribution"></svg>
+                </div>
+
+                <div class="db-bars-card">
+                    <div class="db-bars-title">Force distribution — Rigid vs. Flexible</div>
+                    <div id="bars-container">
+                        <div class="db-bar-group" id="bar-group-1">
+                            <div class="db-bar-label">
+                                <span><span class="frame-dot" style="background:#3b82f6;"></span>Frame 1</span>
+                            </div>
+                            <div class="db-bar-pair">
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Rigid</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-r1" style="background:#3b82f6;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-r1" style="color:#3b82f6;">—</span>
+                                </div>
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Flexible</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-f1" style="background:#93c5fd;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-f1" style="color:#93c5fd;">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="db-bar-group" id="bar-group-2">
+                            <div class="db-bar-label">
+                                <span><span class="frame-dot" style="background:#8b5cf6;"></span>Frame 2</span>
+                            </div>
+                            <div class="db-bar-pair">
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Rigid</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-r2" style="background:#8b5cf6;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-r2" style="color:#8b5cf6;">—</span>
+                                </div>
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Flexible</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-f2" style="background:#c4b5fd;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-f2" style="color:#c4b5fd;">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="db-bar-group" id="bar-group-3">
+                            <div class="db-bar-label">
+                                <span><span class="frame-dot" style="background:#f97316;"></span>Frame 3</span>
+                            </div>
+                            <div class="db-bar-pair">
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Rigid</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-r3" style="background:#f97316;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-r3" style="color:#f97316;">—</span>
+                                </div>
+                                <div class="db-bar-row">
+                                    <span class="db-bar-tag">Flexible</span>
+                                    <div class="db-bar-track"><div class="db-bar-fill" id="bar-f3" style="background:#fdba74;width:0%"></div></div>
+                                    <span class="db-bar-pct" id="bpct-f3" style="color:#fdba74;">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="db-notes">
+                    <strong>Model:</strong> Single story &nbsp;·&nbsp;
+                    Rigid: load by relative stiffness + torsion about center of rigidity &nbsp;·&nbsp;
+                    Flexible: load by tributary width, no stiffness weighting &nbsp;·&nbsp;
+                    Semi-rigid: linear interpolation (approximate — real semi-rigid requires plate FEM) &nbsp;·&nbsp;
+                    Frame positions are Y-coordinates in the floor width direction; lateral force is in the X-direction.
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── SVG helpers ───────────────────────────────────────────────────────
+    const NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs, text) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        if (text !== undefined) e.textContent = text;
+        return e;
+    }
+    function line(g, x1, y1, x2, y2, attrs) { g.appendChild(el('line', { x1, y1, x2, y2, ...attrs })); }
+    function rect(g, x, y, w, h, attrs)      { g.appendChild(el('rect', { x, y, width: w, height: h, ...attrs })); }
+    function circle(g, cx, cy, r, attrs)     { g.appendChild(el('circle', { cx, cy, r, ...attrs })); }
+    function poly(g, pts, attrs)             { g.appendChild(el('polygon', { points: pts.map(p=>p.join(',')).join(' '), ...attrs })); }
+    function text(g, x, y, str, attrs)      { g.appendChild(el('text', { x, y, ...attrs }, str)); }
+    function arrowRight(g, x1, y, x2, clr, width) {
+        const w = Math.max(x2 - x1, 0);
+        if (w < 2) return;
+        line(g, x1, y, x2 - 6, y, { stroke: clr, 'stroke-width': width, 'stroke-linecap': 'round' });
+        poly(g, [[x2, y], [x2-8, y-4], [x2-8, y+4]], { fill: clr });
+    }
+
+    // ── Plan view constants ───────────────────────────────────────────────
+    const PL = 65, PT = 30, PW = 300, PH = 260;   // plan origin + size
+    const PR = PL + PW;                             // plan right edge
+    const PB = PT + PH;                             // plan bottom edge
+    const ARROW_MAX = 80;                           // max force arrow px
+    const COLORS = ['#3b82f6', '#8b5cf6', '#f97316'];
+
+    // ── Mode state ────────────────────────────────────────────────────────
+    let mode = 'rigid';   // 'rigid' | 'semi' | 'flex'
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('btn-rigid').classList.toggle('active', m === 'rigid');
+        document.getElementById('btn-semi').classList.toggle('active',  m === 'semi');
+        document.getElementById('btn-flex').classList.toggle('active',  m === 'flex');
+        document.getElementById('alpha-wrap').classList.toggle('visible', m === 'semi');
+        refresh();
+    }
+
+    document.getElementById('inp-alpha').addEventListener('input', function() {
+        document.getElementById('alpha-val').textContent = parseFloat(this.value).toFixed(2);
+        refresh();
+    });
+
+    // ── Read inputs ───────────────────────────────────────────────────────
+    function getP() {
+        return {
+            B:  parseFloat(document.getElementById('inp-B').value)  || 100,
+            F:  parseFloat(document.getElementById('inp-F').value)  || 100,
+            y:  [parseFloat(document.getElementById('inp-y1').value),
+                 parseFloat(document.getElementById('inp-y2').value),
+                 parseFloat(document.getElementById('inp-y3').value)],
+            k:  [parseFloat(document.getElementById('inp-k1').value) || 1,
+                 parseFloat(document.getElementById('inp-k2').value) || 1,
+                 parseFloat(document.getElementById('inp-k3').value) || 1],
+            alpha: parseFloat(document.getElementById('inp-alpha').value),
+        };
+    }
+
+    // ── Validate order ────────────────────────────────────────────────────
+    function validate(p) {
+        const ok = p.y[0] < p.y[1] && p.y[1] < p.y[2] &&
+                   p.y[0] >= 0 && p.y[2] <= p.B;
+        document.getElementById('warn-order').classList.toggle('visible', !ok);
+        return ok;
+    }
+
+    // ── Stiffness calculations ────────────────────────────────────────────
+    function calcRigid(p) {
+        const { B, F, y, k } = p;
+        const Kt = k[0] + k[1] + k[2];
+        const y_CR = (k[0]*y[0] + k[1]*y[1] + k[2]*y[2]) / Kt;
+        const y_CM = B / 2;
+        const e = y_CM - y_CR;
+        const MT = F * e;
+        const d = y.map(yi => yi - y_CR);
+        const Jt = k[0]*d[0]**2 + k[1]*d[1]**2 + k[2]*d[2]**2;
+        const V = k.map((ki, i) =>
+            F * ki / Kt + (Jt > 0 ? MT * ki * d[i] / Jt : 0)
+        );
+        return { V, y_CR, y_CM, e };
+    }
+
+    function calcFlexible(p) {
+        const { B, F, y } = p;
+        // tributary widths: walls assumed to extend to floor edges at y[0] and y[2]
+        const mid01 = (y[0] + y[1]) / 2;
+        const mid12 = (y[1] + y[2]) / 2;
+        const trib = [
+            mid01 - 0,        // wall 0: from south edge to midpoint 0-1
+            mid12 - mid01,    // wall 1: midpoint 0-1 to midpoint 1-2
+            B - mid12,        // wall 2: midpoint 1-2 to north edge
+        ];
+        const V = trib.map(t => F * t / B);
+        return { V };
+    }
+
+    function calcSemi(p, Vr, Vf) {
+        const a = p.alpha;
+        return Vr.map((vr, i) => a * vr + (1 - a) * Vf[i]);
+    }
+
+    // ── SVG coordinate helper ─────────────────────────────────────────────
+    function svgY(y_floor, B) {
+        return PT + PH * (1 - y_floor / B);
+    }
+
+    // ── Draw floor plan ───────────────────────────────────────────────────
+    function drawPlan(p, V, y_CR, y_CM, showCR) {
+        const svg = document.getElementById('plan-svg');
+        svg.innerHTML = '';
+
+        const { B, F, y } = p;
+        const maxV = Math.max(...V);
+
+        // ── Floor plate ───────────────────────────────────────────────────
+        rect(svg, PL, PT, PW, PH, {
+            fill: '#f8f7f4', stroke: '#d1c9bc', 'stroke-width': '1.5', rx: '2'
+        });
+
+        // ── Y-axis ticks and labels ───────────────────────────────────────
+        const ticks = [0, 0.25, 0.5, 0.75, 1];
+        for (const t of ticks) {
+            const yf = t * B;
+            const sy = svgY(yf, B);
+            line(svg, PL - 4, sy, PL, sy, { stroke: '#94a3b8', 'stroke-width': '1' });
+            text(svg, PL - 7, sy + 4, Math.round(yf) + '',
+                { 'font-size': '9', fill: '#94a3b8', 'text-anchor': 'end', 'font-family': 'Inter, sans-serif' });
+        }
+        text(svg, PL - 30, PT + PH / 2, 'Y (ft)',
+            { 'font-size': '9', fill: '#94a3b8', 'text-anchor': 'middle', 'font-family': 'Inter, sans-serif',
+              transform: `rotate(-90, ${PL - 30}, ${PT + PH / 2})` });
+
+        // ── Frames / walls ────────────────────────────────────────────────
+        for (let i = 0; i < 3; i++) {
+            const sy = svgY(y[i], B);
+            const color = COLORS[i];
+            const thick = 2 + (p.k[i] / Math.max(...p.k)) * 4;
+
+            // shadow glow
+            line(svg, PL, sy, PR, sy, { stroke: color, 'stroke-width': thick + 4, opacity: '0.12' });
+            // main wall line
+            line(svg, PL, sy, PR, sy, { stroke: color, 'stroke-width': thick, 'stroke-linecap': 'round' });
+
+            // wall label (left side)
+            text(svg, PL + 4, sy - 4, `F${i+1} (k=${p.k[i]})`,
+                { 'font-size': '9', fill: color, 'font-family': 'Inter, sans-serif', 'font-weight': '600' });
+
+            // force arrow (right side)
+            const arrowLen = maxV > 0 ? (V[i] / maxV) * ARROW_MAX : 0;
+            const ax1 = PR + 8, ax2 = ax1 + arrowLen;
+            arrowRight(svg, ax1, sy, ax2, color, 2.2);
+            text(svg, ax2 + 5, sy + 4, V[i].toFixed(1) + ' k',
+                { 'font-size': '9.5', fill: color, 'font-family': "'Space Grotesk', sans-serif", 'font-weight': '600' });
+        }
+
+        // ── Applied force arrow (left side, at CM height) ─────────────────
+        const cm_sy = svgY(y_CM, B);
+        arrowRight(svg, 5, cm_sy, PL - 6, '#e85d24', 2.5);
+        text(svg, 4, cm_sy - 8, 'F',
+            { 'font-size': '11', fill: '#e85d24', 'font-family': 'Inter, sans-serif', 'font-weight': '700', 'text-anchor': 'middle' });
+
+        // ── Eccentricity line (only in rigid/semi mode) ───────────────────
+        if (showCR) {
+            const cr_sy = svgY(y_CR, B);
+            const cx = PL + PW / 2;
+            line(svg, cx, cm_sy, cx, cr_sy, {
+                stroke: '#6366f1', 'stroke-width': '1.5', 'stroke-dasharray': '4,3'
+            });
+            // eccentricity bracket
+            if (Math.abs(cm_sy - cr_sy) > 4) {
+                const mid_e = (cm_sy + cr_sy) / 2;
+                line(svg, cx - 3, cm_sy, cx + 3, cm_sy, { stroke: '#6366f1', 'stroke-width': '1' });
+                line(svg, cx - 3, cr_sy, cx + 3, cr_sy, { stroke: '#6366f1', 'stroke-width': '1' });
+                text(svg, cx + 6, mid_e + 4, 'e',
+                    { 'font-size': '10', fill: '#6366f1', 'font-family': 'Inter', 'font-style': 'italic' });
+            }
+        }
+
+        // ── CM marker ─────────────────────────────────────────────────────
+        const cmx = PL + PW / 2;
+        circle(svg, cmx, cm_sy, 6, { fill: '#e85d24', stroke: '#fff', 'stroke-width': '1.5' });
+        text(svg, cmx + 10, cm_sy - 8, 'CM',
+            { 'font-size': '9', fill: '#e85d24', 'font-family': 'Inter, sans-serif', 'font-weight': '600' });
+
+        // ── CR marker (diamond) ───────────────────────────────────────────
+        if (showCR) {
+            const cr_sy = svgY(y_CR, B);
+            const s = 6;
+            poly(svg, [[cmx, cr_sy - s], [cmx + s, cr_sy], [cmx, cr_sy + s], [cmx - s, cr_sy]],
+                { fill: '#6366f1', stroke: '#fff', 'stroke-width': '1.5' });
+            text(svg, cmx + 10, cr_sy + 4, 'CR',
+                { 'font-size': '9', fill: '#6366f1', 'font-family': 'Inter, sans-serif', 'font-weight': '600' });
+        }
+
+        // ── Legend (bottom of SVG) ────────────────────────────────────────
+        const items = showCR
+            ? [['#e85d24', '● CM (center of mass)'], ['#6366f1', '◆ CR (center of rigidity)']]
+            : [['#e85d24', '● CM (center of mass)']];
+        let lx = PL;
+        for (const [color, label] of items) {
+            text(svg, lx, PB + 18, label,
+                { 'font-size': '8.5', fill: color, 'font-family': 'Inter, sans-serif' });
+            lx += label.length * 5 + 20;
+        }
+    }
+
+    // ── Update sidebar results ────────────────────────────────────────────
+    function updateResults(p, V, y_CR, y_CM, e) {
+        const showCR = mode !== 'flex';
+        document.getElementById('out-ycm').textContent = y_CM.toFixed(1) + ' ft';
+        document.getElementById('out-ycr').textContent = showCR ? y_CR.toFixed(1) + ' ft' : '—';
+        document.getElementById('out-ecc').textContent = showCR ? Math.abs(e).toFixed(1) + ' ft' : '—';
+        document.getElementById('row-ycr').style.opacity = showCR ? '1' : '0.35';
+        document.getElementById('row-ecc').style.opacity = showCR ? '1' : '0.35';
+
+        const F = p.F;
+        const ids = [['out-v1','out-p1'],['out-v2','out-p2'],['out-v3','out-p3']];
+        for (let i = 0; i < 3; i++) {
+            document.getElementById(ids[i][0]).textContent = V[i].toFixed(1);
+            document.getElementById(ids[i][1]).textContent = (V[i]/F*100).toFixed(1) + '%';
+        }
+    }
+
+    // ── Update comparison bars ────────────────────────────────────────────
+    function updateBars(p, Vr, Vf) {
+        const F = p.F;
+        const prefixes = ['1','2','3'];
+        for (let i = 0; i < 3; i++) {
+            const pr = Vr[i]/F*100, pf = Vf[i]/F*100;
+            document.getElementById('bar-r'+prefixes[i]).style.width = pr.toFixed(1) + '%';
+            document.getElementById('bar-f'+prefixes[i]).style.width = pf.toFixed(1) + '%';
+            document.getElementById('bpct-r'+prefixes[i]).textContent = pr.toFixed(1) + '%';
+            document.getElementById('bpct-f'+prefixes[i]).textContent = pf.toFixed(1) + '%';
+        }
+    }
+
+    // ── Main refresh ──────────────────────────────────────────────────────
+    function refresh() {
+        const p = getP();
+        if (!validate(p)) return;
+
+        const rigid   = calcRigid(p);
+        const flexible = calcFlexible(p);
+        const { y_CR, y_CM, e } = rigid;
+
+        let V;
+        if (mode === 'rigid')     V = rigid.V;
+        else if (mode === 'flex') V = flexible.V;
+        else                      V = calcSemi(p, rigid.V, flexible.V);
+
+        const showCR = mode !== 'flex';
+        drawPlan(p, V, y_CR, y_CM, showCR);
+        updateResults(p, V, y_CR, y_CM, e);
+        updateBars(p, rigid.V, flexible.V);
+    }
+
+    // ── Wire inputs ───────────────────────────────────────────────────────
+    ['inp-B','inp-F','inp-y1','inp-y2','inp-y3','inp-k1','inp-k2','inp-k3'].forEach(id => {
+        document.getElementById(id).addEventListener('input', refresh);
+    });
+
+    // ── Boot ─────────────────────────────────────────────────────────────
+    refresh();
+    </script>
+
+</body>
+</html>

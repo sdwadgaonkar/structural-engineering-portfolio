@@ -261,6 +261,18 @@
 
     <div id="site-footer"></div>
 
+    <button id="backToTop" title="Back to top"
+        style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+               width:2.4rem;height:2.4rem;border-radius:50%;border:1px solid var(--border,#e5dfd3);
+               background:var(--bg-white,#fff);color:var(--text-secondary,#5a5a5a);
+               font-size:1.1rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);
+               transition:opacity 0.2s;">↑</button>
+    <script>
+        const _btt = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => { _btt.style.display = window.scrollY > 300 ? 'block' : 'none'; });
+        _btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    </script>
+
     <script src="../components.js" data-depth="1"></script>
     <script src="lib/beam-fem.js"></script>
     <script src="lib/beam-diagram.js"></script>

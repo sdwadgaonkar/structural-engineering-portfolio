@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracing Stiffness Visualizer | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Spinner removal ─────────────────────────── */
+        .bv-controls input[type="number"]::-webkit-inner-spin-button,
+        .bv-controls input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .bv-controls input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Controls bar ────────────────────────────── */
+        .bv-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 1.5rem;
+            align-items: flex-end;
+            padding: 1.1rem 1.25rem;
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ctrl-group label {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted, #8a8a8a);
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .ctrl-group input {
+            width: 72px;
+            padding: 5px 8px;
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 5px;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--bg-cream, #faf7f2);
+            color: var(--text-primary, #1a1a1a);
+        }
+        .ctrl-group input:focus {
+            outline: 1px solid var(--accent, #e85d24);
+            border-color: var(--accent, #e85d24);
+        }
+        .ctrl-animate {
+            margin-left: auto;
+            align-self: flex-end;
+        }
+
+        /* ── Frame grid ──────────────────────────────── */
+        .bv-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        @media (max-width: 680px) {
+            .bv-grid { grid-template-columns: 1fr; }
+        }
+
+        .bv-card {
+            background: var(--bg-white, #fff);
+            border: 1px solid var(--border, #e5dfd3);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem 1.25rem;
+        }
+        .bv-card svg {
+            width: 100%;
+            display: block;
+        }
+
+        /* ── Card footer ─────────────────────────────── */
+        .bv-card-footer {
+            margin-top: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .bv-config-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary, #1a1a1a);
+        }
+        .bv-k-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.83rem;
+            color: var(--text-secondary, #5a5a5a);
+        }
+        .bv-ratio {
+            font-weight: 600;
+        }
+        .bv-bar-track {
+            height: 5px;
+            background: var(--bg-muted, #f2efe8);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+        .bv-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.35s ease;
+        }
+
+        /* ── Notes box ───────────────────────────────── */
+        .bv-notes {
+            margin-top: 1.5rem;
+            padding: 0.9rem 1.1rem;
+            background: var(--bg-muted, #f2efe8);
+            border-radius: 8px;
+            font-size: 0.825rem;
+            color: var(--text-secondary, #5a5a5a);
+            line-height: 1.6;
+        }
+        .bv-notes strong { color: var(--text-primary, #1a1a1a); }
+
+        /* ── Legend ──────────────────────────────────── */
+        .bv-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .bv-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .bv-legend-line {
+            width: 28px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        .bv-legend-dash {
+            width: 28px;
+            height: 0;
+            border-top: 3px dashed #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>Bracing Stiffness Visualizer</h1>
+            <p>Compare lateral stiffness and deflected shapes for X-brace, chevron, single diagonal, and EBF — side by side.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1100px; padding-top:3rem; padding-bottom:5rem;">
+
+        <!-- Controls -->
+        <div class="bv-controls">
+            <div class="ctrl-group">
+                <label>Bay width L (ft)</label>
+                <input type="number" id="inp-L" value="20" min="10" max="60" step="1">
+            </div>
+            <div class="ctrl-group">
+                <label>Story height H (ft)</label>
+                <input type="number" id="inp-H" value="13" min="8" max="30" step="1">
+            </div>
+            <div class="ctrl-group">
+                <label>Brace area A (in²)</label>
+                <input type="number" id="inp-A" value="5.0" min="0.5" max="40" step="0.5">
+            </div>
+            <div class="ctrl-group">
+                <label>E (ksi)</label>
+                <input type="number" id="inp-E" value="29000" min="1000" max="50000" step="1000">
+            </div>
+            <div class="ctrl-group">
+                <label>EBF link length e (ft)</label>
+                <input type="number" id="inp-e" value="2.0" min="0.5" max="10" step="0.5">
+            </div>
+            <div class="ctrl-animate">
+                <button id="btn-animate" class="btn btn-primary">Animate</button>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="bv-legend" style="margin-bottom:1rem;">
+            <div class="bv-legend-item"><div class="bv-legend-line" style="background:#3b82f6;"></div> Tension</div>
+            <div class="bv-legend-item"><div class="bv-legend-dash"></div> Compression / buckling</div>
+            <div class="bv-legend-item"><div class="bv-legend-line" style="background:#334155;"></div> Column / beam</div>
+            <div class="bv-legend-item"><div class="bv-legend-line" style="background:#22c55e;"></div> EBF link beam</div>
+            <div class="bv-legend-item"><div class="bv-legend-line" style="background:#f97316;"></div> Applied force F</div>
+        </div>
+
+        <!-- 2×2 frame grid -->
+        <div class="bv-grid">
+
+            <div class="bv-card">
+                <svg id="svg-xbrace" viewBox="0 0 240 270" role="img" aria-label="X-Brace frame diagram"></svg>
+                <div class="bv-card-footer">
+                    <div class="bv-config-name">X-Brace</div>
+                    <div class="bv-k-row">
+                        <span id="k-xbrace">K = — kip/in</span>
+                        <span class="bv-ratio" id="ratio-xbrace" style="color:#3b82f6;"></span>
+                    </div>
+                    <div class="bv-bar-track"><div class="bv-bar-fill" id="bar-xbrace" style="background:#3b82f6; width:0%;"></div></div>
+                </div>
+            </div>
+
+            <div class="bv-card">
+                <svg id="svg-chevron" viewBox="0 0 240 270" role="img" aria-label="Chevron brace frame diagram"></svg>
+                <div class="bv-card-footer">
+                    <div class="bv-config-name">Chevron (&#x2227;)</div>
+                    <div class="bv-k-row">
+                        <span id="k-chevron">K = — kip/in</span>
+                        <span class="bv-ratio" id="ratio-chevron" style="color:#8b5cf6;"></span>
+                    </div>
+                    <div class="bv-bar-track"><div class="bv-bar-fill" id="bar-chevron" style="background:#8b5cf6; width:0%;"></div></div>
+                </div>
+            </div>
+
+            <div class="bv-card">
+                <svg id="svg-single" viewBox="0 0 240 270" role="img" aria-label="Single diagonal brace frame diagram"></svg>
+                <div class="bv-card-footer">
+                    <div class="bv-config-name">Single Diagonal</div>
+                    <div class="bv-k-row">
+                        <span id="k-single">K = — kip/in</span>
+                        <span class="bv-ratio" id="ratio-single" style="color:#f97316;"></span>
+                    </div>
+                    <div class="bv-bar-track"><div class="bv-bar-fill" id="bar-single" style="background:#f97316; width:0%;"></div></div>
+                </div>
+            </div>
+
+            <div class="bv-card">
+                <svg id="svg-ebf" viewBox="0 0 240 270" role="img" aria-label="EBF frame diagram"></svg>
+                <div class="bv-card-footer">
+                    <div class="bv-config-name">EBF</div>
+                    <div class="bv-k-row">
+                        <span id="k-ebf">K = — kip/in</span>
+                        <span class="bv-ratio" id="ratio-ebf" style="color:#22c55e;"></span>
+                    </div>
+                    <div class="bv-bar-track"><div class="bv-bar-fill" id="bar-ebf" style="background:#22c55e; width:0%;"></div></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Assumptions -->
+        <div class="bv-notes">
+            <strong>Assumptions:</strong>
+            Pinned column bases &nbsp;·&nbsp; Columns and beam are rigid (braces carry all lateral load) &nbsp;·&nbsp;
+            X-brace uses tension-only model — one diagonal active per direction, the other buckles &nbsp;·&nbsp;
+            Chevron: both braces active, beam assumed rigid against vertical unbalance &nbsp;·&nbsp;
+            EBF link beam flexibility not included (approximate stiffness) &nbsp;·&nbsp;
+            Animation shows relative lateral displacement under the same oscillating force — stiffer frames rack less.
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── SVG namespace helper ──────────────────────────────────────────────
+    const NS = 'http://www.w3.org/2000/svg';
+    function svgEl(tag, attrs) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        return e;
+    }
+
+    // ── Frame geometry (SVG units, viewBox 240×270) ───────────────────────
+    const CL = 60, CR = 180;       // column x: left, right
+    const CB = 222, CT = 62;       // column y: base, top
+    const FW = CR - CL;            // 120 — frame width in SVG units
+    const FH = CB - CT;            // 160 — frame height in SVG units
+    const MAX_D = 20;              // max SVG displacement (pixels)
+
+    // ── Stiffness formulas (kip/in) ───────────────────────────────────────
+    // All lengths in inches; A in in²; E in ksi
+    function calcK(L_ft, H_ft, A, E, e_ft) {
+        const L = L_ft * 12, H = H_ft * 12;
+
+        // Single diagonal: BL → TR
+        const Ld = Math.hypot(L, H);
+        const cA = L / Ld;
+        const K_single = E * A * cA * cA / Ld;
+
+        // X-brace: tension-only = one active diagonal per direction → same formula as single diagonal
+        const K_xbrace = K_single;
+
+        // Chevron (inverted-V): two braces from column bases to beam midpoint
+        const Lv = Math.hypot(L / 2, H);
+        const cB = (L / 2) / Lv;
+        const K_chevron = 2 * E * A * cB * cB / Lv;
+
+        // EBF: brace from BL to (L−e, H), then link from (L−e, H) to (L, H)
+        const e = Math.min(e_ft * 12, L * 0.4);  // clamp link ≤ 40% bay
+        const Le = L - e;
+        const Lebf = Math.hypot(Le, H);
+        const cG = Le / Lebf;
+        const K_ebf = E * A * cG * cG / Lebf;
+
+        return { K_xbrace, K_chevron, K_single, K_ebf };
+    }
+
+    // ── Low-level SVG drawing helpers ─────────────────────────────────────
+    function addLine(parent, x1, y1, x2, y2, attrs) {
+        parent.appendChild(svgEl('line', { x1, y1, x2, y2, ...attrs }));
+    }
+    function addPoly(parent, pts, attrs) {
+        parent.appendChild(svgEl('polygon', { points: pts.map(p => p.join(',')).join(' '), ...attrs }));
+    }
+    function addText(parent, x, y, str, attrs) {
+        const t = svgEl('text', { x, y, ...attrs });
+        t.textContent = str;
+        parent.appendChild(t);
+    }
+
+    // ── Support symbol (pin) ──────────────────────────────────────────────
+    function drawPin(g, x, y) {
+        addPoly(g, [[x, y], [x - 8, y + 14], [x + 8, y + 14]],
+            { fill: '#94a3b8', stroke: '#64748b', 'stroke-width': '1' });
+        addLine(g, x - 11, y + 14, x + 11, y + 14,
+            { stroke: '#64748b', 'stroke-width': '2' });
+        // Ground hatch lines
+        for (let i = -10; i <= 10; i += 5) {
+            addLine(g, x + i, y + 14, x + i - 4, y + 19,
+                { stroke: '#94a3b8', 'stroke-width': '1' });
+        }
+    }
+
+    // ── Load arrow (horizontal, pointing right) ───────────────────────────
+    // drawn at fixed SVG-space position (doesn't translate with frame)
+    function drawLoadArrow(g, y, dir) {
+        // dir: +1 = rightward, -1 = leftward
+        if (dir >= 0) {
+            addLine(g, 8, y, 50, y,
+                { stroke: '#f97316', 'stroke-width': '2.5', 'stroke-linecap': 'round' });
+            addPoly(g, [[52, y], [44, y - 5], [44, y + 5]],
+                { fill: '#f97316' });
+            addText(g, 8, y - 7, 'F',
+                { 'font-size': '11', fill: '#f97316', 'font-family': 'Inter, sans-serif', 'font-weight': '700', 'text-anchor': 'middle' });
+        } else {
+            addLine(g, 232, y, 190, y,
+                { stroke: '#f97316', 'stroke-width': '2.5', 'stroke-linecap': 'round' });
+            addPoly(g, [[188, y], [196, y - 5], [196, y + 5]],
+                { fill: '#f97316' });
+            addText(g, 232, y - 7, 'F',
+                { 'font-size': '11', fill: '#f97316', 'font-family': 'Inter, sans-serif', 'font-weight': '700', 'text-anchor': 'middle' });
+        }
+    }
+
+    // ── Brace stroke styles ───────────────────────────────────────────────
+    const ST = {
+        tension:     { stroke: '#3b82f6', 'stroke-width': '2.2', 'stroke-linecap': 'round' },
+        compression: { stroke: '#ef4444', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-dasharray': '6,4' },
+        chevron_t:   { stroke: '#8b5cf6', 'stroke-width': '2.2', 'stroke-linecap': 'round' },
+        chevron_c:   { stroke: '#a78bfa', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-dasharray': '6,4' },
+        col:         { stroke: '#334155', 'stroke-width': '3',   'stroke-linecap': 'round' },
+        beam:        { stroke: '#334155', 'stroke-width': '3',   'stroke-linecap': 'round' },
+        ebf_brace:   { stroke: '#16a34a', 'stroke-width': '2.2', 'stroke-linecap': 'round' },
+        ebf_link:    { stroke: '#22c55e', 'stroke-width': '4',   'stroke-linecap': 'round' },
+        ghost:       { stroke: '#94a3b8', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-dasharray': '4,3' },
+    };
+
+    // ── Main draw function ────────────────────────────────────────────────
+    function drawFrame(svgEl, type, delta, params) {
+        svgEl.innerHTML = '';
+
+        const lt = CL + delta;   // left column top x (displaced)
+        const rt = CR + delta;   // right column top x (displaced)
+
+        // Ghost frame (undisplaced, dashed gray)
+        const ghost = svgEl.appendChild(document.createElementNS(NS, 'g'));
+        addLine(ghost, CL, CB, CL, CT, ST.ghost);
+        addLine(ghost, CR, CB, CR, CT, ST.ghost);
+        addLine(ghost, CL, CT, CR, CT, ST.ghost);
+
+        // ── Bracing members (behind columns) ─────────────────────────────
+        const braces = svgEl.appendChild(document.createElementNS(NS, 'g'));
+
+        if (type === 'xbrace') {
+            const d1 = delta >= 0 ? ST.tension : ST.compression;
+            const d2 = delta >= 0 ? ST.compression : ST.tension;
+            addLine(braces, CL, CB, rt, CT, d1);   // BL→TR (tension when →)
+            addLine(braces, CR, CB, lt, CT, d2);   // BR→TL (compression when →)
+
+        } else if (type === 'chevron') {
+            const mx = (lt + rt) / 2;   // midpoint of displaced beam
+            const d_left  = delta >= 0 ? ST.chevron_t : ST.chevron_c;
+            const d_right = delta >= 0 ? ST.chevron_c : ST.chevron_t;
+            addLine(braces, CL, CB, mx, CT, d_left);
+            addLine(braces, CR, CB, mx, CT, d_right);
+
+        } else if (type === 'single') {
+            const d1 = delta >= 0 ? ST.tension : ST.compression;
+            addLine(braces, CL, CB, rt, CT, d1);   // BL→TR
+
+        } else if (type === 'ebf') {
+            const e_ft_clamped = Math.min(params.e_ft, params.L_ft * 0.4);
+            const link_px = (e_ft_clamped / params.L_ft) * FW;
+            const bx = rt - link_px;    // where brace meets beam
+            addLine(braces, CL, CB, bx, CT, ST.ebf_brace);   // diagonal brace
+            addLine(braces, bx, CT, rt, CT, ST.ebf_link);    // link beam (horizontal)
+        }
+
+        // ── Columns (displaced) ───────────────────────────────────────────
+        const frame = svgEl.appendChild(document.createElementNS(NS, 'g'));
+        addLine(frame, CL, CB, lt, CT, ST.col);
+        addLine(frame, CR, CB, rt, CT, ST.col);
+
+        // ── Beam (displaced) ──────────────────────────────────────────────
+        addLine(frame, lt, CT, rt, CT, ST.beam);
+
+        // ── Pin supports ──────────────────────────────────────────────────
+        drawPin(svgEl, CL, CB);
+        drawPin(svgEl, CR, CB);
+
+        // ── Load arrow ────────────────────────────────────────────────────
+        // Show arrow in the direction of current displacement; hide near zero
+        if (Math.abs(delta) > 0.5) {
+            drawLoadArrow(svgEl, CT, delta);
+        }
+
+        // ── Displacement annotation ───────────────────────────────────────
+        // Small "Δ ↔" line at top showing displacement
+        if (Math.abs(delta) > 1) {
+            const y_ann = CT - 12;
+            const x1 = delta >= 0 ? CL : CL + delta;
+            const x2 = delta >= 0 ? CL + delta : CL;
+            addLine(svgEl, CL, y_ann, lt, y_ann,
+                { stroke: '#f97316', 'stroke-width': '1.2', 'stroke-dasharray': '3,2' });
+        }
+    }
+
+    // ── State ─────────────────────────────────────────────────────────────
+    let animating = false;
+    let rafId = null;
+    let t0 = 0;
+    let currentKs = {};
+
+    // ── Read inputs ───────────────────────────────────────────────────────
+    function getParams() {
+        return {
+            L_ft: parseFloat(document.getElementById('inp-L').value) || 20,
+            H_ft: parseFloat(document.getElementById('inp-H').value) || 13,
+            A:    parseFloat(document.getElementById('inp-A').value) || 5,
+            E:    parseFloat(document.getElementById('inp-E').value) || 29000,
+            e_ft: parseFloat(document.getElementById('inp-e').value) || 2,
+        };
+    }
+
+    // ── Update stiffness display ──────────────────────────────────────────
+    function updateDisplay(Ks) {
+        const maxK = Math.max(...Object.values(Ks));
+        const minK = Math.min(...Object.values(Ks));
+
+        const configs = [
+            { key: 'K_xbrace',  suffix: 'xbrace'  },
+            { key: 'K_chevron', suffix: 'chevron'  },
+            { key: 'K_single',  suffix: 'single'   },
+            { key: 'K_ebf',     suffix: 'ebf'      },
+        ];
+
+        for (const { key, suffix } of configs) {
+            const K = Ks[key];
+            document.getElementById('k-' + suffix).textContent = `K = ${K.toFixed(2)} kip/in`;
+            const ratio = K / minK;
+            document.getElementById('ratio-' + suffix).textContent =
+                ratio >= 1.005 ? `${ratio.toFixed(2)}×` : 'baseline';
+            document.getElementById('bar-' + suffix).style.width = `${(K / maxK * 100).toFixed(1)}%`;
+        }
+    }
+
+    // ── Render all four frames at given displacement scale ────────────────
+    function renderAll(phase, Ks, params) {
+        const minK = Math.min(...Object.values(Ks));
+
+        function delta(K) { return phase * (minK / K) * MAX_D; }
+
+        drawFrame(document.getElementById('svg-xbrace'),  'xbrace',  delta(Ks.K_xbrace),  params);
+        drawFrame(document.getElementById('svg-chevron'), 'chevron', delta(Ks.K_chevron), params);
+        drawFrame(document.getElementById('svg-single'),  'single',  delta(Ks.K_single),  params);
+        drawFrame(document.getElementById('svg-ebf'),     'ebf',     delta(Ks.K_ebf),     params);
+    }
+
+    // ── Animation loop ────────────────────────────────────────────────────
+    function loop(ts) {
+        if (!animating) return;
+        const t = (ts - t0) / 1000;
+        const phase = Math.sin(2 * Math.PI * t / 3);   // 3-second period
+        renderAll(phase, currentKs, getParams());
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function startAnim() {
+        animating = true;
+        t0 = performance.now();
+        document.getElementById('btn-animate').textContent = 'Stop';
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function stopAnim() {
+        animating = false;
+        if (rafId) cancelAnimationFrame(rafId);
+        document.getElementById('btn-animate').textContent = 'Animate';
+        renderAll(0, currentKs, getParams());
+    }
+
+    // ── Recalculate and redraw ────────────────────────────────────────────
+    function refresh() {
+        const p = getParams();
+        currentKs = calcK(p.L_ft, p.H_ft, p.A, p.E, p.e_ft);
+        updateDisplay(currentKs);
+        if (!animating) renderAll(0, currentKs, p);
+    }
+
+    // ── Event wiring ──────────────────────────────────────────────────────
+    document.getElementById('btn-animate').addEventListener('click', () => {
+        if (animating) stopAnim();
+        else startAnim();
+    });
+
+    ['inp-L', 'inp-H', 'inp-A', 'inp-E', 'inp-e'].forEach(id => {
+        document.getElementById(id).addEventListener('input', refresh);
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────────────
+    refresh();
+    </script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,7 +33,7 @@
             <a href="tools/multispan-beam.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Multi-Span Beam Analyzer</h3>
-                    <p>1–3 span continuous beam FEM solver (Euler-Bernoulli) — point loads, UDLs, trapezoidal loads, applied moments, settlement, SFD, BMD, and deflected shape.</p>
+                    <p><strong>Solve a multi-span beam with mixed loads in seconds.</strong> FEM solver (Euler-Bernoulli) — point loads, UDLs, trapezoidal loads, moments, settlement. Outputs SFD, BMD, and deflected shape.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -41,7 +41,7 @@
             <a href="tools/beam-calculator.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Continuous Beam Calculator</h3>
-                    <p>1 to 6-span continuous beam analysis (direct stiffness method) — point loads, UDLs, trapezoidal loads, plus reactions, SFD, BMD, and deflected shape.</p>
+                    <p><strong>Analyze up to 6-span beams without software.</strong> Direct stiffness method — point loads, UDLs, trapezoidal loads, reactions, SFD, BMD, deflected shape.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -49,7 +49,7 @@
             <a href="tools/load-combinations.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Load Combination Generator</h3>
-                    <p>Compute factored load combinations per ASCE 7-22 (LRFD) or IS 875 (LSD), with the governing case highlighted automatically.</p>
+                    <p><strong>Get LRFD load combos in one click.</strong> Computes factored combinations per ASCE 7-22 or IS 875, with the governing case highlighted automatically.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -57,7 +57,7 @@
             <a href="tools/section-properties.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Section Property Calculator</h3>
-                    <p>Compute area, centroid, moments of inertia, section moduli, and radii of gyration for built-up rectangular sections, with a live preview.</p>
+                    <p><strong>Get section properties for built-up sections instantly.</strong> Computes area, centroid, I, S, and r for rectangular built-up shapes, with a live preview.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -65,7 +65,7 @@
             <a href="tools/column-interaction.html" style="text-decoration: none;">
                 <div class="card live">
                     <h3>Column Interaction Diagram</h3>
-                    <p>Uniaxial P-M interaction diagram for rectangular RC columns per ACI 318-19, with nominal and design curves and adequacy check against Pu, Mu.</p>
+                    <p><strong>Check your column against ACI 318 in under a minute.</strong> Generates the full P-M interaction diagram with nominal and design envelopes, and plots your (Pu, Mu) demand point.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -82,6 +82,25 @@
 
         </div>
 
+    </section>
+
+    <section class="container section-muted">
+        <div class="section-heading">
+            <span class="section-label">Coming next</span>
+            <h2>Tools in the pipeline</h2>
+            <p>The roadmap below reflects what's actively being built. Get notified when a new tool launches.</p>
+        </div>
+        <ul style="list-style:none;padding:0;margin:1.5rem 0 2rem;display:flex;flex-direction:column;gap:0.75rem;">
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>Bracing Stiffness Visualizer</strong> &mdash; compare X, V, K, and EBF configurations side-by-side with animated deflected shapes</div></li>
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>Diaphragm Behavior Tool</strong> &mdash; visualize rigid vs. semi-rigid load distribution for irregular floor plates</div></li>
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>Base Plate Designer</strong> &mdash; AISC 360 tension, shear, and bearing checks for steel column base plates</div></li>
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>ACI Development Length Calculator</strong> &mdash; rebar development and lap splice lengths per ACI 318-19</div></li>
+        </ul>
+        <form name="tools-notify" netlify style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+            <input type="email" name="email" placeholder="your@email.com" required
+                style="padding:0.6rem 1rem;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;font-family:inherit;background:var(--bg);color:var(--text);min-width:220px;flex:1;">
+            <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Notify me when new tools launch</button>
+        </form>
     </section>
 
     <div id="site-footer"></div>

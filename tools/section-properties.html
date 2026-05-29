@@ -9,6 +9,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <style>
+        /* ── Section properties right-column layout ── */
+        .sp-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+        .sp-panel {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .sp-panel svg { width: 100%; height: auto; display: block; }
+        .sp-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -32,6 +62,10 @@
                     Each row is a rectangular component. (x, y) is its centroid, measured from a global reference origin. All values in inches.
                 </p>
 
+                <div style="background:var(--bg-muted);border-radius:6px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary);">
+                    <div id="eqParallelAxis" style="text-align:center;margin:0.25rem 0;"></div>
+                </div>
+
                 <table class="components-table">
                     <thead>
                         <tr>
@@ -52,20 +86,19 @@
                 <button class="calc-button" id="calculateBtn">Calculate Properties</button>
             </div>
 
-            <div class="tool-panel">
-                <h3>Results</h3>
-                <div id="results">
-                    <div class="result-empty">Add components and click Calculate.</div>
+            <div class="sp-right">
+                <div class="sp-panel">
+                    <p class="sp-label">Properties</p>
+                    <div id="results">
+                        <div class="result-empty">Add components and click Calculate.</div>
+                    </div>
+                </div>
+                <div class="sp-panel">
+                    <p class="sp-label">Section preview</p>
+                    <svg id="sectionPreview" viewBox="0 0 700 320" preserveAspectRatio="xMidYMid meet"></svg>
                 </div>
             </div>
 
-        </div>
-
-        <div class="diagram-section">
-            <div class="diagram-panel">
-                <h4>Section preview</h4>
-                <svg id="sectionPreview" viewBox="0 0 700 320" preserveAspectRatio="xMidYMid meet"></svg>
-            </div>
         </div>
 
     </section>
@@ -286,6 +319,16 @@
         renderRows();
         drawSection();
         calculate();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof katex !== 'undefined') {
+                katex.render(
+                    'I_x = \\sum\\left(\\frac{bh^3}{12} + A\\,d^2\\right)',
+                    document.getElementById('eqParallelAxis'),
+                    { throwOnError: false, displayMode: true }
+                );
+            }
+        });
     </script>
 
     <script src="../components.js" data-depth="1"></script>

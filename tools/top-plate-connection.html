@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Plate Connection Designer | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .tpc-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+        .tpc-sidebar {
+            width: 290px; flex-shrink: 0;
+            position: sticky; top: 1rem;
+            max-height: calc(100vh - 2rem); overflow-y: auto;
+        }
+        .tpc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1rem; }
+        .tpc-panel {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px; padding: 1.25rem;
+        }
+        .tpc-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.07em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 0.75rem;
+        }
+        .analysis-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+        .analysis-table thead th {
+            text-align: left; padding: 0.35rem 0.5rem;
+            background: var(--bg-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--text-muted); border-bottom: 1px solid var(--border);
+        }
+        .analysis-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .analysis-table tr:last-child td { border-bottom: none; }
+        .analysis-table .col-desc { color: var(--text-secondary); width: 55%; }
+        .analysis-table .col-sym { font-style: italic; color: var(--text-muted); white-space: nowrap; width: 12%; }
+        .analysis-table .col-val { font-family: 'Space Grotesk', sans-serif; font-weight: 600; text-align: right; white-space: nowrap; width: 18%; }
+        .analysis-table .col-unit { color: var(--text-muted); font-size: 0.78rem; padding-left: 0.2rem; width: 15%; }
+        .analysis-table tr.highlight td { background: var(--accent-tint); }
+        .tpc-verdict {
+            border-radius: 6px; padding: 0.9rem 1.1rem;
+            margin-top: 0.75rem;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 600;
+        }
+        .tpc-verdict.ok { background: var(--color-ok-tint); color: var(--color-ok-text); border-left: 3px solid var(--color-ok); }
+        .tpc-verdict.bad { background: rgba(239,68,68,0.07); color: #991b1b; border-left: 3px solid var(--color-fail); }
+        .factor-group { display: flex; gap: 0.5rem; }
+        .factor-group .form-group { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Tool · Live</span>
+            <h1>Top Plate Connection Designer</h1>
+            <p>Design the double top plate lap splice for diaphragm chord/collector forces. Checks plate tension capacity and nail lateral design values per NDS 2024 Tables 4A &amp; 12N. Imperial units.</p>
+        </div>
+    </header>
+
+    <section class="container">
+        <div class="tpc-layout">
+
+            <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+            <aside class="tpc-sidebar">
+                <div class="tool-panel">
+                    <h3>Design Data</h3>
+
+                    <div class="form-group">
+                        <label for="inT">Diaphragm Chord / Collector Force</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="inT" value="15" min="0.1" step="0.5">
+                            <span class="unit-label">k</span>
+                        </div>
+                        <p class="field-hint">Tension or compression demand at splice (T = C)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inNailType">Nail Type</label>
+                        <select id="inNailType">
+                            <option value="0">Common Wire</option>
+                            <option value="1">Box</option>
+                            <option value="2">Sinker</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inNailSize">Nail Penny Weight</label>
+                        <select id="inNailSize">
+                            <option value="0">12d</option>
+                            <option value="1" selected>16d</option>
+                            <option value="2">20d</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inSpecies">Lumber Species</label>
+                        <select id="inSpecies">
+                            <option value="0" selected>Douglas Fir-Larch</option>
+                            <option value="1">Douglas Fir-Larch (N)</option>
+                            <option value="2">Hem-Fir (N)</option>
+                            <option value="3">Hem-Fir</option>
+                            <option value="4">Spruce-Pine-Fir</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inGrade">Lumber Grade</label>
+                        <select id="inGrade">
+                            <option value="0">Select Structural</option>
+                            <option value="1">No. 1 &amp; Btr</option>
+                            <option value="2" selected>No. 1</option>
+                            <option value="3">No. 2</option>
+                            <option value="4">No. 3</option>
+                            <option value="5">Stud</option>
+                            <option value="6">Construction</option>
+                            <option value="7">Standard</option>
+                            <option value="8">Utility</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inPlate">Top Plate Nominal Width</label>
+                        <select id="inPlate">
+                            <option value="4">2×4</option>
+                            <option value="6" selected>2×6</option>
+                            <option value="8">2×8</option>
+                        </select>
+                        <p class="field-hint">Always double top plate — one member at splice</p>
+                    </div>
+
+                    <p class="tpc-label" style="margin-top:1rem;">Adjustment Factors</p>
+
+                    <div class="form-group">
+                        <label for="inCD">Load Duration Factor, C<sub>D</sub></label>
+                        <input type="number" id="inCD" value="1.6" min="0.5" max="2.0" step="0.05">
+                        <p class="field-hint">NDS Tab 2.3.2 — e.g. 1.6 wind/seismic, 1.0 occupancy</p>
+                    </div>
+
+                    <div class="factor-group">
+                        <div class="form-group">
+                            <label for="inCM">C<sub>M</sub></label>
+                            <input type="number" id="inCM" value="1.0" min="0.2" max="1.0" step="0.05">
+                            <p class="field-hint">Wet service (Tab 10.3.3)</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="inCt">C<sub>t</sub></label>
+                            <input type="number" id="inCt" value="1.0" min="0.5" max="1.0" step="0.05">
+                            <p class="field-hint">Temperature (Tab 10.3.4)</p>
+                        </div>
+                    </div>
+
+                    <div id="errorBox"></div>
+                    <button class="calc-button" id="calcBtn">Design Connection</button>
+                </div>
+            </aside>
+
+            <!-- ── MAIN ──────────────────────────────────────────────────── -->
+            <div class="tpc-main">
+
+                <div class="tpc-panel">
+                    <p class="tpc-label">Plate Tension Check — NDS 2024 Table 4A</p>
+                    <div id="tensionOut"><div class="result-empty">Enter inputs and click Design Connection.</div></div>
+                </div>
+
+                <div class="tpc-panel">
+                    <p class="tpc-label">Nail Design — NDS 2024 Table 12N</p>
+                    <div id="nailOut"><div class="result-empty">—</div></div>
+                </div>
+
+                <div class="tpc-panel">
+                    <p class="tpc-label">Connection Diagram — Double Top Plate Lap Splice</p>
+                    <svg id="diagram" viewBox="0 0 640 270" width="100%" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+
+                <div class="tpc-panel" style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;">
+                    <strong style="color:var(--text-secondary);">Technical References</strong><br>
+                    1. National Design Specification (NDS), 2024 Edition — American Wood Council.<br>
+                    2. NDS 2024 Supplement: Design Values for Wood Construction (Tables 4A, 12N).<br>
+                    3. Nail yield limit equations per NDS 2024 Appendix I; rope effect per NDS 12.3.6.
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script>
+    // ── NDS DATA TABLES ──────────────────────────────────────────────────────
+
+    // Specific gravity by species index
+    const G_VAL = [0.50, 0.49, 0.46, 0.43, 0.42];
+    const SPECIES_NAMES = [
+        'Douglas Fir-Larch (G=0.50)',
+        'Douglas Fir-Larch (N) (G=0.49)',
+        'Hem-Fir (N) (G=0.46)',
+        'Hem-Fir (G=0.43)',
+        'Spruce-Pine-Fir (G=0.42)',
+    ];
+    const GRADE_NAMES = [
+        'Select Structural','No. 1 & Btr','No. 1','No. 2','No. 3',
+        'Stud','Construction','Standard','Utility',
+    ];
+
+    // F_t (psi) — NDS 2024 Supplement Table 4A, 2"–4" thick Dimension Lumber
+    // Rows: [DFL, DFL-N, HF-N, HF, SPF]
+    // Cols: [Sel Str, No1&Btr, No1, No2, No3, Stud, Constr, Stand, Util]
+    const FT = [
+        [1000, 800, 675, 575, 325, 400, 525, 150,  75],  // DFL
+        [ 825, 675, 575, 500, 275, 325, 450, 125,  65],  // DFL-N
+        [ 775, 625, 525, 450, 250, 300, 400, 125,  60],  // HF-N
+        [ 525, 400, 350, 300, 175, 200, 275,  75,  35],  // HF
+        [ 525, 400, 350, 300, 175, 200, 275,  75,  35],  // SPF
+    ];
+
+    // Plate data: nominal width → { A (one 2× member, in²), CF (size factor for Ft) }
+    const PLATE = { 4:{A:5.25, CF:1.5}, 6:{A:8.25, CF:1.3}, 8:{A:10.875, CF:1.2} };
+
+    // Nail dimensions [D (in), L (in)] — NDS 2024 Appendix L Table L2
+    // [nail type][penny]: type 0=Common, 1=Box, 2=Sinker; penny 0=12d, 1=16d, 2=20d
+    const NAIL = [
+        [[0.148,3.25],[0.162,3.50],[0.192,4.00]], // Common
+        [[0.128,3.25],[0.135,3.50],[0.148,4.00]], // Box
+        [[0.120,3.25],[0.131,3.25],[0.148,4.00]], // Sinker
+    ];
+    const NAIL_TYPES = ['Common Wire','Box','Sinker'];
+    const NAIL_SIZES = ['12d','16d','20d'];
+
+    // ── ENGINEERING FUNCTIONS ─────────────────────────────────────────────────
+
+    function fyb(D) {
+        // Bending yield strength (psi) — NDS 2024 Appendix L
+        if (D <= 0.099) return 130000;
+        if (D <= 0.142) return 115000;
+        if (D <= 0.177) return 100000;
+        if (D <= 0.236) return  90000;
+        return 80000;
+    }
+
+    function calcZ(D, L, G) {
+        // Reference lateral design value Z (lbf) per NDS 2024 yield limit equations
+        // Single shear, wood-to-wood, side member = 2× lumber (ts = 1.5")
+        const ts = 1.5;
+        const p  = L - ts;           // penetration into main member
+
+        const Fe  = 11200 * G;       // F_e parallel to grain (same both members, NDS Tab 12.3.1)
+        const Fyb = fyb(D);
+
+        // Withdrawal per unit length — NDS Eq. 11.2-3 (rope effect, Sec. 12.3.6)
+        const W = 1380 * Math.pow(G, 2.5) * Math.pow(D, 1.5);
+
+        // Re = Fem/Fes = 1 (same species, same F_e)
+        const ls = ts, lm = p;
+        const Rt = lm / ls;
+
+        // k-factors (NDS Appendix I)
+        const k1 = (Math.sqrt(1 + 2*(1 + Rt + Rt*Rt) + Rt*Rt) - (1 + Rt)) / 2;
+        const k2 = -1 + Math.sqrt(4 + 2*Fyb*3*D*D / (3*Fe*lm*lm));
+        const k3 = -1 + Math.sqrt(4 + 2*Fyb*3*D*D / (3*Fe*ls*ls));
+
+        // Yield modes (Kθ = 1.0, Re = 1)
+        const ZIm   = D*lm*Fe / 4;
+        const ZIs   = D*ls*Fe / 4;
+        const ZII   = k1*D*ls*Fe / 3.6;
+        const ZIIIm = k2*D*lm*Fe / (3.2*3);
+        const ZIIIs = k3*D*ls*Fe / (3.2*3);
+        const ZIV   = D*D/3.2 * Math.sqrt(2*Fe*Fyb/6);
+
+        // Rope effect contributions (NDS 12.3.6)
+        const rs = W*ls/2;
+        const rm = W*lm/2;
+
+        return Math.min(ZIm, ZIs, ZII+rs, ZIIIm+rm, ZIIIs+rs, ZIV+rs+rm);
+    }
+
+    function calcCd(D, L) {
+        const p = L - 1.5;
+        if (p >= 10*D) return 1.0;
+        if (p >=  6*D) return +(p/(10*D)).toFixed(2);
+        return null; // inadequate penetration
+    }
+
+    // ── RENDERING HELPERS ────────────────────────────────────────────────────
+
+    function row(desc, sym, val, unit, hl=false) {
+        return `<tr${hl?' class="highlight"':''}>
+            <td class="col-desc">${desc}</td>
+            <td class="col-sym">${sym}</td>
+            <td class="col-val">${val}</td>
+            <td class="col-unit">${unit}</td>
+        </tr>`;
+    }
+
+    function fmtFrac(n) {
+        const w = Math.floor(n), f = n - w;
+        const map = [[0.25,'¼'],[0.333,'⅓'],[0.5,'½'],[0.667,'⅔'],[0.75,'¾']];
+        for (const [v,s] of map) if (Math.abs(f-v)<0.03) return w?`${w} ${s}`:s;
+        return n.toFixed(2);
+    }
+
+    // ── MAIN CALCULATION ────────────────────────────────────────────────────
+
+    function calculate() {
+        document.getElementById('errorBox').innerHTML = '';
+
+        const T_k    = parseFloat(document.getElementById('inT').value);
+        const nType  = +document.getElementById('inNailType').value;
+        const nSize  = +document.getElementById('inNailSize').value;
+        const spec   = +document.getElementById('inSpecies').value;
+        const grade  = +document.getElementById('inGrade').value;
+        const plateW = +document.getElementById('inPlate').value;
+        const CD     = parseFloat(document.getElementById('inCD').value);
+        const CM     = parseFloat(document.getElementById('inCM').value);
+        const Ct     = parseFloat(document.getElementById('inCt').value);
+
+        if (!T_k || T_k <= 0) {
+            document.getElementById('errorBox').innerHTML = '<div class="result-error">Chord force must be positive.</div>';
+            return;
+        }
+
+        const G  = G_VAL[spec];
+        const Ft = FT[spec][grade];
+        const { A, CF } = PLATE[plateW];
+        const [D, L] = NAIL[nType][nSize];
+        const ts = 1.5;
+        const p  = L - ts;
+
+        // Plate tension capacity (one 2× member at splice)
+        const Tstar_k = A * Ft * CD * CM * Ct * CF / 1000;
+        const strap   = T_k > Tstar_k;
+        const Fstrap  = Math.max(0, T_k - Tstar_k);
+
+        // Nail capacity
+        const Cd = calcCd(D, L);
+        if (Cd === null) {
+            document.getElementById('errorBox').innerHTML =
+                `<div class="result-error">Nail penetration p = ${p.toFixed(2)}" &lt; 6D = ${(6*D).toFixed(2)}". Choose a longer nail.</div>`;
+            return;
+        }
+        const Z_ref  = calcZ(D, L, G);
+        const Zprime = Z_ref * CD * CM * Ct * Cd;
+        const n_req  = Math.ceil(T_k * 1000 / Zprime);
+
+        // ── PLATE TENSION OUTPUT ────────────────────────────────────────
+        const verdict = strap
+            ? `<div class="tpc-verdict bad">T = ${T_k} k &gt; T* = ${Tstar_k.toFixed(2)} k — Plate tension exceeded.
+               Simpson strap required to resist <strong>${Fstrap.toFixed(2)} k</strong>. Consult Simpson Strong-Tie CMSTC catalog.</div>`
+            : `<div class="tpc-verdict ok">T = ${T_k} k ≤ T* = ${Tstar_k.toFixed(2)} k — Single 2×${plateW} plate OK in tension. Nails only.</div>`;
+
+        document.getElementById('tensionOut').innerHTML = `
+            <table class="analysis-table">
+                <thead><tr>
+                    <th class="col-desc">Description</th>
+                    <th class="col-sym">Symbol</th>
+                    <th class="col-val">Value</th>
+                    <th class="col-unit">Unit</th>
+                </tr></thead>
+                <tbody>
+                    ${row(`Design tension value — ${SPECIES_NAMES[spec]}, ${GRADE_NAMES[grade]} (NDS 2024 Tab 4A)`, 'F<sub>t</sub>', Ft, 'psi')}
+                    ${row(`Cross-section area, one 2×${plateW} (1.5" × ${plateW==4?3.5:plateW==6?5.5:7.25}")`, 'A', A.toFixed(2), 'in²')}
+                    ${row('Size factor for F<sub>t</sub> (NDS 2024 Tab 4A footnote, width adjustment)', 'C<sub>F</sub>', CF.toFixed(2), '')}
+                    ${row('Allowable tension capacity: A·F<sub>t</sub>·C<sub>D</sub>·C<sub>M</sub>·C<sub>t</sub>·C<sub>F</sub>', 'T*', Tstar_k.toFixed(2), 'k', true)}
+                </tbody>
+            </table>
+            ${verdict}
+        `;
+
+        // ── NAIL OUTPUT ─────────────────────────────────────────────────
+        document.getElementById('nailOut').innerHTML = `
+            <table class="analysis-table">
+                <thead><tr>
+                    <th class="col-desc">Description</th>
+                    <th class="col-sym">Symbol</th>
+                    <th class="col-val">Value</th>
+                    <th class="col-unit">Unit</th>
+                </tr></thead>
+                <tbody>
+                    ${row(`Nail length — ${NAIL_SIZES[nSize]} ${NAIL_TYPES[nType]}`, 'L', fmtFrac(L), 'in')}
+                    ${row('Side member thickness (2× lumber)', 't<sub>s</sub>', fmtFrac(ts), 'in')}
+                    ${row('Penetration into main member: L − t<sub>s</sub>', 'p', p.toFixed(2), 'in')}
+                    ${row('Nail diameter', 'D', D.toFixed(3), 'in')}
+                    ${row('Penetration depth factor (NDS Note 3, Tab 12N)', 'C<sub>d</sub>', Cd.toFixed(2), '')}
+                    ${row('Reference lateral design value, single shear (NDS 2024 Tab 12N)', 'Z', Math.round(Z_ref), 'lbf')}
+                    ${row("Allowable lateral value: Z·C<sub>D</sub>·C<sub>M</sub>·C<sub>t</sub>·C<sub>d</sub>", "Z'", Math.round(Zprime), 'lbf')}
+                    ${row(`Nails required: T / Z' = ${(T_k*1000/Zprime).toFixed(1)}, rounded up`, 'n', n_req, 'nails', true)}
+                </tbody>
+            </table>
+        `;
+
+        // ── DIAGRAM ─────────────────────────────────────────────────────
+        drawDiagram(n_req, strap, Fstrap, T_k, plateW, NAIL_SIZES[nSize], NAIL_TYPES[nType]);
+    }
+
+    // ── SVG DIAGRAM ─────────────────────────────────────────────────────────
+
+    function drawDiagram(n, strapNeeded, Fstrap, T_k, plateW, nailSize, nailType) {
+        const svg = document.getElementById('diagram');
+        const W = 640, H = 270;
+        const cx = W / 2;
+
+        // Plate rectangles (elevation — lap splice)
+        const pH    = plateW === 4 ? 40 : plateW === 6 ? 52 : 64; // SVG height proportional
+        const pY    = (H - pH) / 2 - (strapNeeded ? 14 : 4);
+        const lapW  = 200;  // overlap width in SVG px
+        const pLen  = 170;  // each plate extends this far beyond overlap
+
+        const p1x1 = cx - lapW/2 - pLen;
+        const p1x2 = cx + lapW/2;
+        const p2x1 = cx - lapW/2;
+        const p2x2 = cx + lapW/2 + pLen;
+
+        const woodFill1 = '#D4B483';
+        const woodFill2 = '#C4A060';
+
+        // Nail grid in overlap zone
+        const nCols = Math.min(n, 8);
+        const nRows = Math.max(1, Math.ceil(n / nCols));
+        const nColsActual = Math.ceil(n / nRows);
+        const xPad = 18, yPad = 10;
+        const nailXs = Array.from({length:nColsActual}, (_,i) =>
+            cx - lapW/2 + xPad + (lapW - 2*xPad) / Math.max(nColsActual-1,1) * i);
+        const nailYs = Array.from({length:nRows}, (_,i) =>
+            pY + yPad + (pH - 2*yPad) / Math.max(nRows-1,1) * i);
+
+        let nailDots = '';
+        let cnt = 0;
+        for (const y of nailYs) for (const x of nailXs) {
+            if (cnt++ < n) nailDots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#1A1A1A" opacity="0.75"/>`;
+        }
+
+        // Strap
+        const strapH = 12;
+        const strapY = pY - strapH - 4;
+        const strapSVG = strapNeeded ? `
+            <rect x="${cx-lapW/2}" y="${strapY}" width="${lapW}" height="${strapH}" rx="3" fill="var(--accent)" opacity="0.9"/>
+            <text x="${cx}" y="${strapY+strapH/2}" dominant-baseline="middle" text-anchor="middle"
+                font-family="Space Grotesk,sans-serif" font-size="9" fill="white" font-weight="700">
+                SIMPSON STRAP — ${Fstrap.toFixed(1)} k RESIDUAL
+            </text>` : '';
+
+        // Force arrows (pointing outward = tension pulling plates apart)
+        function arrowLeft(x, y, len, label) {
+            return `<line x1="${x}" y1="${y}" x2="${x-len}" y2="${y}" stroke="var(--accent)" stroke-width="2.5"/>
+                <polygon points="${x-len},${y} ${x-len+10},${y-5} ${x-len+10},${y+5}" fill="var(--accent)"/>
+                <text x="${x-len/2}" y="${y-10}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="11" fill="var(--accent)" font-weight="700">${label}</text>`;
+        }
+        function arrowRight(x, y, len, label) {
+            return `<line x1="${x}" y1="${y}" x2="${x+len}" y2="${y}" stroke="var(--accent)" stroke-width="2.5"/>
+                <polygon points="${x+len},${y} ${x+len-10},${y-5} ${x+len-10},${y+5}" fill="var(--accent)"/>
+                <text x="${x+len/2}" y="${y-10}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="11" fill="var(--accent)" font-weight="700">${label}</text>`;
+        }
+        const arY = pY + pH/2;
+        const arLen = 60;
+        const arLabel = `T = ${T_k} k`;
+
+        // Dimension line
+        const dimY = pY + pH + 28;
+
+        svg.innerHTML = `
+            <!-- Plate 1 (left) -->
+            <rect x="${p1x1}" y="${pY}" width="${p1x2-p1x1}" height="${pH}"
+                fill="${woodFill1}" fill-opacity="0.5" stroke="#8B6914" stroke-width="1.5" rx="2"/>
+            <!-- Plate 2 (right, dashed outside overlap) -->
+            <rect x="${p2x1}" y="${pY}" width="${p2x2-p2x1}" height="${pH}"
+                fill="${woodFill2}" fill-opacity="0.35" stroke="#8B6914" stroke-width="1.5" stroke-dasharray="5,3" rx="2"/>
+            <!-- Overlap highlight -->
+            <rect x="${cx-lapW/2}" y="${pY}" width="${lapW}" height="${pH}"
+                fill="var(--accent)" fill-opacity="0.07" stroke="var(--accent)" stroke-width="1.2" rx="2"/>
+
+            <!-- Nails -->
+            ${nailDots}
+
+            <!-- Strap -->
+            ${strapSVG}
+
+            <!-- Force arrows -->
+            ${arrowLeft(p1x1 + arLen, arY, arLen, arLabel)}
+            ${arrowRight(p2x2 - arLen, arY, arLen, arLabel)}
+
+            <!-- Plate labels -->
+            <text x="${p1x1 + pLen*0.45}" y="${arY+5}" text-anchor="middle"
+                font-family="Space Grotesk,sans-serif" font-size="10" fill="#6B4E0A" font-weight="600">Top Plate 1</text>
+            <text x="${p2x1 + pLen*0.55 + lapW}" y="${arY+5}" text-anchor="middle"
+                font-family="Space Grotesk,sans-serif" font-size="10" fill="#6B4E0A" font-weight="600">Top Plate 2</text>
+
+            <!-- Nail zone label -->
+            <text x="${cx}" y="${arY+5}" text-anchor="middle"
+                font-family="Space Grotesk,sans-serif" font-size="9" fill="var(--text-muted)">${n} − ${nailSize} ${nailType}</text>
+
+            <!-- Dimension: lap -->
+            <line x1="${cx-lapW/2}" y1="${dimY}" x2="${cx+lapW/2}" y2="${dimY}" stroke="var(--text-muted)" stroke-width="1"/>
+            <line x1="${cx-lapW/2}" y1="${dimY-5}" x2="${cx-lapW/2}" y2="${dimY+5}" stroke="var(--text-muted)" stroke-width="1"/>
+            <line x1="${cx+lapW/2}" y1="${dimY-5}" x2="${cx+lapW/2}" y2="${dimY+5}" stroke="var(--text-muted)" stroke-width="1"/>
+            <text x="${cx}" y="${dimY+14}" text-anchor="middle"
+                font-family="Space Grotesk,sans-serif" font-size="10" fill="var(--text-muted)">48" MIN LAP (typ.)</text>
+
+            <!-- Border ticks showing plates continue -->
+            <line x1="${p1x1+4}" y1="${pY}" x2="${p1x1+4}" y2="${pY+pH}" stroke="#8B6914" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="${p2x2-4}" y1="${pY}" x2="${p2x2-4}" y2="${pY+pH}" stroke="#8B6914" stroke-width="2.5" stroke-linecap="round"/>
+        `;
+    }
+
+    // ── INIT ────────────────────────────────────────────────────────────────
+    document.getElementById('calcBtn').addEventListener('click', calculate);
+    calculate();
+    </script>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+</body>
+</html>

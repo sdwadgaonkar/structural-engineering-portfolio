@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACI Development Length | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .adl-sidebar input[type="number"]::-webkit-inner-spin-button,
+        .adl-sidebar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        .adl-sidebar input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Layout ─────────────────────────────────────────── */
+        .adl-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 2rem;
+        }
+
+        /* ── Sidebar ────────────────────────────────────────── */
+        .adl-sidebar {
+            width: 270px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.1rem 1.5rem;
+            scrollbar-width: thin;
+        }
+        .adl-sidebar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.1rem 0 0.55rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .adl-sidebar h3:first-child { margin-top: 0; }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+            gap: 0.4rem;
+        }
+        .field label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            flex: 1;
+            line-height: 1.3;
+        }
+        .field label sub { font-size: 0.65rem; }
+        .field input[type="number"] {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+            text-align: right;
+        }
+        .field input[type="number"]:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+        .field select {
+            width: 148px;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.80rem;
+            font-family: inherit;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+        }
+        .field select:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+        .field-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin: -0.2rem 0 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* ── Bar info strip ─────────────────────────────────── */
+        .bar-strip {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 0.55rem;
+        }
+        .bar-chip {
+            flex: 1;
+            background: var(--bg-muted);
+            border-radius: 5px;
+            padding: 5px 0;
+            text-align: center;
+        }
+        .bar-chip .bc-label {
+            font-size: 0.60rem;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: block;
+        }
+        .bar-chip .bc-val {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* ── Main area ───────────────────────────────────────── */
+        .adl-main { flex: 1; min-width: 0; }
+
+        /* ── Result cards ────────────────────────────────────── */
+        .result-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 560px) { .result-cards { grid-template-columns: 1fr; } }
+
+        .result-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.95rem 1.1rem;
+        }
+        .rc-label {
+            font-size: 0.72rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+        .rc-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .rc-sub {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.35;
+        }
+        .rc-sub strong { color: var(--text-primary); font-weight: 600; }
+
+        /* ── Parameter table ─────────────────────────────────── */
+        .param-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+        .param-table th {
+            background: var(--bg-muted);
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .param-table td {
+            padding: 0.45rem 0.85rem;
+            border-top: 1px solid #f0ece4;
+        }
+        .param-table td:first-child { color: var(--text-secondary); }
+        .param-table td:last-child {
+            text-align: right;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .param-table .hl-row td { background: #fff7ed; }
+        .param-table .hl-row td:last-child { color: var(--accent); font-weight: 700; }
+        .param-table .sep-row td {
+            background: var(--bg-muted);
+            font-size: 0.70rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0.35rem 0.85rem;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .param-table .warn-row td:last-child { color: #b45309; font-weight: 600; }
+
+        /* ── Warning banner ──────────────────────────────────── */
+        .adl-warning {
+            display: none;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            color: #78350f;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+        .adl-warning.visible { display: block; }
+
+        /* ── Notes ───────────────────────────────────────────── */
+        .adl-notes {
+            padding: 0.85rem 1rem;
+            background: var(--bg-muted);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .adl-notes strong { color: var(--text-primary); }
+
+        @media (max-width: 780px) {
+            .adl-layout { flex-direction: column; }
+            .adl-sidebar { width: 100%; position: static; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>ACI Development Length</h1>
+            <p>Rebar development and lap splice lengths per ACI 318-19. Covers tension (straight bar &amp; standard hook) and compression. Select bar, material properties, and cover conditions.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1100px; padding-top:2.5rem; padding-bottom:5rem;">
+
+        <div class="adl-layout">
+
+            <!-- ── Sidebar ──────────────────────────────────────────── -->
+            <aside class="adl-sidebar">
+
+                <h3>Rebar</h3>
+                <div class="field">
+                    <label>Bar size</label>
+                    <select id="inp-bar" onchange="calc()">
+                        <option value="3">#3</option>
+                        <option value="4">#4</option>
+                        <option value="5" selected>#5</option>
+                        <option value="6">#6</option>
+                        <option value="7">#7</option>
+                        <option value="8">#8</option>
+                        <option value="9">#9</option>
+                        <option value="10">#10</option>
+                        <option value="11">#11</option>
+                        <option value="14">#14</option>
+                        <option value="18">#18</option>
+                    </select>
+                </div>
+                <div class="bar-strip">
+                    <div class="bar-chip"><span class="bc-label">d<sub>b</sub> (in)</span><span class="bc-val" id="disp-db">0.625</span></div>
+                    <div class="bar-chip"><span class="bc-label">A<sub>b</sub> (in²)</span><span class="bc-val" id="disp-Ab">0.31</span></div>
+                </div>
+
+                <h3>Concrete</h3>
+                <div class="field">
+                    <label>f′<sub>c</sub> (psi)</label>
+                    <input type="number" id="inp-fc" value="4000" min="2500" max="15000" step="500" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Concrete type</label>
+                    <select id="inp-wt" onchange="calc()">
+                        <option value="1.0">Normal weight</option>
+                        <option value="0.85">Sand-lightweight</option>
+                        <option value="0.75">All-lightweight</option>
+                    </select>
+                </div>
+
+                <h3>Steel</h3>
+                <div class="field">
+                    <label>Steel grade</label>
+                    <select id="inp-grade" onchange="calc()">
+                        <option value="40000|0.77">Grade 40 (40 ksi)</option>
+                        <option value="60000|1.00" selected>Grade 60 (60 ksi)</option>
+                        <option value="80000|1.15">Grade 80 (80 ksi)</option>
+                        <option value="100000|1.30">Grade 100 (100 ksi)</option>
+                    </select>
+                </div>
+
+                <h3>Bar Conditions</h3>
+                <div class="field">
+                    <label>Casting position</label>
+                    <select id="inp-pos" onchange="calc()">
+                        <option value="1.0">Other (bottom)</option>
+                        <option value="1.3">Top bar (≥ 12″ below)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Bar coating</label>
+                    <select id="inp-coat" onchange="calc()">
+                        <option value="1.0">Uncoated / galvanized</option>
+                        <option value="1.5">Epoxy — cover &lt; 3d<sub>b</sub> or spacing &lt; 6d<sub>b</sub></option>
+                        <option value="1.2">Epoxy — other cases</option>
+                    </select>
+                </div>
+
+                <h3>Cover &amp; Spacing</h3>
+                <div class="field-hint">Used to compute c<sub>b</sub> = min(cover + d<sub>b</sub>/2, half C-to-C spacing).</div>
+                <div class="field">
+                    <label>Clear cover (in)</label>
+                    <input type="number" id="inp-cover" value="1.5" min="0.5" max="6" step="0.25" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Clear spacing between bars (in)</label>
+                    <input type="number" id="inp-spacing" value="3.0" min="1" max="24" step="0.25" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Use K<sub>tr</sub> = 0 (conservative)</label>
+                    <select id="inp-ktr" onchange="calc()">
+                        <option value="1">Yes (recommended)</option>
+                        <option value="0">No — enter transverse rebar</option>
+                    </select>
+                </div>
+                <div id="ktr-fields" style="display:none;">
+                    <div class="field">
+                        <label>A<sub>tr</sub> total area (in²)</label>
+                        <input type="number" id="inp-Atr" value="0.22" min="0" step="0.01" oninput="calc()">
+                    </div>
+                    <div class="field">
+                        <label>f<sub>yt</sub> (psi)</label>
+                        <input type="number" id="inp-fyt" value="60000" min="40000" max="100000" step="1000" oninput="calc()">
+                    </div>
+                    <div class="field">
+                        <label>Stirrup spacing s (in)</label>
+                        <input type="number" id="inp-s" value="12" min="1" max="24" step="0.5" oninput="calc()">
+                    </div>
+                    <div class="field">
+                        <label>No. of bars n</label>
+                        <input type="number" id="inp-n" value="2" min="1" max="20" step="1" oninput="calc()">
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- ── Main area ─────────────────────────────────────────── -->
+            <div class="adl-main">
+
+                <!-- ψt×ψe warning -->
+                <div class="adl-warning" id="warn-psi">
+                    <strong>ACI 318-19 §25.5.2.1(d):</strong> &psi;<sub>t</sub> &times; &psi;<sub>e</sub> has been capped at 1.7.
+                </div>
+
+                <!-- Result cards: ld, ldh, ldc -->
+                <div class="result-cards">
+                    <div class="result-card">
+                        <div class="rc-label">Tension &mdash; Straight Bar</div>
+                        <div class="rc-value" id="disp-ld">—</div>
+                        <div class="rc-sub"><em>l</em><sub>d</sub> per ACI 318-19 <strong id="ref-ld">&sect;25.5.2</strong></div>
+                    </div>
+                    <div class="result-card">
+                        <div class="rc-label">Tension &mdash; Standard Hook</div>
+                        <div class="rc-value" id="disp-ldh">—</div>
+                        <div class="rc-sub"><em>l</em><sub>dh</sub> per ACI 318-19 &sect;25.4.3 <br><strong id="ref-ldh-min"></strong></div>
+                    </div>
+                    <div class="result-card">
+                        <div class="rc-label">Compression</div>
+                        <div class="rc-value" id="disp-ldc">—</div>
+                        <div class="rc-sub"><em>l</em><sub>dc</sub> per ACI 318-19 &sect;25.5.5 <br><strong id="ref-ldc-min"></strong></div>
+                    </div>
+                </div>
+
+                <!-- Parameter / factor table -->
+                <div class="param-card">
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Parameter</th><th>Value</th></tr>
+                        </thead>
+                        <tbody id="param-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Notes -->
+                <div class="adl-notes">
+                    <strong>Reference:</strong> ACI 318-19 &sect;25.4.3, &sect;25.5.2, &sect;25.5.5 &nbsp;&middot;&nbsp;
+                    <strong>Straight bar tension:</strong> Eq. 25.5.2.1a: <em>l</em><sub>d</sub>/d<sub>b</sub> = [3f<sub>y</sub>&psi;<sub>t</sub>&psi;<sub>e</sub>&psi;<sub>g</sub>] / [40&lambda;&radic;f&prime;<sub>c</sub> &times; (c<sub>b</sub>+K<sub>tr</sub>)/d<sub>b</sub>], min 12 in. &nbsp;&middot;&nbsp;
+                    <strong>Standard hook:</strong> Eq. 25.4.3.1a: <em>l</em><sub>dh</sub> = [0.02&psi;<sub>e</sub>&psi;<sub>r</sub>&psi;<sub>o</sub>&psi;<sub>c</sub>f<sub>y</sub>] / [&lambda;&radic;f&prime;<sub>c</sub>] &times; d<sub>b</sub>. Hook factors &psi;<sub>r</sub>, &psi;<sub>o</sub>, &psi;<sub>c</sub> taken as 1.0 (conservative; reductions may apply per &sect;25.4.3.2). &nbsp;&middot;&nbsp;
+                    <strong>Compression:</strong> Eq. 25.5.5.1a/b. &nbsp;&middot;&nbsp;
+                    <strong>Lap splices:</strong> Class A = 1.0&times;<em>l</em><sub>d</sub> (≥ 50% bars spliced and excess A<sub>s</sub> ≥ 2&times; required); Class B = 1.3&times;<em>l</em><sub>d</sub> (all other cases). &nbsp;&middot;&nbsp;
+                    <strong>All values in inches.</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── Bar data ─────────────────────────────────────────────────────────────
+    const BAR = {
+        3:  { db: 0.375, Ab: 0.11 },
+        4:  { db: 0.500, Ab: 0.20 },
+        5:  { db: 0.625, Ab: 0.31 },
+        6:  { db: 0.750, Ab: 0.44 },
+        7:  { db: 0.875, Ab: 0.60 },
+        8:  { db: 1.000, Ab: 0.79 },
+        9:  { db: 1.128, Ab: 1.00 },
+        10: { db: 1.270, Ab: 1.27 },
+        11: { db: 1.410, Ab: 1.56 },
+        14: { db: 1.693, Ab: 2.25 },
+        18: { db: 2.257, Ab: 4.00 },
+    };
+
+    // ── Ktr visibility toggle ─────────────────────────────────────────────────
+    document.getElementById('inp-ktr').addEventListener('change', function() {
+        document.getElementById('ktr-fields').style.display = this.value === '0' ? 'block' : 'none';
+        calc();
+    });
+
+    // ── Format inches → "X in (X′-X″)" ──────────────────────────────────────
+    function fmtIn(val) {
+        const v = Math.ceil(val * 4) / 4; // round up to nearest 1/4 in
+        const ft = Math.floor(v / 12);
+        const inRem = v - ft * 12;
+        const inStr = inRem % 1 === 0 ? inRem.toFixed(0) : inRem.toFixed(2).replace(/\.?0+$/, '');
+        const ftStr = ft > 0 ? `${ft}′-${inStr}″` : `${inStr}″`;
+        return `${v.toFixed(2)} in &nbsp;(${ftStr})`;
+    }
+    function fmtInPlain(val) {
+        const v = Math.ceil(val * 4) / 4;
+        return `${v.toFixed(2)}"`;
+    }
+
+    // ── Main calculation ─────────────────────────────────────────────────────
+    function calc() {
+        const barNum  = parseInt(document.getElementById('inp-bar').value);
+        const { db, Ab } = BAR[barNum];
+        const fc      = parseFloat(document.getElementById('inp-fc').value)    || 4000;
+        const lambda  = parseFloat(document.getElementById('inp-wt').value);
+        const gradeRaw= document.getElementById('inp-grade').value.split('|');
+        const fy      = parseFloat(gradeRaw[0]);
+        const psi_g   = parseFloat(gradeRaw[1]);
+        const psi_t   = parseFloat(document.getElementById('inp-pos').value);
+        const psi_e   = parseFloat(document.getElementById('inp-coat').value);
+        const cover   = parseFloat(document.getElementById('inp-cover').value) || 1.5;
+        const spacing = parseFloat(document.getElementById('inp-spacing').value) || 3.0;
+        const useKtr0 = document.getElementById('inp-ktr').value === '1';
+
+        // Update bar info strip
+        document.getElementById('disp-db').textContent = db.toFixed(3);
+        document.getElementById('disp-Ab').textContent = Ab.toFixed(2);
+
+        // ── Modification factors ──────────────────────────────────────────
+        let psi_t_e = psi_t * psi_e;
+        const psi_te_capped = psi_t_e > 1.7;
+        if (psi_te_capped) psi_t_e = 1.7;
+        document.getElementById('warn-psi').classList.toggle('visible', psi_te_capped);
+
+        // ── c_b (ACI 318-19 §25.5.2.1) ───────────────────────────────────
+        const cb_cover  = cover + db / 2;
+        const cb_space  = (spacing + db) / 2;
+        const cb        = Math.min(cb_cover, cb_space);
+
+        // ── K_tr ─────────────────────────────────────────────────────────
+        let Ktr = 0;
+        if (!useKtr0) {
+            const Atr = parseFloat(document.getElementById('inp-Atr').value) || 0;
+            const fyt = parseFloat(document.getElementById('inp-fyt').value) || 60000;
+            const s   = parseFloat(document.getElementById('inp-s').value)   || 12;
+            const n   = parseFloat(document.getElementById('inp-n').value)   || 2;
+            Ktr = (Atr * fyt) / (1500 * s * n);
+        }
+
+        const cb_Ktr_ratio = Math.min((cb + Ktr) / db, 2.5);
+
+        // ── Straight bar tension: ACI 318-19 Eq. 25.5.2.1a ───────────────
+        // l_d = [3 fy ψt ψe ψg / (40 λ √f'c)] × [db / ((cb+Ktr)/db)]
+        const sqrt_fc = Math.sqrt(fc);
+        const ld_calc = (3 * fy * psi_t_e * psi_g) / (40 * lambda * sqrt_fc * cb_Ktr_ratio) * db;
+        const ld      = Math.max(ld_calc, 12);
+
+        // ── Standard hook: ACI 318-19 Eq. 25.4.3.1a ──────────────────────
+        // l_dh = [0.02 ψe ψr ψo ψc fy / (λ √f'c)] × db
+        // Using ψr = ψo = ψc = 1.0 (conservative)
+        const psi_e_hook = psi_e > 1.0 ? 1.2 : 1.0; // hook only uses epoxy factor, not top-bar
+        const ldh_calc = (0.02 * psi_e_hook * 1.0 * 1.0 * 1.0 * fy) / (lambda * sqrt_fc) * db;
+        const ldh_min  = Math.max(8 * db, 6);
+        const ldh      = Math.max(ldh_calc, ldh_min);
+
+        // ── Compression: ACI 318-19 §25.5.5.1 ────────────────────────────
+        const ldc_a   = (0.02 * 1.0 * fy) / (lambda * sqrt_fc) * db; // ψr = 1.0 (no spiral)
+        const ldc_b   = 0.0003 * fy * db;
+        const ldc     = Math.max(ldc_a, ldc_b, 8);
+
+        // ── Lap splice lengths ────────────────────────────────────────────
+        const lap_A = Math.max(ld * 1.0, 12);
+        const lap_B = Math.max(ld * 1.3, 12);
+
+        // ── Update result cards ───────────────────────────────────────────
+        document.getElementById('disp-ld').innerHTML  = fmtInPlain(ld);
+        document.getElementById('disp-ldh').innerHTML = fmtInPlain(ldh);
+        document.getElementById('disp-ldc').innerHTML = fmtInPlain(ldc);
+        document.getElementById('ref-ldh-min').textContent = `min ${Math.ceil(ldh_min * 4)/4 === ldh_min ? ldh_min.toFixed(2) : ldh_min.toFixed(2)}" controls`;
+        document.getElementById('ref-ldc-min').textContent = ldc <= 8 ? 'min 8 in controls' : '';
+
+        // ── Build parameter table ─────────────────────────────────────────
+        const tbody = document.getElementById('param-tbody');
+        tbody.innerHTML = '';
+
+        function row(label, value, cls) {
+            const tr = document.createElement('tr');
+            if (cls) tr.className = cls;
+            tr.innerHTML = `<td>${label}</td><td>${value}</td>`;
+            tbody.appendChild(tr);
+        }
+        function sep(label) {
+            const tr = document.createElement('tr');
+            tr.className = 'sep-row';
+            tr.innerHTML = `<td colspan="2">${label}</td>`;
+            tbody.appendChild(tr);
+        }
+
+        sep('Bar Properties');
+        row('Bar designation', `#${barNum}`);
+        row('d<sub>b</sub> — nominal diameter', `${db.toFixed(3)} in`);
+        row('A<sub>b</sub> — nominal area', `${Ab.toFixed(2)} in²`);
+
+        sep('Modification Factors — ACI 318-19 §25.5.2.1');
+        row('&psi;<sub>t</sub> — casting position factor', psi_t === 1.3 ? '1.3 (top bar)' : '1.0 (other)');
+        row('&psi;<sub>e</sub> — epoxy coating factor', psi_e.toFixed(1));
+        row('&psi;<sub>t</sub> &times; &psi;<sub>e</sub>' + (psi_te_capped ? ' ← capped at 1.7' : ''), psi_t_e.toFixed(2), psi_te_capped ? 'warn-row' : '');
+        row('&psi;<sub>g</sub> — reinforcement grade factor', psi_g.toFixed(2));
+        row('&lambda; — lightweight factor', lambda.toFixed(2));
+        row('&radic;f&prime;<sub>c</sub>', `${sqrt_fc.toFixed(1)} psi^0.5`);
+
+        sep('c<sub>b</sub> and K<sub>tr</sub>');
+        row('c<sub>b</sub> from cover = cover + d<sub>b</sub>/2', `${cb_cover.toFixed(3)} in`);
+        row('c<sub>b</sub> from spacing = (clear spacing + d<sub>b</sub>) / 2', `${cb_space.toFixed(3)} in`);
+        row('c<sub>b</sub> = min of above', `${cb.toFixed(3)} in`);
+        row('K<sub>tr</sub>' + (useKtr0 ? ' = 0 (conservative)' : ' = A<sub>tr</sub>f<sub>yt</sub>/(1500sn)'), Ktr.toFixed(4));
+        row('(c<sub>b</sub> + K<sub>tr</sub>) / d<sub>b</sub> &nbsp; [≤ 2.5]', `${((cb + Ktr)/db).toFixed(3)} → ${cb_Ktr_ratio.toFixed(3)}`);
+
+        sep('Straight Bar Tension — ACI 318-19 Eq. 25.5.2.1a');
+        row('l<sub>d</sub> (calculated)', `${ld_calc.toFixed(2)} in`);
+        row('Minimum l<sub>d</sub>', '12 in');
+        row('<strong>l<sub>d</sub> = max(calculated, 12 in)</strong>', `<strong>${fmtIn(ld)}</strong>`, 'hl-row');
+
+        sep('Lap Splice Lengths (Tension)');
+        row('Class A — 1.0 &times; l<sub>d</sub> &nbsp;[≥ 12 in]', fmtIn(lap_A));
+        row('Class B — 1.3 &times; l<sub>d</sub> &nbsp;[≥ 12 in] &nbsp;&larr; use unless excess A<sub>s</sub> ≥ 2&times; required', fmtIn(lap_B), 'hl-row');
+
+        sep('Standard Hook — ACI 318-19 Eq. 25.4.3.1a');
+        row('&psi;<sub>e</sub> (hook, epoxy factor only)', psi_e_hook.toFixed(1));
+        row('&psi;<sub>r</sub> &psi;<sub>o</sub> &psi;<sub>c</sub> (conservative, no reductions applied)', '1.0 × 1.0 × 1.0 = 1.00');
+        row('l<sub>dh</sub> (calculated)', `${ldh_calc.toFixed(2)} in`);
+        row('Minimum l<sub>dh</sub> = max(8d<sub>b</sub>, 6 in)', `${ldh_min.toFixed(2)} in`);
+        row('<strong>l<sub>dh</sub> = max(calculated, min)</strong>', `<strong>${fmtIn(ldh)}</strong>`, 'hl-row');
+
+        sep('Compression — ACI 318-19 §25.5.5.1');
+        row('l<sub>dc</sub> (a) = 0.02 &psi;<sub>r</sub> f<sub>y</sub> d<sub>b</sub> / (&lambda; &radic;f&prime;<sub>c</sub>)', `${ldc_a.toFixed(2)} in`);
+        row('l<sub>dc</sub> (b) = 0.0003 f<sub>y</sub> d<sub>b</sub>', `${ldc_b.toFixed(2)} in`);
+        row('<strong>l<sub>dc</sub> = max(a, b, 8 in)</strong>', `<strong>${fmtIn(ldc)}</strong>`, 'hl-row');
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    calc();
+    </script>
+
+</body>
+</html>

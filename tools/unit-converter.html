@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Tabs ──────────────────────────────────────────── */
+        .uc-tabs {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin: 2rem 0 1.25rem;
+        }
+        .uc-tab {
+            padding: 0.38rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            font-size: 0.82rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--bg-white);
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            user-select: none;
+            line-height: 1.4;
+        }
+        .uc-tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .uc-tab:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── Panels ────────────────────────────────────────── */
+        .uc-panel { display: none; }
+        .uc-panel.active { display: block; }
+
+        /* ── Grid ──────────────────────────────────────────── */
+        .uc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.55rem;
+        }
+        @media (max-width: 580px) { .uc-grid { grid-template-columns: 1fr; } }
+
+        /* ── Conversion row ────────────────────────────────── */
+        .uc-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.9rem;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: border-color 0.12s, box-shadow 0.12s;
+        }
+        .uc-row:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(232,93,36,0.08);
+        }
+        .uc-unit-label {
+            font-size: 0.82rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 70px;
+            flex-shrink: 0;
+            line-height: 1.2;
+        }
+        .uc-unit-label small {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .uc-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.92rem;
+            font-family: 'Space Grotesk', sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            text-align: right;
+            min-width: 0;
+        }
+        .uc-copy-btn {
+            flex-shrink: 0;
+            padding: 0.22rem 0.55rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .uc-copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .uc-copy-btn.ok { border-color: #15803d; color: #15803d; }
+
+        /* ── Footer note ───────────────────────────────────── */
+        .uc-note {
+            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            background: var(--bg-muted);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>Unit Converter</h1>
+            <p>Structural engineering unit conversions &mdash; force, stress, moment, distributed load, length, and section properties. Type in any box to convert instantly.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:840px; padding-top:0; padding-bottom:5rem;">
+
+        <div class="uc-tabs" id="uc-tabs"></div>
+        <div id="uc-panels"></div>
+
+        <div class="uc-note">
+            All conversions use exact NIST/SI base factors &mdash; no rounding at source. Values update live as you type.
+            Click <strong>Copy</strong> to copy any value to clipboard.
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── Unit categories ─────────────────────────────────────────────────────
+    // factor: multiply input value by factor to get base-unit value
+    const CATS = [
+        {
+            name: 'Force',
+            units: [
+                { label: 'kip',     sub: 'kilopound',        factor: 4.4482216153  },
+                { label: 'lbf',     sub: 'pound-force',      factor: 0.0044482216  },
+                { label: 'kN',      sub: 'kilonewton',       factor: 1.0           },
+                { label: 'N',       sub: 'newton',           factor: 0.001         },
+                { label: 'kgf',     sub: 'kilogram-force',   factor: 0.0098066500  },
+                { label: 'tf',      sub: 'metric ton-force', factor: 9.8066500     },
+            ]
+        },
+        {
+            name: 'Stress',
+            units: [
+                { label: 'ksi',     sub: 'kip / in²',        factor: 6.8947572932  },
+                { label: 'psi',     sub: 'lb / in²',         factor: 0.0068947573  },
+                { label: 'MPa',     sub: 'N / mm²',          factor: 1.0           },
+                { label: 'kPa',     sub: 'kN / m²',          factor: 0.001         },
+                { label: 'psf',     sub: 'lb / ft²',         factor: 4.7880259e-5  },
+                { label: 'kg/cm²',  sub: 'kgf / cm²',        factor: 0.0980665     },
+            ]
+        },
+        {
+            name: 'Moment',
+            units: [
+                { label: 'kip·ft',  sub: '',                  factor: 1.3558179483  },
+                { label: 'kip·in',  sub: '',                  factor: 0.1129848290  },
+                { label: 'kN·m',    sub: '',                  factor: 1.0           },
+                { label: 'N·m',     sub: '',                  factor: 0.001         },
+                { label: 'tf·m',    sub: 'metric',            factor: 9.8066500     },
+                { label: 'kgf·m',   sub: '',                  factor: 0.0098066500  },
+            ]
+        },
+        {
+            name: 'Dist. Load',
+            units: [
+                { label: 'kip/ft',  sub: '',                  factor: 14.5939029372 },
+                { label: 'lb/ft',   sub: 'plf',               factor: 0.0145939029  },
+                { label: 'kN/m',    sub: '',                  factor: 1.0           },
+                { label: 'N/m',     sub: '',                  factor: 0.001         },
+                { label: 'kN/mm',   sub: '',                  factor: 1000.0        },
+                { label: 'tf/m',    sub: 'metric',            factor: 9.8066500     },
+            ]
+        },
+        {
+            name: 'Length',
+            units: [
+                { label: 'ft',      sub: 'foot',              factor: 0.3048        },
+                { label: 'in',      sub: 'inch',              factor: 0.0254        },
+                { label: 'm',       sub: 'meter',             factor: 1.0           },
+                { label: 'mm',      sub: 'millimeter',        factor: 0.001         },
+                { label: 'cm',      sub: 'centimeter',        factor: 0.01          },
+                { label: 'yd',      sub: 'yard',              factor: 0.9144        },
+            ]
+        },
+        {
+            name: 'Inertia (I)',
+            units: [
+                { label: 'in⁴',    sub: '',                  factor: 1.0           },
+                { label: 'ft⁴',    sub: '',                  factor: 20736.0       },
+                { label: 'cm⁴',    sub: '',                  factor: 0.0240250629  },
+                { label: 'mm⁴',    sub: '',                  factor: 2.40250629e-6 },
+                { label: 'm⁴',     sub: '',                  factor: 2402510.0     },
+            ]
+        },
+        {
+            name: 'Section Mod.',
+            units: [
+                { label: 'in³',    sub: '',                  factor: 1.0           },
+                { label: 'ft³',    sub: '',                  factor: 1728.0        },
+                { label: 'cm³',    sub: '',                  factor: 0.0610237441  },
+                { label: 'mm³',    sub: '',                  factor: 6.10237441e-5 },
+                { label: 'm³',     sub: '',                  factor: 61023.744     },
+            ]
+        },
+    ];
+
+    // ── Smart number formatter ──────────────────────────────────────────────
+    function fmt(v) {
+        if (!isFinite(v) || v === 0) return '0';
+        const a = Math.abs(v);
+        if (a >= 1e8 || (a < 1e-4 && a > 0)) return parseFloat(v.toExponential(5)).toString();
+        return parseFloat(v.toPrecision(7)).toString();
+    }
+
+    // ── Build UI ────────────────────────────────────────────────────────────
+    const tabsEl   = document.getElementById('uc-tabs');
+    const panelsEl = document.getElementById('uc-panels');
+
+    CATS.forEach((cat, ci) => {
+        // Tab
+        const tab = document.createElement('button');
+        tab.className = 'uc-tab' + (ci === 0 ? ' active' : '');
+        tab.textContent = cat.name;
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.uc-tab').forEach((t, i)   => t.classList.toggle('active', i === ci));
+            document.querySelectorAll('.uc-panel').forEach((p, i) => p.classList.toggle('active', i === ci));
+        });
+        tabsEl.appendChild(tab);
+
+        // Panel
+        const panel = document.createElement('div');
+        panel.className = 'uc-panel' + (ci === 0 ? ' active' : '');
+
+        const grid = document.createElement('div');
+        grid.className = 'uc-grid';
+
+        cat.units.forEach((u, ui) => {
+            const row = document.createElement('div');
+            row.className = 'uc-row';
+
+            const lbl = document.createElement('div');
+            lbl.className = 'uc-unit-label';
+            lbl.innerHTML = u.label + (u.sub ? `<small>${u.sub}</small>` : '');
+
+            const inp = document.createElement('input');
+            inp.type = 'number';
+            inp.className = 'uc-input';
+            inp.id = `uc-${ci}-${ui}`;
+            inp.placeholder = '—';
+            inp.step = 'any';
+            inp.addEventListener('input', () => {
+                const val = parseFloat(inp.value);
+                if (inp.value === '' || isNaN(val)) {
+                    cat.units.forEach((_, i) => {
+                        if (i !== ui) document.getElementById(`uc-${ci}-${i}`).value = '';
+                    });
+                    return;
+                }
+                const base = val * u.factor;
+                cat.units.forEach((ou, i) => {
+                    if (i === ui) return;
+                    document.getElementById(`uc-${ci}-${i}`).value = fmt(base / ou.factor);
+                });
+            });
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'uc-copy-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', () => {
+                const v = inp.value;
+                if (!v) return;
+                navigator.clipboard.writeText(v).then(() => {
+                    copyBtn.textContent = '✓';
+                    copyBtn.classList.add('ok');
+                    setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('ok'); }, 1400);
+                });
+            });
+
+            row.appendChild(lbl);
+            row.appendChild(inp);
+            row.appendChild(copyBtn);
+            grid.appendChild(row);
+        });
+
+        panel.appendChild(grid);
+        panelsEl.appendChild(panel);
+    });
+    </script>
+
+</body>
+</html>

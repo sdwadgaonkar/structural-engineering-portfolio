@@ -9,6 +9,87 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Column interaction two-panel layout ── */
+        .ci-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        .ci-sidebar {
+            width: 290px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem 1.25rem 1.5rem;
+        }
+        .ci-sidebar h3 {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.25rem 0 0.6rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .ci-sidebar h3:first-child { margin-top: 0; }
+        .ci-main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .ci-top-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .ci-preview-panel {
+            width: 210px;
+            flex-shrink: 0;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .ci-info-panel {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .ci-diagram-panel {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .ci-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+        @media (max-width: 900px) {
+            .ci-layout { flex-direction: column; }
+            .ci-sidebar { width: 100%; position: static; max-height: none; }
+            .ci-top-row { flex-direction: column; }
+            .ci-preview-panel { width: 100%; }
+        }
+    </style>
 </head>
 <body>
 
@@ -24,9 +105,9 @@
 
     <section class="container">
 
-        <div class="tool-layout">
+        <div class="ci-layout">
 
-            <div class="tool-panel">
+            <aside class="ci-sidebar">
                 <h3>Section</h3>
 
                 <div class="field">
@@ -47,7 +128,7 @@
                     <span class="hint">From extreme face to centroid of outermost bars</span>
                 </div>
 
-                <h3 style="margin-top: 1.5rem;">Materials</h3>
+                <h3>Materials</h3>
 
                 <div class="field">
                     <label for="fc">Concrete f'c (ksi)</label>
@@ -59,7 +140,7 @@
                     <input type="number" id="fy" value="60" step="1" min="40">
                 </div>
 
-                <h3 style="margin-top: 1.5rem;">Reinforcement</h3>
+                <h3>Reinforcement</h3>
 
                 <div class="field">
                     <label for="barsPerFace">Bars per face (top/bottom)</label>
@@ -73,7 +154,7 @@
                     <span class="hint">e.g. 0.875 (#7), 1.0 (#8), 1.128 (#9), 1.27 (#10)</span>
                 </div>
 
-                <h3 style="margin-top: 1.5rem;">Demand</h3>
+                <h3>Demand</h3>
 
                 <div class="field">
                     <label for="Pu">Factored axial load Pu (kip)</label>
@@ -87,28 +168,35 @@
                 </div>
 
                 <button class="calc-button" id="calculateBtn">Generate Diagram</button>
-            </div>
+                <div id="errorBox" style="margin-top: 0.75rem;"></div>
+            </aside>
 
-            <div class="tool-panel">
-                <h3>Section Preview</h3>
-                <svg id="sectionMini" class="section-mini" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid meet"></svg>
-                <div id="errorBox" style="margin-top: 1rem;"></div>
-                <div id="adequacyBox"></div>
-                <div id="sectionInfo" style="margin-top: 1.25rem;"></div>
-            </div>
+            <div class="ci-main">
 
-        </div>
-
-        <div class="diagram-section">
-            <div class="diagram-panel">
-                <h4>P-M interaction diagram</h4>
-                <svg id="interactionSvg" class="interaction-svg" viewBox="0 0 700 500" preserveAspectRatio="xMidYMid meet"></svg>
-                <div class="legend">
-                    <span class="legend-item"><span class="legend-swatch nominal"></span> Nominal capacity (Pn, Mn)</span>
-                    <span class="legend-item"><span class="legend-swatch design"></span> Design capacity (φPn, φMn)</span>
-                    <span class="legend-item" id="demandLegend"><span class="legend-swatch demand-ok"></span> Design demand (Pu, Mu)</span>
+                <div class="ci-top-row">
+                    <div class="ci-preview-panel">
+                        <p class="ci-label">Section preview</p>
+                        <svg id="sectionMini" class="section-mini" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+                    <div class="ci-info-panel">
+                        <p class="ci-label">Adequacy</p>
+                        <div id="adequacyBox"></div>
+                        <div id="sectionInfo" style="margin-top: 1rem;"></div>
+                    </div>
                 </div>
+
+                <div class="ci-diagram-panel">
+                    <p class="ci-label">P-M interaction diagram</p>
+                    <svg id="interactionSvg" class="interaction-svg" viewBox="0 0 700 500" preserveAspectRatio="xMidYMid meet"></svg>
+                    <div class="legend">
+                        <span class="legend-item"><span class="legend-swatch nominal"></span> Nominal capacity (Pn, Mn)</span>
+                        <span class="legend-item"><span class="legend-swatch design"></span> Design capacity (φPn, φMn)</span>
+                        <span class="legend-item" id="demandLegend"><span class="legend-swatch demand-ok"></span> Design demand (Pu, Mu)</span>
+                    </div>
+                </div>
+
             </div>
+
         </div>
 
     </section>

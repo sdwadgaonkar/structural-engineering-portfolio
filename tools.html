@@ -9,6 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 2-column grid, larger cards with more breathing room */
+        #toolGrid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        @media (max-width: 700px) { #toolGrid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
 
@@ -28,76 +33,116 @@
             <p>Tools are released progressively. Free tools are marked as such; advanced tools may require a subscription.</p>
         </div>
 
-        <div class="card-grid">
+        <div class="tool-filter" id="toolFilter">
+            <button class="tool-filter-btn active" data-filter="all">All</button>
+            <button class="tool-filter-btn" data-filter="concrete">Concrete</button>
+            <button class="tool-filter-btn" data-filter="steel">Steel</button>
+            <button class="tool-filter-btn" data-filter="loads">Loads</button>
+            <button class="tool-filter-btn" data-filter="analysis">Analysis</button>
+        </div>
 
-            <a href="tools/multispan-beam.html" style="text-decoration: none;">
+        <div class="card-grid" id="toolGrid">
+
+            <a href="tools/multispan-beam.html" style="text-decoration: none;" data-category="analysis">
                 <div class="card live">
                     <h3>Multi-Span Beam Analyzer</h3>
-                    <p><strong>Solve a multi-span beam with mixed loads in seconds.</strong> FEM solver (Euler-Bernoulli) — point loads, UDLs, trapezoidal loads, moments, settlement. Outputs SFD, BMD, and deflected shape.</p>
+                    <p><strong>Solve a multi-span beam with mixed loads in seconds.</strong> FEM (Euler-Bernoulli) — point loads, UDL, trapezoidal, moments, settlement. Outputs SFD, BMD, deflected shape.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/load-combinations.html" style="text-decoration: none;">
+            <a href="tools/load-combinations.html" style="text-decoration: none;" data-category="loads">
                 <div class="card live">
                     <h3>Load Combination Generator</h3>
-                    <p><strong>Get LRFD load combos in one click.</strong> Computes factored combinations per ASCE 7-22 or IS 875, with the governing case highlighted automatically.</p>
+                    <p><strong>Get LRFD load combos in one click.</strong> ASCE 7-22 or IS 875 — all factored combinations computed, governing case highlighted.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/section-properties.html" style="text-decoration: none;">
+            <a href="tools/section-properties.html" style="text-decoration: none;" data-category="analysis">
                 <div class="card live">
                     <h3>Section Property Calculator</h3>
-                    <p><strong>Get section properties for built-up sections instantly.</strong> Computes area, centroid, I, S, and r for rectangular built-up shapes, with a live preview.</p>
+                    <p><strong>Get section properties for built-up sections instantly.</strong> Area, centroid, I, S, r for rectangular components — live preview updates as you type.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/column-interaction.html" style="text-decoration: none;">
+            <a href="tools/column-interaction.html" style="text-decoration: none;" data-category="concrete">
                 <div class="card live">
                     <h3>Column Interaction Diagram</h3>
-                    <p><strong>Check your column against ACI 318 in under a minute.</strong> Generates the full P-M interaction diagram with nominal and design envelopes, and plots your (Pu, Mu) demand point.</p>
+                    <p><strong>Check your column against ACI 318 in under a minute.</strong> Full P-M diagram — nominal and design envelopes, demand point plotted.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/bracing-visualizer.html" style="text-decoration: none;">
+            <a href="tools/bracing-visualizer.html" style="text-decoration: none;" data-category="steel">
                 <div class="card live">
                     <h3>Bracing Stiffness Visualizer</h3>
-                    <p><strong>See how much stiffer a chevron is than a single diagonal — animated.</strong> Compare X-brace, chevron, single diagonal, and EBF side by side with live deflected shapes and lateral stiffness values.</p>
+                    <p><strong>See how much stiffer a chevron is than a single diagonal — animated.</strong> X-brace, chevron, diagonal, EBF side-by-side with live deflected shapes.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/diaphragm-behavior.html" style="text-decoration: none;">
+            <a href="tools/diaphragm-behavior.html" style="text-decoration: none;" data-category="loads">
                 <div class="card live">
                     <h3>Diaphragm Behavior Tool</h3>
-                    <p><strong>See how much the diaphragm assumption changes your frame forces.</strong> Compare rigid, semi-rigid, and flexible load distribution across 3 resisting frames — with torsion, center of rigidity, and eccentricity visualized in plan.</p>
+                    <p><strong>See how much the diaphragm assumption changes your frame forces.</strong> Rigid, semi-rigid, flexible — torsion, center of rigidity, eccentricity in plan.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/base-plate.html" style="text-decoration: none;">
+            <a href="tools/base-plate.html" style="text-decoration: none;" data-category="steel">
                 <div class="card live">
                     <h3>Base Plate Designer</h3>
-                    <p><strong>Check your column base plate against AISC DG1 in seconds.</strong> Full LRFD checks: bearing on concrete, required plate thickness, anchor bolt shear, and uplift tension. Plan + elevation sketch updates live.</p>
+                    <p><strong>Check your column base plate against AISC DG1 in seconds.</strong> LRFD — bearing, plate thickness, anchor bolt shear and uplift. Live plan + elevation sketch.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/seismic-base-shear.html" style="text-decoration: none;">
+            <a href="tools/seismic-base-shear.html" style="text-decoration: none;" data-category="loads">
                 <div class="card live">
                     <h3>Seismic Base Shear Calculator</h3>
-                    <p><strong>Get ASCE 7-22 base shear in seconds — no table lookups.</strong> Type an address, auto-fetch Ss, S1, SDS, SD1 from the USGS Design Maps API, pick your seismic system, and see V with a live Design Response Spectrum chart.</p>
+                    <p><strong>Get ASCE 7-22 base shear in seconds — no table lookups.</strong> Auto-fetches Ss, S1, SDS, SD1 from USGS; pick seismic system; outputs V and response spectrum.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
 
-            <a href="tools/diaphragm-design.html" style="text-decoration: none;">
+            <a href="tools/diaphragm-design.html" style="text-decoration: none;" data-category="concrete">
                 <div class="card live">
                     <h3>Diaphragm Design Tool</h3>
-                    <p><strong>Design a concrete diaphragm per ACI 318-19 — chord, shear, and collectors in one pass.</strong> Define geometry, LFRS positions and stiffnesses, and lateral load. Auto-classifies rigid vs. flexible, applies torsion, and outputs required reinforcement areas with SFD, BMD, and collector force diagrams.</p>
+                    <p><strong>Design a concrete diaphragm per ACI 318-19 in one pass.</strong> Chord, shear, collectors — rigid vs. flexible, torsion applied, reinforcement areas output.</p>
+                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
+                </div>
+            </a>
+
+            <a href="tools/unit-converter.html" style="text-decoration: none;" data-category="analysis">
+                <div class="card live">
+                    <h3>Unit Converter</h3>
+                    <p><strong>Convert structural engineering units instantly — type in any box.</strong> Force, stress, moment, load, length, in⁴, in³ — kip and SI side by side.</p>
+                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
+                </div>
+            </a>
+
+            <a href="tools/wind-load.html" style="text-decoration: none;" data-category="loads">
+                <div class="card live">
+                    <h3>Wind Load Calculator</h3>
+                    <p><strong>Get ASCE 7-22 MWFRS wind pressures in seconds — no table lookups.</strong> Windward, leeward, roof pressures; net lateral force; live pressure diagram.</p>
+                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
+                </div>
+            </a>
+
+            <a href="tools/aci-dev-length.html" style="text-decoration: none;" data-category="concrete">
+                <div class="card live">
+                    <h3>ACI Development Length</h3>
+                    <p><strong>Get rebar development and lap splice lengths per ACI 318-19 instantly.</strong> Straight tension, standard hook, compression — all ψ factors shown with intermediate values.</p>
+                    <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
+                </div>
+            </a>
+
+            <a href="tools/top-plate-connection.html" style="text-decoration: none;" data-category="steel">
+                <div class="card live">
+                    <h3>Top Plate Connection Designer</h3>
+                    <p><strong>Design the double top plate splice for diaphragm chord forces per NDS 2024.</strong> Plate tension check, nail count from yield equations, strap requirement flagged.</p>
                     <span style="color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500;">Open tool →</span>
                 </div>
             </a>
@@ -113,9 +158,8 @@
             <p>The roadmap below reflects what's actively being built. Get notified when a new tool launches.</p>
         </div>
         <ul style="list-style:none;padding:0;margin:1.5rem 0 2rem;display:flex;flex-direction:column;gap:0.75rem;">
-            
-            
-            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>ACI Development Length Calculator</strong> &mdash; rebar development and lap splice lengths per ACI 318-19</div></li>
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>Anchor Bolt Calculator</strong> &mdash; ACI 318-19 Chapter 17 breakout, pullout, and side-face blowout checks</div></li>
+            <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span style="color:var(--accent);font-size:1.1rem;line-height:1.4;">&#9675;</span><div><strong>Influence Line Explorer</strong> &mdash; interactive moving load with live influence line diagrams</div></li>
         </ul>
         <form name="tools-notify" netlify style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
             <input type="email" name="email" placeholder="your@email.com" required
@@ -130,6 +174,21 @@
     <script>
         renderNavbar('tools');
         renderFooter();
+    </script>
+    <script>
+        const filterBtns = document.querySelectorAll('.tool-filter-btn');
+        const toolCards = document.querySelectorAll('#toolGrid > a[data-category]');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+                toolCards.forEach(card => {
+                    card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none';
+                });
+            });
+        });
     </script>
 
 </body>

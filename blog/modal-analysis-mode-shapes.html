@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Analysis and Mode Shapes: What Your ETABS Output Is Actually Telling You | StruxLab</title>
+    <meta name="description" content="A first-principles walkthrough of modal analysis for building structures — eigenvalue problem, mode shapes, mass participation, torsional modes, and what all of it means for your seismic design.">
+    <meta property="og:title" content="Modal Analysis and Mode Shapes: What Your ETABS Output Is Actually Telling You">
+    <meta property="og:description" content="Mode shapes aren't just a check box. Here's what they actually reveal about how your building will behave under seismic loading — and the warning signs most engineers miss.">
+    <meta property="og:type" content="article">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <article class="post-page">
+
+        <p class="post-meta">May 24, 2026 · Structural dynamics · 12 min read</p>
+
+        <h1>Modal Analysis and Mode Shapes: What Your ETABS Output Is Actually Telling You</h1>
+
+        <p class="lede">Every engineer who runs a response spectrum analysis in ETABS checks the mass participation table and confirms it's above 90%. Most move on. The mode shapes and periods contain far more information than that threshold — they describe exactly how your building prefers to move, which modes will be excited by the ground, and whether your lateral system is working the way you think it is.</p>
+
+        <div class="post-body">
+
+            <p>The modal analysis output is one of the most information-dense results a structural model produces. It answers three questions simultaneously: how stiff is the building, how mass is distributed relative to that stiffness, and where the structural weaknesses are hiding. Most of that information gets ignored in the routine SDC D/E/F project workflow — confirm mass participation above 90%, check the fundamental period against the approximate period from ASCE 7 Table 12.8-2, move on to the scale factor.</p>
+
+            <p>That's often fine. But it skips past mode shapes that are telling you something specific about your structure. This post works through the mechanics of modal analysis from first principles, builds up to what the ETABS output means physically, and identifies the things worth looking at beyond the participation table.</p>
+
+            <h2>Why static analysis isn't sufficient for seismic loading</h2>
+
+            <p>Equivalent lateral force (ELF) procedure represents seismic demand as a set of static forces applied at each floor, proportional to the product of floor weight and height above the base. The underlying assumption is that the building responds predominantly in its first mode — and that first mode has a deflected shape that increases linearly (or nearly so) with height. For regular, low-to-mid-rise buildings, this is a defensible approximation.</p>
+
+            <p>The problem is that ground motion doesn't apply forces statically — it applies accelerations dynamically. The forces a building experiences depend on its own motion, which depends on its stiffness and mass distribution. A stiff building with a short period experiences large accelerations. A flexible building with a long period moves more but accelerates less. Two buildings of identical height and weight can experience fundamentally different seismic demands if their lateral systems are different. ELF accounts for this through the period-dependent seismic response coefficient C<sub>s</sub>, but it assumes a single period governs. For buildings where multiple modes contribute significantly, or where the mode shape doesn't increase monotonically with height, ELF misrepresents the true distribution of force.</p>
+
+            <p>Modal response spectrum analysis resolves this by analyzing each mode separately, computing the peak response in each mode from the design spectrum, and combining them statistically. To do that, you need the modes — which means solving the eigenvalue problem.</p>
+
+            <h2>The eigenvalue problem: what ETABS is solving</h2>
+
+            <p>A multi-degree-of-freedom building under lateral loading obeys the matrix equation of motion:</p>
+
+            <div class="equation">
+                [M]{ü} + [C]{u̇} + [K]{u} = {F(t)}
+            </div>
+
+            <p>where [M] is the mass matrix, [C] the damping matrix, [K] the stiffness matrix, and {u} the vector of displacements at each degree of freedom. For free, undamped vibration ({F} = 0, [C] = 0), this reduces to:</p>
+
+            <div class="equation">
+                [M]{ü} + [K]{u} = {0}
+            </div>
+
+            <p>Assuming harmonic motion, {u} = {φ}sin(ωt), the second derivative is {ü} = −ω²{φ}sin(ωt). Substituting:</p>
+
+            <div class="equation">
+                ([K] − ω²[M]){φ} = {0}
+            </div>
+
+            <p>This is the generalized eigenvalue problem. The non-trivial solution requires:</p>
+
+            <div class="equation">
+                det([K] − ω²[M]) = 0
+            </div>
+
+            <p>For an N-degree-of-freedom system, this produces N eigenvalues ω₁² ≤ ω₂² ≤ ... ≤ ω<sub>N</sub>² and N corresponding eigenvectors {φ₁}, {φ₂}, ..., {φ<sub>N</sub>}. The eigenvalues are the squared natural circular frequencies; the eigenvectors are the mode shapes. The natural period of each mode is:</p>
+
+            <div class="equation">
+                T<sub>i</sub> = 2π / ω<sub>i</sub>
+            </div>
+
+            <p>Solving this for a real building with hundreds or thousands of DOFs is the numerical heavy-lifting that ETABS does automatically. What comes back is a list of periods and mode shapes. Those eigenvectors are what's plotted in the mode shape animation.</p>
+
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 700 260" preserveAspectRatio="xMidYMid meet">
+                    <!-- Left panel: SDOF -->
+                    <text x="120" y="20" text-anchor="middle" class="diaphragm-label-bold">SDOF — one mode</text>
+                    <!-- Ground -->
+                    <line x1="30" y1="220" x2="210" y2="220" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="36" y1="220" x2="30" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="50" y1="220" x2="44" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="64" y1="220" x2="58" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="78" y1="220" x2="72" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="92" y1="220" x2="86" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="106" y1="220" x2="100" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="120" y1="220" x2="114" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="134" y1="220" x2="128" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="148" y1="220" x2="142" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="162" y1="220" x2="156" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="176" y1="220" x2="170" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="190" y1="220" x2="184" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="204" y1="220" x2="198" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Column/spring -->
+                    <line x1="120" y1="220" x2="120" y2="80" stroke="#1A1A1A" stroke-width="2" stroke-dasharray="6,4"/>
+                    <!-- Spring symbol -->
+                    <polyline points="120,220 115,200 125,190 115,180 125,170 115,160 120,140"
+                        fill="none" stroke="#E85D24" stroke-width="2"/>
+                    <!-- Mass box -->
+                    <rect x="90" y="60" width="60" height="30" fill="var(--bg-muted)" stroke="#1A1A1A" stroke-width="1.5" rx="3"/>
+                    <text x="120" y="79" text-anchor="middle" class="diaphragm-label-bold" font-size="12">m</text>
+                    <!-- k label -->
+                    <text x="142" y="185" class="diaphragm-label-accent" font-size="12">k</text>
+                    <!-- Period label -->
+                    <text x="120" y="248" text-anchor="middle" class="diaphragm-label" font-size="11">T = 2π√(m/k), one period</text>
+
+                    <!-- Right panel: MDOF 3-story -->
+                    <text x="520" y="20" text-anchor="middle" class="diaphragm-label-bold">MDOF — N modes (one per floor)</text>
+                    <!-- Ground -->
+                    <line x1="375" y1="220" x2="665" y2="220" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="381" y1="220" x2="375" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="395" y1="220" x2="389" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="409" y1="220" x2="403" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="423" y1="220" x2="417" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="437" y1="220" x2="431" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="451" y1="220" x2="445" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="465" y1="220" x2="459" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="479" y1="220" x2="473" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="493" y1="220" x2="487" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="507" y1="220" x2="501" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="521" y1="220" x2="515" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="535" y1="220" x2="529" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="549" y1="220" x2="543" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="563" y1="220" x2="557" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="577" y1="220" x2="571" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="591" y1="220" x2="585" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="605" y1="220" x2="599" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="619" y1="220" x2="613" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="633" y1="220" x2="627" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="647" y1="220" x2="641" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="661" y1="220" x2="655" y2="227" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Story springs: floor 1 spring -->
+                    <polyline points="520,220 515,207 525,200 515,193 525,186 515,179 520,167" fill="none" stroke="#E85D24" stroke-width="2"/>
+                    <!-- Floor 1 mass -->
+                    <rect x="488" y="150" width="65" height="22" fill="var(--bg-muted)" stroke="#1A1A1A" stroke-width="1.5" rx="2"/>
+                    <text x="520" y="165" text-anchor="middle" class="diaphragm-label" font-size="11">m₁, floor 1</text>
+                    <!-- Story spring 2 -->
+                    <polyline points="520,150 515,138 525,131 515,124 525,117 515,110 520,99" fill="none" stroke="#E85D24" stroke-width="2"/>
+                    <!-- Floor 2 mass -->
+                    <rect x="488" y="82" width="65" height="22" fill="var(--bg-muted)" stroke="#1A1A1A" stroke-width="1.5" rx="2"/>
+                    <text x="520" y="97" text-anchor="middle" class="diaphragm-label" font-size="11">m₂, floor 2</text>
+                    <!-- Story spring 3 -->
+                    <polyline points="520,82 515,70 525,63 515,56 525,49 515,42 520,31" fill="none" stroke="#E85D24" stroke-width="2"/>
+                    <!-- Floor 3 (roof) mass -->
+                    <rect x="488" y="14" width="65" height="22" fill="var(--bg-muted)" stroke="#1A1A1A" stroke-width="1.5" rx="2"/>
+                    <text x="520" y="29" text-anchor="middle" class="diaphragm-label" font-size="11">m₃, roof</text>
+                    <!-- k labels -->
+                    <text x="540" y="197" class="diaphragm-label-accent" font-size="11">k₁</text>
+                    <text x="540" y="130" class="diaphragm-label-accent" font-size="11">k₂</text>
+                    <text x="540" y="61" class="diaphragm-label-accent" font-size="11">k₃</text>
+                    <!-- Result label -->
+                    <text x="520" y="248" text-anchor="middle" class="diaphragm-label" font-size="11">3 DOFs → 3 modes, 3 periods T₁ &gt; T₂ &gt; T₃</text>
+                </svg>
+                <figcaption>Left: a single-DOF system has one natural frequency and one mode shape. Right: an N-story building modeled as a stack of masses and springs (story stiffnesses) has N natural frequencies and N mode shapes. ETABS solves for all of them, then uses the design spectrum to determine the contribution of each.</figcaption>
+            </figure>
+
+            <h2>What a mode shape is, physically</h2>
+
+            <p>A mode shape {φ<sub>i</sub>} is the pattern of relative displacements across all floors that occurs when the building vibrates freely at frequency ω<sub>i</sub>. The absolute magnitudes are arbitrary — only the ratios between floors matter. If mode 1 is normalized so the roof displacement is 1.0, a value of 0.6 at the third floor means that floor moves 60% as far as the roof during first-mode vibration.</p>
+
+            <p>Mode shapes are orthogonal with respect to both the mass and stiffness matrices:</p>
+
+            <div class="equation">
+                {φ<sub>i</sub>}ᵀ [M] {φ<sub>j</sub>} = 0 &nbsp;&nbsp; and &nbsp;&nbsp; {φ<sub>i</sub>}ᵀ [K] {φ<sub>j</sub>} = 0 &nbsp;&nbsp; for i ≠ j
+            </div>
+
+            <p>This orthogonality is what makes modal superposition work — the modes are independent of each other. A force that excites Mode 1 does not, in theory, excite Mode 2 or Mode 3. This lets you analyze each mode separately and combine the results, rather than solving the full N-DOF coupled system at every time step.</p>
+
+            <figure>
+                <svg class="blog-svg" viewBox="0 0 700 300" preserveAspectRatio="xMidYMid meet">
+                    <!-- Three mode shape diagrams for a 3-story building -->
+                    <!--
+                        Building: 3 floors at y = 230 (ground/base), 175, 120, 65 (roof)
+                        Mode 1: φ = [0.45, 0.78, 1.00] → all positive, largest at top
+                        Mode 2: φ = [-0.80, 0.50, 1.00] → sign reversal between floor 1 and 2
+                        Mode 3: φ = [1.00, -0.75, 0.35] → two sign reversals
+                    -->
+
+                    <!-- === MODE 1 === -->
+                    <text x="117" y="18" text-anchor="middle" class="diaphragm-label-bold">Mode 1 (T₁, fundamental)</text>
+                    <!-- Undeformed building outline (dashed) -->
+                    <line x1="90" y1="65" x2="90" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="145" y1="65" x2="145" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="90" y1="65" x2="145" y2="65" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="90" y1="120" x2="145" y2="120" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="90" y1="175" x2="145" y2="175" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <!-- Ground -->
+                    <line x1="65" y1="240" x2="170" y2="240" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="71" y1="240" x2="65" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="85" y1="240" x2="79" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="99" y1="240" x2="93" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="113" y1="240" x2="107" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="127" y1="240" x2="121" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="141" y1="240" x2="135" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="155" y1="240" x2="149" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="169" y1="240" x2="163" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Mode 1: displacements (positive = right). Scale: 35px max -->
+                    <!-- Floor 1: 0.45 × 35 = 16px, Floor 2: 0.78 × 35 = 27px, Roof: 1.00 × 35 = 35px -->
+                    <line x1="90" y1="240" x2="90" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="90" y1="175" x2="106" y2="175" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="90" y1="120" x2="117" y2="120" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="90" y1="65" x2="125" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Deformed shape connecting points -->
+                    <polyline points="90,240 106,175 117,120 125,65" fill="none" stroke="#E85D24" stroke-width="2" stroke-dasharray="5,2" opacity="0.6"/>
+                    <!-- Arrow heads at displaced positions -->
+                    <polygon points="106,175 98,171 98,179" fill="#E85D24"/>
+                    <polygon points="117,120 109,116 109,124" fill="#E85D24"/>
+                    <polygon points="125,65 117,61 117,69" fill="#E85D24"/>
+                    <!-- Displacement labels -->
+                    <text x="112" y="180" class="diaphragm-label-accent" font-size="10">0.45</text>
+                    <text x="123" y="125" class="diaphragm-label-accent" font-size="10">0.78</text>
+                    <text x="131" y="70" class="diaphragm-label-accent" font-size="10">1.00</text>
+                    <text x="117" y="275" text-anchor="middle" class="diaphragm-label" font-size="10">All floors: same direction</text>
+                    <text x="117" y="290" text-anchor="middle" fill="var(--color-ok)" font-family="'Space Grotesk',sans-serif" font-size="10" font-weight="600">~75–85% mass participation</text>
+
+                    <!-- === MODE 2 === -->
+                    <text x="350" y="18" text-anchor="middle" class="diaphragm-label-bold">Mode 2 (T₂ ≈ T₁ / 3)</text>
+                    <!-- Undeformed -->
+                    <line x1="323" y1="65" x2="323" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="378" y1="65" x2="378" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="323" y1="65" x2="378" y2="65" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="323" y1="120" x2="378" y2="120" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="323" y1="175" x2="378" y2="175" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <!-- Ground -->
+                    <line x1="298" y1="240" x2="403" y2="240" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="304" y1="240" x2="298" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="318" y1="240" x2="312" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="332" y1="240" x2="326" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="346" y1="240" x2="340" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="360" y1="240" x2="354" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="374" y1="240" x2="368" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="388" y1="240" x2="382" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="402" y1="240" x2="396" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Mode 2: [-0.80, 0.50, 1.00]. Scale 30px.
+                         Floor 1: -0.80 × 30 = -24px (left), Floor 2: +0.50 × 30 = +15px (right), Roof: +1.0 × 30 = +30px (right) -->
+                    <line x1="323" y1="240" x2="323" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="323" y1="175" x2="299" y2="175" stroke="#E85D24" stroke-width="2.5"/> <!-- left: negative -->
+                    <line x1="323" y1="120" x2="338" y2="120" stroke="#E85D24" stroke-width="2.5"/> <!-- right: positive -->
+                    <line x1="323" y1="65" x2="353" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Deformed shape -->
+                    <polyline points="323,240 299,175 338,120 353,65" fill="none" stroke="#E85D24" stroke-width="2" stroke-dasharray="5,2" opacity="0.6"/>
+                    <!-- Arrow heads -->
+                    <polygon points="299,175 307,171 307,179" fill="#E85D24" transform="rotate(180,303,175)"/>
+                    <polygon points="338,120 330,116 330,124" fill="#E85D24"/>
+                    <polygon points="353,65 345,61 345,69" fill="#E85D24"/>
+                    <!-- Labels -->
+                    <text x="285" y="180" class="diaphragm-label-accent" font-size="10">−0.80</text>
+                    <text x="344" y="125" class="diaphragm-label-accent" font-size="10">0.50</text>
+                    <text x="359" y="70" class="diaphragm-label-accent" font-size="10">1.00</text>
+                    <!-- Inflection marker -->
+                    <circle cx="323" cy="157" r="4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                    <text x="335" y="157" class="diaphragm-label" font-size="9">inflection</text>
+                    <text x="350" y="275" text-anchor="middle" class="diaphragm-label" font-size="10">One sign reversal — S-curve shape</text>
+                    <text x="350" y="290" text-anchor="middle" fill="var(--color-warn)" font-family="'Space Grotesk',sans-serif" font-size="10" font-weight="600">~12–18% mass participation</text>
+
+                    <!-- === MODE 3 === -->
+                    <text x="583" y="18" text-anchor="middle" class="diaphragm-label-bold">Mode 3 (T₃ ≈ T₁ / 5)</text>
+                    <!-- Undeformed -->
+                    <line x1="556" y1="65" x2="556" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="611" y1="65" x2="611" y2="240" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="556" y1="65" x2="611" y2="65" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="556" y1="120" x2="611" y2="120" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <line x1="556" y1="175" x2="611" y2="175" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                    <!-- Ground -->
+                    <line x1="531" y1="240" x2="636" y2="240" stroke="#1A1A1A" stroke-width="2"/>
+                    <line x1="537" y1="240" x2="531" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="551" y1="240" x2="545" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="565" y1="240" x2="559" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="579" y1="240" x2="573" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="593" y1="240" x2="587" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="607" y1="240" x2="601" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="621" y1="240" x2="615" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="635" y1="240" x2="629" y2="247" stroke="#1A1A1A" stroke-width="1"/>
+                    <!-- Mode 3: [1.00, -0.75, 0.35]. Scale 30px.
+                         Floor 1: +30px (right), Floor 2: -22px (left), Roof: +10px (right) -->
+                    <line x1="556" y1="240" x2="556" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="556" y1="175" x2="586" y2="175" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="556" y1="120" x2="534" y2="120" stroke="#E85D24" stroke-width="2.5"/>
+                    <line x1="556" y1="65" x2="566" y2="65" stroke="#E85D24" stroke-width="2.5"/>
+                    <!-- Deformed shape -->
+                    <polyline points="556,240 586,175 534,120 566,65" fill="none" stroke="#E85D24" stroke-width="2" stroke-dasharray="5,2" opacity="0.6"/>
+                    <!-- Arrow heads -->
+                    <polygon points="586,175 578,171 578,179" fill="#E85D24"/>
+                    <polygon points="534,120 542,116 542,124" fill="#E85D24" transform="rotate(180,538,120)"/>
+                    <polygon points="566,65 558,61 558,69" fill="#E85D24"/>
+                    <!-- Labels -->
+                    <text x="592" y="180" class="diaphragm-label-accent" font-size="10">1.00</text>
+                    <text x="518" y="125" class="diaphragm-label-accent" font-size="10">−0.75</text>
+                    <text x="572" y="70" class="diaphragm-label-accent" font-size="10">0.35</text>
+                    <!-- Two inflection markers -->
+                    <circle cx="556" cy="142" r="4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                    <circle cx="556" cy="100" r="4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                    <text x="583" y="275" text-anchor="middle" class="diaphragm-label" font-size="10">Two sign reversals — double S-curve</text>
+                    <text x="583" y="290" text-anchor="middle" fill="var(--text-muted)" font-family="'Space Grotesk',sans-serif" font-size="10" font-weight="600">~3–5% mass participation</text>
+                </svg>
+                <figcaption>The three translational mode shapes of a regular 3-story building. Mode 1 (fundamental): all floors move in the same direction, maximum displacement at the roof. Mode 2: one sign reversal, S-curve, with an inflection point near floor 2. Mode 3: two sign reversals, double S-curve. The numbers are relative displacements normalized so the maximum is 1.0.</figcaption>
+            </figure>
+
+            <h2>Natural period and the design spectrum connection</h2>
+
+            <p>The natural period T<sub>i</sub> of each mode is what connects the mode shape to the seismic demand. The design response spectrum (ASCE 7-22 Figure 22-1, derived from site-specific S<sub>DS</sub> and S<sub>D1</sub>) gives the spectral acceleration S<sub>a</sub>(T) for any period. The spectral acceleration for mode i is simply S<sub>a</sub>(T<sub>i</sub>) — you look up the period on the x-axis and read the acceleration on the y-axis.</p>
+
+            <p>For a regular 3-story concrete building, periods might be approximately T₁ = 0.6 s, T₂ = 0.2 s, T₃ = 0.12 s. If the site has S<sub>DS</sub> = 1.0 g and S<sub>D1</sub> = 0.5 g, the spectrum plateau is at T<sub>s</sub> = 0.5 s. Mode 1 (T₁ = 0.6 s) is in the descending branch — S<sub>a</sub>(0.6) = S<sub>D1</sub>/T₁ = 0.5/0.6 = 0.83 g. Mode 2 (T₂ = 0.2 s) is in the plateau — S<sub>a</sub>(0.2) = S<sub>DS</sub> = 1.0 g. Mode 3 is also in the plateau at 1.0 g.</p>
+
+            <p>Higher modes carry less mass, but they sit at higher spectral accelerations on the flat part of the spectrum. For tall or irregular buildings, the combination of higher S<sub>a</sub> and meaningful mass participation can make Mode 2 contributions non-negligible even if Mode 1 dominates overall.</p>
+
+            <h2>Mass participation: the 90% rule, explained</h2>
+
+            <p>Not all modes are equally important. The <em>modal participation factor</em> for mode i in the x-direction is:</p>
+
+            <div class="equation">
+                Γ<sub>i</sub> = {φ<sub>i</sub>}ᵀ [M] {1} / {φ<sub>i</sub>}ᵀ [M] {φ<sub>i</sub>}
+            </div>
+
+            <p>where {1} is a vector of ones representing a unit ground acceleration in the x-direction. The <em>effective modal mass</em> (also called participating mass) for mode i is:</p>
+
+            <div class="equation">
+                M<sub>eff,i</sub> = Γ<sub>i</sub>² × {φ<sub>i</sub>}ᵀ [M] {φ<sub>i</sub>}
+            </div>
+
+            <p>The mass participation ratio for mode i is M<sub>eff,i</sub> / M<sub>total</sub>. A mode shape that is well-aligned with the direction of ground motion excites more mass and has a high participation ratio. A mode shape with strong cancellations (sign reversals) excites less mass and participates less.</p>
+
+            <p>ASCE 7-22 §12.9.1 requires that the cumulative mass participation across all included modes reaches at least 90% in each orthogonal horizontal direction. The logic: the modes you've computed capture 90% of the seismic energy that the ground motion can excite. The remaining 10% is in very high modes with very short periods that contribute minimally to the response quantities of interest (story drift, base shear, member forces).</p>
+
+            <div class="callout">
+                <p>For a typical 3–5 story regular building, three translational modes per direction often exceed 95% participation. For a 20-story building, you may need 15–25 modes. For a podium structure where the tower sits above a large rigid base, higher modes of the tower alone can have significant participation. ETABS reports cumulative mass participation after each mode — this is the column to watch, not the per-mode value.</p>
+            </div>
+
+            <p>It's also worth noting what mass participation does NOT guarantee: it says nothing about whether your model has captured torsional response or vertical response. ASCE 7-22 §12.9.1 requires 90% in <em>each orthogonal horizontal direction</em>. If you have a torsionally irregular building, you need to check that the rotational mass participation (about the vertical axis) is also adequate — most engineers don't look at this column.</p>
+
+            <h2>What the mode shapes are telling you about your building</h2>
+
+            <p>Mode shapes are not just an academic exercise. They reveal the mechanics of how your building resists lateral loading. For a regular building — symmetric plan, uniform stiffness and mass distribution — the mode shapes look like the diagram above: clean translational modes (X-translation, Y-translation) followed by a torsional mode. The participation in the first two modes is high; the third (torsional) is excited only if the building twists, which a symmetric building does minimally under uniform ground motion.</p>
+
+            <h3>Soft-story behavior</h3>
+            <p>When one story is significantly softer than the others — a ground-floor parking garage below office floors, or a story with large openings — the mode shape concentrates its displacement in that story. The mode shape shows a large "jump" at the soft story; the other floors barely move relative to each other. This is the mode shape of a soft-story mechanism, and it's identifiable before the building is built if you look at Mode 1 carefully. The story drift ratio at the soft story will be a multiple of the average — often 3–5× — which is why ASCE 7 flags vertical stiffness irregularity (Table 12.3-2, Type 1a/1b) and penalizes it with additional requirements.</p>
+
+            <h3>Setbacks and irregular mass distribution</h3>
+            <p>Buildings that step back at upper floors or have large floor masses concentrated at certain levels show distorted mode shapes. The heavy floors attract disproportionate inertia force; the light floors above them move more freely. Mode 1 may no longer be a clean monotonically increasing profile — the inflection point may occur at the setback level, not between floors. This is visible in the ETABS mode shape plot as a kink at the setback level.</p>
+
+            <h3>Wall-dominated vs. frame-dominated modes</h3>
+            <p>Concrete shear walls produce a fundamentally different mode shape than moment frames. A uniform cantilever wall produces a parabolic first-mode shape (curvature concentrated at the base); a moment frame produces an S-curve that's more linear in the lower stories and curves near the top. A dual system — walls and frames sharing lateral load — has a mode shape somewhere between the two extremes, determined by the relative stiffness ratio. Checking Mode 1 in ETABS and comparing the shape to what you'd expect from the lateral system is a fast qualitative sanity check on the model.</p>
+
+            <h2>Torsional modes: the warning sign to take seriously</h2>
+
+            <p>In a building model with 3D behavior, ETABS computes modes in all six degrees of freedom at each floor. The modes that matter for seismic design are typically the two dominant translational modes (X and Y) and one dominant torsional mode (rotation about Z). In a regular building, the first two modes are translational and the third is torsional. Their periods are ranked T₁ > T₂ > T<sub>torsional</sub>.</p>
+
+            <p>The warning sign: when the torsional mode period T<sub>θ</sub> is close to or longer than one of the translational periods. ASCE 7-22 §12.3.2.1 defines a torsional irregularity (Type 1a) when the maximum story drift at one end of the floor is more than 1.2× the average drift — but the modal period ratio is a faster indicator. If T<sub>θ</sub> / T<sub>1</sub> > 0.85 for a building where the first mode is translational, the building is torsionally flexible and approaching irregular behavior. If the first mode itself is torsional (T<sub>θ</sub> > T<sub>translational</sub>), the lateral system is torsionally deficient — the building will rotate under uniform ground motion before it translates, which produces significantly higher demands on the perimeter frames.</p>
+
+            <div class="callout">
+                <p>A first mode that is predominantly torsional is a structural red flag. It means the building's center of rigidity is poorly positioned relative to its center of mass, or the perimeter stiffness is inadequate in one direction. The fix is to add stiffness at the perimeter — moving walls or frames toward the building edges — not to add more stiffness at the center. Adding central stiffness makes Mode 1 translation stiffer but doesn't change the torsional-to-translational period ratio in a way that resolves the irregularity.</p>
+            </div>
+
+            <h2>Combining modes: SRSS and CQC</h2>
+
+            <p>Each mode produces its own peak response (floor displacements, story drifts, member forces). Because the modes don't peak simultaneously — they're orthogonal and their phase is random relative to ground motion — you can't add them directly. The two standard combination methods are SRSS and CQC.</p>
+
+            <p><strong>SRSS (Square Root of Sum of Squares):</strong> R = √(Σ R<sub>i</sub>²). Accurate when mode periods are well-separated — a ratio of at least 10% between adjacent periods. For most low-to-mid-rise buildings with distinct T₁ >> T₂, SRSS is adequate.</p>
+
+            <p><strong>CQC (Complete Quadratic Combination):</strong> R = √(Σᵢ Σⱼ ρ<sub>ij</sub> R<sub>i</sub> R<sub>j</sub>), where ρ<sub>ij</sub> is the correlation coefficient between modes i and j, a function of their period ratio and damping. CQC reduces to SRSS when periods are well-separated (ρ<sub>ij</sub> → 0 for T<sub>i</sub>/T<sub>j</sub> << 1). For buildings where mode periods are close — torsionally coupled structures, buildings with closely spaced structural systems — CQC gives the more accurate combination. ASCE 7-22 §12.9.1.3 permits either method, with CQC as the default recommendation for 3D models.</p>
+
+            <p>A common mistake is using SRSS for a building with a closely-spaced torsional mode — one where T<sub>torsional</sub> is within 10–15% of T<sub>translational</sub>. The correlation between these modes can be significant, and SRSS will underestimate combined demand. ETABS uses CQC by default and this is correct for nearly all buildings. If you've changed it to SRSS for a specific reason, make sure that reason is well-founded.</p>
+
+            <h2>The RSA scaling requirement — and what it implies</h2>
+
+            <p>ASCE 7-22 §12.9.1.4 requires scaling the RSA results so the base shear is at least 100% of the ELF base shear V (for irregular structures) or 85% of V (for regular structures). This scaling is often applied mechanically as a scale factor in ETABS without thinking about what it means.</p>
+
+            <p>The scaling requirement exists because RSA uses smoothed design spectra and statistical combination — the 90% mass participation cutoff means you've omitted some modes, and the statistical combination can underestimate forces for specific configurations. The ELF base shear provides a lower bound that has been calibrated against observed building performance. If the RSA base shear is below this bound, scale up.</p>
+
+            <p>But here's what the scale factor is not: it's not a correction for missing modes. If your RSA requires a 1.6× scale factor, that's often a sign that Mass Mode 1 has low participation in one direction — perhaps because the building's first translational mode is actually torsional, or the diaphragm is flexible and the simplified mass lumping doesn't capture the actual response. Investigate the cause before accepting the scale factor and moving on.</p>
+
+            <h2>Practical reading of ETABS modal output</h2>
+
+            <p>When you run a modal analysis in ETABS, the output you should look at, in order:</p>
+
+            <ol>
+                <li><strong>Mode 1 period against the ASCE 7 approximate period T<sub>a</sub>.</strong> ASCE 7-22 Table 12.8-2 gives T<sub>a</sub> = C<sub>t</sub> × h<sub>n</sub><sup>x</sup>. Your computed T₁ should be within 1.4–1.7× T<sub>a</sub> (ASCE 7 limits the upper bound for design at C<sub>u</sub>T<sub>a</sub>). If T₁ is dramatically different from T<sub>a</sub>, either the height is wrong, the stiffness is misrepresented, or the model has an error.</li>
+                <li><strong>Dominant mode shape for Mode 1.</strong> Is it X-translation, Y-translation, or rotation? For a regular building, it should be translation in the longer plan dimension. If it's torsional, investigate immediately.</li>
+                <li><strong>Period ratio T₃ / T₁ (or T<sub>torsional</sub> / T<sub>1</sub>).</strong> This should be substantially less than 1.0 for a torsionally regular building. Values above 0.85 warrant a torsional irregularity check.</li>
+                <li><strong>Cumulative mass participation after 3 modes.</strong> For regular buildings, this should be above 85%. If it's not, check whether the building is torsionally irregular, has flexible diaphragms, or has localized mass concentrations that are driving many low-participation modes.</li>
+                <li><strong>Mode shape plots at Mode 1 and Mode 2.</strong> Does Mode 1 look like a smooth, monotonically increasing deflected shape? Is Mode 2 a clean S-curve? Any kinks or sharp jumps at a specific floor indicate a stiffness irregularity at that level.</li>
+            </ol>
+
+            <div class="callout">
+                <p>Mode shapes are the building's structural fingerprint. A regular, well-designed building produces clean, legible mode shapes. Irregularities — soft stories, setbacks, torsional imbalance, missing walls — show up as distortions in the mode shape before they show up as code violations in the irregularity check tables. Looking at the mode shape takes 30 seconds and often saves hours of re-running a model after the irregularity check fails.</p>
+            </div>
+
+            <p>The mode shape, the period, and the mass participation are three views of the same thing: the dynamic character of the structure. They encode the distribution of stiffness and mass in a form that connects directly to seismic demand through the design spectrum. Understanding what they mean — not just checking the 90% threshold — is what separates a structural model you trust from one you're hoping is correct.</p>
+
+            <p>If you've run into an interesting case where the mode shapes revealed something unexpected about a building — a torsional mode that shouldn't have been first, a soft story you didn't anticipate, a scale factor that was a symptom of something deeper — <a href="../contact.html">drop me a note</a>. The model behavior that surprises you is usually the most instructive.</p>
+
+        </div>
+
+        <div class="post-footer">
+            <p>← <a href="../blog.html">Back to blog</a></p>
+        </div>
+
+    </article>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('blog');
+        renderFooter();
+    </script>
+
+</body>
+</html>

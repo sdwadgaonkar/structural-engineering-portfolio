@@ -9,6 +9,69 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* ── Beam calculator two-panel layout ── */
+        .bc-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        .bc-sidebar {
+            width: 360px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .bc-sidebar h3 {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.25rem 0 0.6rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .bc-sidebar h3:first-child { margin-top: 0; }
+        .bc-main { flex: 1; min-width: 0; }
+        .bc-top-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: flex-start;
+        }
+        .bc-top-row > * { flex: 1; min-width: 0; }
+        .bc-panel {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .bc-panel:last-child { margin-bottom: 0; }
+        .bc-panel svg { width: 100%; height: auto; display: block; }
+        .bc-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+        @media (max-width: 960px) {
+            .bc-layout { flex-direction: column; }
+            .bc-sidebar { width: 100%; position: static; max-height: none; }
+            .bc-top-row { flex-direction: column; }
+        }
+    </style>
 </head>
 <body>
 
@@ -24,9 +87,9 @@
 
     <section class="container">
 
-        <div class="tool-layout">
+        <div class="bc-layout">
 
-            <div class="tool-panel">
+            <aside class="bc-sidebar">
                 <h3>Configuration</h3>
 
                 <label class="result-label" style="display:block; margin-bottom:0.5rem;">Number of spans</label>
@@ -45,7 +108,7 @@
                     <label><input type="checkbox" id="rightFixed"> Right end fixed</label>
                 </div>
 
-                <h3 style="margin-top: 1.5rem;">Spans</h3>
+                <h3>Spans</h3>
                 <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">
                     Per-span L, E, I and per-support settlement. Click "Apply to all" to copy Span 1's E and I.
                 </p>
@@ -76,57 +139,59 @@
                     <tbody id="settleBody"></tbody>
                 </table>
 
-                <h3 style="margin-top: 1.5rem;">Loads</h3>
+                <h3>Loads</h3>
                 <div id="loadsContainer"></div>
                 <button class="add-load-btn" id="addLoadBtn">+ Add load</button>
 
                 <button class="calc-button" id="calculateBtn" style="margin-top:1.5rem;">Calculate</button>
                 <div id="errorBox" style="margin-top:1rem;"></div>
-            </div>
+            </aside>
 
-            <div class="tool-panel">
-                <h3>Reactions</h3>
-                <table class="reactions-table" id="reactionsTable">
-                    <thead>
-                        <tr>
-                            <th>Support</th>
-                            <th>R (kip)</th>
-                            <th>M (kip-ft)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reactionsBody">
-                        <tr><td colspan="3" class="result-empty">Click Calculate to see reactions.</td></tr>
-                    </tbody>
-                </table>
+            <div class="bc-main">
 
-                <h3>Per-span maxima</h3>
-                <div id="spanStatsContainer"></div>
+                <div class="bc-top-row">
+                    <div class="bc-panel" style="margin-bottom:0;">
+                        <p class="bc-label">Reactions</p>
+                        <table class="reactions-table" id="reactionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Support</th>
+                                    <th>R (kip)</th>
+                                    <th>M (kip-ft)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reactionsBody">
+                                <tr><td colspan="3" class="result-empty">Click Calculate to see reactions.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bc-panel" style="margin-bottom:0;">
+                        <p class="bc-label">Per-span maxima</p>
+                        <div id="spanStatsContainer"></div>
+                        <button class="export-btn" id="exportBtn">↓ Export results to CSV</button>
+                    </div>
+                </div>
 
-                <button class="export-btn" id="exportBtn">↓ Export results to CSV</button>
-            </div>
+                <div class="bc-panel" style="margin-top:1rem;">
+                    <p class="bc-label">Beam &amp; loading</p>
+                    <svg id="beamDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
 
-        </div>
+                <div class="bc-panel">
+                    <p class="bc-label">Shear Force Diagram (kip)</p>
+                    <svg id="sfdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
 
-        <div class="diagram-section">
+                <div class="bc-panel">
+                    <p class="bc-label">Bending Moment Diagram (kip-ft) — sagging plotted downward</p>
+                    <svg id="bmdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
 
-            <div class="diagram-panel">
-                <h4>Beam &amp; loading</h4>
-                <svg id="beamDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
-            </div>
+                <div class="bc-panel">
+                    <p class="bc-label">Deflected shape (in) — downward plotted downward</p>
+                    <svg id="defDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
 
-            <div class="diagram-panel">
-                <h4>Shear Force Diagram (kip)</h4>
-                <svg id="sfdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
-            </div>
-
-            <div class="diagram-panel">
-                <h4>Bending Moment Diagram (kip-ft) — sagging plotted downward</h4>
-                <svg id="bmdDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
-            </div>
-
-            <div class="diagram-panel">
-                <h4>Deflected shape (in) — downward plotted downward</h4>
-                <svg id="defDiagram" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
         </div>

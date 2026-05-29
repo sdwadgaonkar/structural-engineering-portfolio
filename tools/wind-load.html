@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Load Calculator | StruxLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .wl-sidebar input[type="number"]::-webkit-inner-spin-button,
+        .wl-sidebar input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        .wl-sidebar input[type="number"] { -moz-appearance: textfield; }
+
+        /* ── Layout ─────────────────────────────────────────── */
+        .wl-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 2rem;
+        }
+
+        /* ── Sidebar ────────────────────────────────────────── */
+        .wl-sidebar {
+            width: 270px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.1rem 1.5rem;
+            scrollbar-width: thin;
+        }
+        .wl-sidebar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.1rem 0 0.55rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .wl-sidebar h3:first-child { margin-top: 0; }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+            gap: 0.4rem;
+        }
+        .field label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            flex: 1;
+            line-height: 1.3;
+        }
+        .field label sub { font-size: 0.65rem; }
+        .field input[type="number"] {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+            text-align: right;
+        }
+        .field input[type="number"]:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+        .field select {
+            width: 148px;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.80rem;
+            font-family: inherit;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+        }
+        .field select:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+        .field-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin: -0.2rem 0 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* ── Fixed-value chips ──────────────────────────────── */
+        .fixed-strip {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 0.6rem;
+        }
+        .fixed-chip {
+            flex: 1;
+            background: var(--bg-muted);
+            border-radius: 5px;
+            padding: 5px 0;
+            text-align: center;
+        }
+        .fixed-chip .fc-label {
+            font-size: 0.60rem;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: block;
+        }
+        .fixed-chip .fc-val {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* ── Main area ───────────────────────────────────────── */
+        .wl-main { flex: 1; min-width: 0; }
+
+        /* ── Banner ──────────────────────────────────────────── */
+        .result-banner {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.4rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .result-block-label {
+            font-size: 0.72rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        .result-v {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .result-sub {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 3px;
+        }
+        .result-sub strong { color: var(--text-primary); }
+
+        /* ── Diagram card ────────────────────────────────────── */
+        .diagram-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem 1rem 0.6rem;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+        .diagram-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .diagram-card svg { width: 100%; display: block; }
+
+        /* ── Pressure table ──────────────────────────────────── */
+        .param-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+        .param-table th {
+            background: var(--bg-muted);
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .param-table td {
+            padding: 0.45rem 0.85rem;
+            border-top: 1px solid #f0ece4;
+        }
+        .param-table td:first-child { color: var(--text-secondary); }
+        .param-table td:last-child {
+            text-align: right;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .param-table .hl-row td { background: #fff7ed; }
+        .param-table .hl-row td:last-child { color: var(--accent); font-weight: 700; }
+        .param-table .sep-row td {
+            background: var(--bg-muted);
+            font-size: 0.70rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0.35rem 0.85rem;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* ── Notes ───────────────────────────────────────────── */
+        .wl-notes {
+            padding: 0.85rem 1rem;
+            background: var(--bg-muted);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .wl-notes strong { color: var(--text-primary); }
+
+        @media (max-width: 780px) {
+            .wl-layout { flex-direction: column; }
+            .wl-sidebar { width: 100%; position: static; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="site-navbar"></div>
+
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Engineering Tools</span>
+            <h1>Wind Load Calculator</h1>
+            <p>ASCE 7-22 MWFRS wind pressures by the Directional Procedure (Chapter 26&ndash;27). Enter the basic wind speed, exposure, and building geometry to get velocity pressures and design loads.</p>
+        </div>
+    </header>
+
+    <section class="container" style="max-width:1100px; padding-top:2.5rem; padding-bottom:5rem;">
+
+        <div class="wl-layout">
+
+            <!-- ── Sidebar ──────────────────────────────────────────── -->
+            <aside class="wl-sidebar">
+
+                <h3>Wind Speed</h3>
+                <div class="field-hint">From ASCE 7-22 Fig. 26.5-1 through 26.5-8 for your site location and Risk Category.</div>
+                <div class="field">
+                    <label>Basic wind speed V (mph)</label>
+                    <input type="number" id="inp-V" value="115" min="60" max="250" step="5" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Risk Category</label>
+                    <select id="inp-rc" onchange="calc()">
+                        <option value="I">I &mdash; Low hazard</option>
+                        <option value="II" selected>II &mdash; Standard</option>
+                        <option value="III">III &mdash; Substantial hazard</option>
+                        <option value="IV">IV &mdash; Essential facility</option>
+                    </select>
+                </div>
+
+                <h3>Exposure &amp; Topography</h3>
+                <div class="field">
+                    <label>Exposure Category</label>
+                    <select id="inp-exp" onchange="calc()">
+                        <option value="B" selected>B &mdash; Suburban/wooded</option>
+                        <option value="C">C &mdash; Open terrain</option>
+                        <option value="D">D &mdash; Coastal/open water</option>
+                    </select>
+                </div>
+                <div class="fixed-strip">
+                    <div class="fixed-chip"><span class="fc-label">K<sub>zt</sub></span><span class="fc-val">1.00</span></div>
+                    <div class="fixed-chip"><span class="fc-label">K<sub>d</sub></span><span class="fc-val">0.85</span></div>
+                    <div class="fixed-chip"><span class="fc-label">K<sub>e</sub></span><span class="fc-val">1.00</span></div>
+                    <div class="fixed-chip"><span class="fc-label">G</span><span class="fc-val">0.85</span></div>
+                </div>
+                <div class="field-hint">K<sub>zt</sub> = 1.0 (flat terrain), K<sub>d</sub> = 0.85 (MWFRS, Table 26.6-1), K<sub>e</sub> = 1.0 (sea level), G = 0.85 (rigid building).</div>
+
+                <h3>Building Geometry</h3>
+                <div class="field">
+                    <label>Mean roof height h (ft)</label>
+                    <input type="number" id="inp-h" value="40" min="10" max="500" step="5" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Width B (ft) <small style="font-size:0.65rem; color:var(--text-muted);">⊥ wind</small></label>
+                    <input type="number" id="inp-B" value="60" min="10" max="1000" step="5" oninput="calc()">
+                </div>
+                <div class="field">
+                    <label>Length L (ft) <small style="font-size:0.65rem; color:var(--text-muted);">∥ wind</small></label>
+                    <input type="number" id="inp-L" value="100" min="10" max="1000" step="5" oninput="calc()">
+                </div>
+
+                <h3>Enclosure</h3>
+                <div class="field">
+                    <label>Classification</label>
+                    <select id="inp-enc" onchange="calc()">
+                        <option value="enclosed" selected>Enclosed</option>
+                        <option value="partial">Partially enclosed</option>
+                        <option value="open">Open</option>
+                    </select>
+                </div>
+
+            </aside>
+
+            <!-- ── Main area ─────────────────────────────────────────── -->
+            <div class="wl-main">
+
+                <!-- Result banner -->
+                <div class="result-banner">
+                    <div>
+                        <div class="result-block-label">q<sub>h</sub> at roof</div>
+                        <div class="result-v" id="disp-qh">— psf</div>
+                    </div>
+                    <div>
+                        <div class="result-sub">Windward at h: <strong id="disp-pww-h">—</strong></div>
+                        <div class="result-sub" style="margin-top:4px;">Leeward: <strong id="disp-plw">—</strong></div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <div class="result-block-label">Net lateral at h</div>
+                        <div class="result-v" style="font-size:1.6rem;" id="disp-pnet">— psf</div>
+                    </div>
+                </div>
+
+                <!-- Pressure diagram -->
+                <div class="diagram-card">
+                    <div class="diagram-title">MWFRS Pressure Diagram &mdash; Elevation View (wind left to right)</div>
+                    <svg id="svg-wind" viewBox="0 0 580 300" role="img" aria-label="Wind pressure diagram"></svg>
+                </div>
+
+                <!-- Design pressures table -->
+                <div class="param-card">
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Parameter</th><th>Value</th></tr>
+                        </thead>
+                        <tbody id="param-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Notes -->
+                <div class="wl-notes">
+                    <strong>Reference:</strong> ASCE 7-22 &sect;26.10, &sect;27.3 &nbsp;&middot;&nbsp;
+                    <strong>Scope:</strong> MWFRS by Directional Procedure, enclosed/partially enclosed/open buildings.
+                    Windward wall pressures vary with height; leeward wall, sidewall, and roof use q<sub>h</sub>. &nbsp;&middot;&nbsp;
+                    <strong>Internal pressure:</strong> GC<sub>pi</sub> is included in net pressures using the governing sign for each surface. For component/cladding design, check both GC<sub>pi</sub> signs per ASCE 7-22 &sect;27.3.2. &nbsp;&middot;&nbsp;
+                    <strong>Roof pressures</strong> shown are for flat/low-slope roofs (C<sub>p</sub> = &minus;0.9, conservative). Check Table 27.3-1 for other roof angles. &nbsp;&middot;&nbsp;
+                    <strong>All pressures factored (LRFD).</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div id="site-footer"></div>
+
+    <script src="../components.js" data-depth="1"></script>
+    <script>
+        renderNavbar('tools');
+        renderFooter();
+    </script>
+
+    <script>
+    // ── Exposure parameters (ASCE 7-22 Table 26.10-1, power law) ───────────
+    const EXP_PARAMS = {
+        B: { alpha: 7.0,  zg: 1200, zmin: 15 },
+        C: { alpha: 9.5,  zg: 900,  zmin: 15 },
+        D: { alpha: 11.5, zg: 700,  zmin: 15 },
+    };
+
+    function kz(z, exp) {
+        const { alpha, zg, zmin } = EXP_PARAMS[exp];
+        const ze = Math.max(z, zmin);
+        return 2.41 * Math.pow(ze / zg, 2 / alpha);
+    }
+
+    function qz(z, V, exp) {
+        return 0.00256 * kz(z, exp) * 1.0 * 0.85 * 1.0 * V * V;
+    }
+
+    // ── Leeward Cp (Table 27.3-1) ───────────────────────────────────────────
+    function cpLeeward(LB) {
+        if (LB <= 1)  return -0.5;
+        if (LB >= 4)  return -0.2;
+        if (LB <= 2)  return -0.5 + 0.2 * (LB - 1);
+        return -0.3 + 0.1 * (LB - 2) / 2;
+    }
+
+    // ── GCpi lookup ─────────────────────────────────────────────────────────
+    const GCPI = { enclosed: 0.18, partial: 0.55, open: 0.00 };
+
+    // ── Height zones for windward wall ──────────────────────────────────────
+    const ZONE_TOPS = [15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200];
+
+    // ── SVG helpers ─────────────────────────────────────────────────────────
+    const NS = 'http://www.w3.org/2000/svg';
+    function mk(tag, attrs, txt) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        if (txt !== undefined) e.textContent = txt;
+        return e;
+    }
+    function arrow(svg, x1, y1, x2, y2, color, sw) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 3) return;
+        const ah = Math.min(8, len * 0.35);
+        const ux = dx / len, uy = dy / len;
+        const px = -uy * ah * 0.4, py = ux * ah * 0.4;
+        svg.appendChild(mk('line', { x1, y1, x2, y2, stroke: color, 'stroke-width': sw || 2, 'stroke-linecap': 'round' }));
+        svg.appendChild(mk('polygon', {
+            points: `${x2},${y2} ${x2 - ux*ah + px},${y2 - uy*ah + py} ${x2 - ux*ah - px},${y2 - uy*ah - py}`,
+            fill: color
+        }));
+    }
+
+    // ── Draw pressure diagram ────────────────────────────────────────────────
+    function drawDiagram(p_ww_zones, p_lw_abs, p_roof_abs, gcpi_abs) {
+        const svg = document.getElementById('svg-wind');
+        svg.innerHTML = '';
+
+        const VW = 580, VH = 300;
+        const bx = 155, by = 30, bw = 245, bh = 218;
+        const bx2 = bx + bw, by2 = by + bh;
+
+        // Compute max pressure for scaling arrows
+        const allP = [...p_ww_zones.map(z => z.p_net), p_lw_abs, p_roof_abs].filter(v => isFinite(v) && v > 0);
+        const pMax = Math.max(...allP, 1);
+        const maxWwLen = 110, maxLwLen = 90, maxRoofLen = 55;
+
+        // Background
+        svg.appendChild(mk('rect', { x:0, y:0, width:VW, height:VH, fill:'#faf7f2' }));
+
+        // Ground line
+        svg.appendChild(mk('line', { x1: 0, y1: by2, x2: VW, y2: by2, stroke: '#c9c3b8', 'stroke-width': 1.5 }));
+
+        // Building fill + outline
+        svg.appendChild(mk('rect', { x: bx, y: by, width: bw, height: bh, fill: '#ddd9d1' }));
+        svg.appendChild(mk('rect', { x: bx, y: by, width: bw, height: bh, fill: 'none', stroke: '#6b6560', 'stroke-width': 1.5 }));
+
+        // ── Windward pressure arrows (left face, orange) ─────────────────
+        const nZones = p_ww_zones.length;
+        p_ww_zones.forEach((zone, i) => {
+            const yMid = by2 - ((zone.zMid / zone.h) * bh);
+            const alen = Math.max(4, (zone.p_net / pMax) * maxWwLen);
+            arrow(svg, bx - alen, yMid, bx, yMid, '#e85d24', 1.8);
+            if (i === 0 || i === nZones - 1 || nZones <= 3) {
+                svg.appendChild(mk('text', {
+                    x: bx - alen - 4, y: yMid + 3.5,
+                    'text-anchor': 'end', 'font-size': '8.5', fill: '#e85d24',
+                    'font-family': 'Inter, sans-serif', 'font-weight': '600'
+                }, `${zone.p_net.toFixed(1)} psf`));
+            }
+        });
+
+        // Windward label
+        svg.appendChild(mk('text', {
+            x: bx - 5, y: by - 7, 'text-anchor': 'end',
+            'font-size': '9.5', fill: '#e85d24', 'font-family': 'Space Grotesk, sans-serif', 'font-weight': '700'
+        }, 'WINDWARD'));
+
+        // ── Leeward suction arrows (right face, blue) ────────────────────
+        if (p_lw_abs > 0.1) {
+            const y_lw = (by + by2) / 2;
+            const alen_lw = Math.max(4, (p_lw_abs / pMax) * maxLwLen);
+            arrow(svg, bx2, y_lw, bx2 + alen_lw, y_lw, '#3b82f6', 1.8);
+            svg.appendChild(mk('text', {
+                x: bx2 + alen_lw + 5, y: y_lw + 3.5,
+                'text-anchor': 'start', 'font-size': '8.5', fill: '#3b82f6',
+                'font-family': 'Inter, sans-serif', 'font-weight': '600'
+            }, `${p_lw_abs.toFixed(1)} psf`));
+        }
+        svg.appendChild(mk('text', {
+            x: bx2 + 5, y: by - 7, 'text-anchor': 'start',
+            'font-size': '9.5', fill: '#3b82f6', 'font-family': 'Space Grotesk, sans-serif', 'font-weight': '700'
+        }, 'LEEWARD'));
+
+        // ── Roof uplift arrows (blue, pointing up) ────────────────────────
+        if (p_roof_abs > 0.1) {
+            const alen_r = Math.max(4, (p_roof_abs / pMax) * maxRoofLen);
+            [0.25, 0.5, 0.75].forEach(frac => {
+                const sx = bx + frac * bw;
+                arrow(svg, sx, by, sx, by - alen_r, '#3b82f6', 1.8);
+            });
+            svg.appendChild(mk('text', {
+                x: bx + bw / 2, y: by - (p_roof_abs / pMax) * maxRoofLen - 8,
+                'text-anchor': 'middle', 'font-size': '8.5', fill: '#3b82f6',
+                'font-family': 'Inter, sans-serif', 'font-weight': '600'
+            }, `${p_roof_abs.toFixed(1)} psf (uplift)`));
+        }
+
+        // ── Wind direction indicator ──────────────────────────────────────
+        const wy = (by + by2) / 2;
+        svg.appendChild(mk('text', {
+            x: 14, y: wy - 10, 'font-size': '8.5', fill: '#64748b',
+            'font-family': 'Space Grotesk, sans-serif', 'font-weight': '700', 'letter-spacing': '0.06em'
+        }, 'WIND'));
+        arrow(svg, 12, wy, 50, wy, '#64748b', 2);
+
+        // ── Height label ──────────────────────────────────────────────────
+        const h_val = document.getElementById('inp-h').value;
+        svg.appendChild(mk('line', { x1: bx2+50, y1: by, x2: bx2+50, y2: by2, stroke: '#94a3b8', 'stroke-width': 1, 'stroke-dasharray': '3,3' }));
+        svg.appendChild(mk('text', {
+            x: bx2 + 56, y: (by + by2) / 2 + 3.5, 'font-size': '9', fill: '#94a3b8',
+            'font-family': 'Inter, sans-serif'
+        }, `h = ${h_val} ft`));
+
+        // ── Ground label ──────────────────────────────────────────────────
+        svg.appendChild(mk('text', {
+            x: bx + 4, y: by2 + 13, 'font-size': '8.5', fill: '#94a3b8',
+            'font-family': 'Inter, sans-serif'
+        }, '▲ Ground'));
+
+        // ── GCpi legend ───────────────────────────────────────────────────
+        const gcpi_txt = gcpi_abs > 0 ? `±${gcpi_abs} GCᵖᴵ included` : 'Open structure (GCᵖᴵ = 0)';
+        svg.appendChild(mk('text', {
+            x: VW - 8, y: VH - 6, 'text-anchor': 'end', 'font-size': '8', fill: '#94a3b8',
+            'font-family': 'Inter, sans-serif'
+        }, gcpi_txt));
+    }
+
+    // ── Main calculation ─────────────────────────────────────────────────────
+    function calc() {
+        const V   = parseFloat(document.getElementById('inp-V').value)   || 115;
+        const h   = parseFloat(document.getElementById('inp-h').value)   || 40;
+        const B   = parseFloat(document.getElementById('inp-B').value)   || 60;
+        const L   = parseFloat(document.getElementById('inp-L').value)   || 100;
+        const exp = document.getElementById('inp-exp').value;
+        const enc = document.getElementById('inp-enc').value;
+
+        const G      = 0.85;
+        const Cp_ww  = 0.8;
+        const Cp_lw  = cpLeeward(L / B);
+        const Cp_sw  = -0.7;
+        const Cp_rf  = -0.9;
+        const gcpi   = GCPI[enc];
+
+        const qh = qz(h, V, exp);
+
+        // Design pressures (net, governing internal pressure sign per surface)
+        // Windward: p = qz×G×Cp_ww + qh×gcpi  (Case 2: internal suction, max inward)
+        // Leeward : p = qh×G×|Cp_lw| + qh×gcpi (both suction, max outward)
+        // Sidewall: same logic as leeward
+        // Roof    : p = qh×G×|Cp_rf| + qh×gcpi (uplift)
+
+        function p_ww_at(z) {
+            return qz(z, V, exp) * G * Cp_ww + qh * gcpi;
+        }
+        const p_lw_abs  = qh * G * Math.abs(Cp_lw) + qh * gcpi;
+        const p_sw_abs  = qh * G * Math.abs(Cp_sw)  + qh * gcpi;
+        const p_rf_abs  = qh * G * Math.abs(Cp_rf)  + qh * gcpi;
+
+        // Net lateral (internal cancels): windward ext + leeward ext
+        const p_net_at_h = qh * G * Cp_ww + qh * G * Math.abs(Cp_lw);
+
+        // Build windward zones
+        const zones = [];
+        let prev_z = 0;
+        const tops = [...ZONE_TOPS.filter(z => z < h), h];
+        tops.forEach(zt => {
+            const zb = prev_z;
+            const zMid = (zb + zt) / 2;
+            zones.push({ zBot: zb, zTop: zt, zMid, h, p_net: p_ww_at(zt) });
+            prev_z = zt;
+        });
+
+        // Banner
+        document.getElementById('disp-qh').textContent  = `${qh.toFixed(2)} psf`;
+        document.getElementById('disp-pww-h').textContent = `${p_ww_at(h).toFixed(2)} psf`;
+        document.getElementById('disp-plw').textContent = `${p_lw_abs.toFixed(2)} psf (suction)`;
+        document.getElementById('disp-pnet').textContent = `${p_net_at_h.toFixed(2)} psf`;
+
+        // Build table
+        const tbody = document.getElementById('param-tbody');
+        tbody.innerHTML = '';
+
+        function row(label, value, hl) {
+            const tr = document.createElement('tr');
+            if (hl) tr.className = 'hl-row';
+            tr.innerHTML = `<td>${label}</td><td>${value}</td>`;
+            tbody.appendChild(tr);
+        }
+        function sep(label) {
+            const tr = document.createElement('tr');
+            tr.className = 'sep-row';
+            tr.innerHTML = `<td colspan="2">${label}</td>`;
+            tbody.appendChild(tr);
+        }
+
+        sep('Velocity Pressure Coefficients');
+        row(`K<sub>z</sub> at z = 15 ft`, kz(15, exp).toFixed(3));
+        row(`K<sub>z</sub> at z = ${h} ft (h)`, kz(h, exp).toFixed(3));
+        row(`q<sub>z</sub> at 15 ft = 0.00256 K<sub>z</sub> K<sub>zt</sub> K<sub>d</sub> K<sub>e</sub> V²`, `${qz(15, V, exp).toFixed(2)} psf`);
+        row(`q<sub>h</sub> at h = ${h} ft`, `${qh.toFixed(2)} psf`, true);
+
+        sep('Pressure Coefficients');
+        row('C<sub>p</sub> — Windward wall', `+${Cp_ww}`);
+        row(`C<sub>p</sub> — Leeward wall (L/B = ${(L/B).toFixed(2)})`, Cp_lw.toFixed(2));
+        row('C<sub>p</sub> — Side walls', Cp_sw.toFixed(1));
+        row('C<sub>p</sub> — Flat roof (conservative, near windward edge)', Cp_rf.toFixed(1));
+        row(`GC<sub>pi</sub> (${enc})`, `±${gcpi}`);
+
+        sep('Design Pressures — Windward Wall (vary with height)');
+        const showZones = zones.length > 6 ? zones.filter((_, i) => i === 0 || i === zones.length - 1 || i % Math.ceil(zones.length / 5) === 0) : zones;
+        showZones.forEach(z => {
+            row(
+                `p at z = ${z.zTop.toFixed(0)} ft &nbsp;&nbsp; [q<sub>z</sub>&times;G&times;0.8 + q<sub>h</sub>&times;GC<sub>pi</sub>]`,
+                `${z.p_net.toFixed(2)} psf`,
+                z.zTop === h
+            );
+        });
+
+        sep('Design Pressures — Other Surfaces (at q<sub>h</sub>)');
+        row('Leeward wall &nbsp;&nbsp;[q<sub>h</sub>&times;G&times;|C<sub>p</sub>| + q<sub>h</sub>&times;GC<sub>pi</sub>] (suction)', `${p_lw_abs.toFixed(2)} psf`);
+        row('Side walls &nbsp;&nbsp;(suction)', `${p_sw_abs.toFixed(2)} psf`);
+        row('Flat roof &nbsp;&nbsp;(uplift, conservative)', `${p_rf_abs.toFixed(2)} psf`);
+
+        sep('MWFRS Net Lateral (internal pressure cancels)');
+        row(
+            `Net lateral at h &nbsp;&nbsp;[q<sub>h</sub>&times;G&times;(C<sub>p,ww</sub> + |C<sub>p,lw</sub>|)]`,
+            `${p_net_at_h.toFixed(2)} psf`, true
+        );
+
+        // Draw
+        drawDiagram(zones, p_lw_abs, p_rf_abs, gcpi);
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    calc();
+    </script>
+
+</body>
+</html>
